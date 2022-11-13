@@ -4,6 +4,15 @@
 import pandas as pd
 
 
+CONFIG = {
+    'Краснодар': 'Raw_Assortment_ALIDI_KRASNODAR.xlsx',
+    'Пятигорск': 'Raw_Assortment_ALIDI_PYATIGORSK.xlsx',
+    'Волгоград': 'Raw_Assortment_ALIDI_VOLGOGRAD.xlsx',
+    'Краснодар-ELB': 'Raw_Assortment_ALIDI_KRASNODAR_Elbrus.xlsx',
+    'Пятигорск-ELB': 'Raw_Assortment_ALIDI_PYATIGORSK_Elbrus.xlsx'
+}
+
+
 def get_warehouse_data(file_path, warehouse):
     """Формирует активный ассортимент по заданному складу"""
     xl = pd.ExcelFile(file_path)
@@ -17,19 +26,17 @@ def get_warehouse_data(file_path, warehouse):
     return df
 
 
-CONFIG = {
-    'Краснодар': 'Raw_Assortment_ALIDI_KRASNODAR.xlsx',
-    'Пятигорск': 'Raw_Assortment_ALIDI_PYATIGORSK.xlsx',
-    'Волгоград': 'Raw_Assortment_ALIDI_VOLGOGRAD.xlsx',
-    'Краснодар-ELB': 'Raw_Assortment_ALIDI_KRASNODAR_Elbrus.xlsx',
-    'Пятигорск-ELB': 'Raw_Assortment_ALIDI_PYATIGORSK_Elbrus.xlsx'
-}
+def main():
+    path_to_folder = 'Исходники/Ассортимент МР Юг/'
+    warehouse_df = []
+    for warehouse, file in CONFIG.items():
+        warehouse_df.append(get_warehouse_data(
+            path_to_folder + file,
+            warehouse
+        ))
+    df_result = pd.concat(warehouse_df, ignore_index=True)
+    df_result.to_excel('Результаты/Ассортимент.xlsx', index=False)
 
-path_to_folder = 'Исходники/Ассортимент МР Юг/'
-warehouse_df = []
 
-for warehouse, file in CONFIG.items():
-    warehouse_df.append(get_warehouse_data(path_to_folder + file, warehouse))
-
-df_result = pd.concat(warehouse_df, ignore_index=True)
-df_result.to_excel('Результаты/Ассортимент.xlsx', index=False)
+if __name__ == "__main__":
+    main()
