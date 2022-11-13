@@ -17,29 +17,19 @@ def get_warehouse_data(file_path, warehouse):
     return df
 
 
-df_krd = get_warehouse_data(
-    "./Исходники/Ассортимент МР Юг/Raw_Assortment_ALIDI_KRASNODAR.xlsx",
-    'Краснодар'
-)
-df_pt = get_warehouse_data(
-    "./Исходники/Ассортимент МР Юг/Raw_Assortment_ALIDI_PYATIGORSK.xlsx",
-    'Пятигорск'
-)
-df_vlg = get_warehouse_data(
-    "./Исходники/Ассортимент МР Юг/Raw_Assortment_ALIDI_VOLGOGRAD.xlsx",
-    'Волгоград'
-)
-df_krd_elb = get_warehouse_data(
-    "./Исходники/Ассортимент МР Юг/Raw_Assortment_ALIDI_KRASNODAR_Elbrus.xlsx",
-    'Краснодар-ELB'
-)
-df_pt_elb = get_warehouse_data(
-    './Исходники/Ассортимент МР Юг/'
-    'Raw_Assortment_ALIDI_PYATIGORSK_Elbrus.xlsx',
-    'Пятигорск-ELB'
-)
-df_result = pd.concat(
-    [df_krd, df_pt, df_vlg, df_krd_elb, df_pt_elb],
-    ignore_index=True
-)
+CONFIG = {
+    'Краснодар': 'Raw_Assortment_ALIDI_KRASNODAR.xlsx',
+    'Пятигорск': 'Raw_Assortment_ALIDI_PYATIGORSK.xlsx',
+    'Волгоград': 'Raw_Assortment_ALIDI_VOLGOGRAD.xlsx',
+    'Краснодар-ELB': 'Raw_Assortment_ALIDI_KRASNODAR_Elbrus.xlsx',
+    'Пятигорск-ELB': 'Raw_Assortment_ALIDI_PYATIGORSK_Elbrus.xlsx'
+}
+
+path_to_folder = 'Исходники/Ассортимент МР Юг/'
+warehouse_df = []
+
+for warehouse, file in CONFIG.items():
+    warehouse_df.append(get_warehouse_data(path_to_folder + file, warehouse))
+
+df_result = pd.concat(warehouse_df, ignore_index=True)
 df_result.to_excel('Результаты/Ассортимент.xlsx', index=False)
