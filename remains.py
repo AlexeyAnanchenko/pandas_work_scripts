@@ -52,7 +52,6 @@ def main():
         on='EAN',
         how='left',
     )
-    yug_df.columns.get_loc('EAN')
     yug_df.to_excel('Результаты/Остатки.xlsx', index=False)
 
 
