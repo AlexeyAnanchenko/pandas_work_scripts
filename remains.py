@@ -26,8 +26,8 @@ def main():
         'Исходники/1082 - Доступность товара по складам (PG).xlsx'
     )
     full_df = xl.parse()
-    yug_df = full_df[full_df['Склад'].isin(list(CONFIG.keys()))]
-    yug_df = yug_df.replace({'Склад': CONFIG})
+    yug_df_crude = full_df[full_df['Склад'].isin(list(CONFIG.keys()))]
+    yug_df = yug_df_crude.replace({'Склад': CONFIG})
     yug_df.insert(
         len(yug_df.axes[1]),
         RESERVE,
@@ -46,6 +46,13 @@ def main():
         yug_df[AVIALABLE_REST] - yug_df[QUOTA]
     )
     yug_df.loc[yug_df[FREE_REST] < 0, FREE_REST] = 0
+    yug_df.loc[yug_df[AVIALABLE_REST] < 0, AVIALABLE_REST] = 0
+    yug_df = yug_df.merge(
+        yug_df_crude[['EAN', 'Наименование']].drop_duplicates(subset=['EAN']),
+        on='EAN',
+        how='left',
+    )
+    yug_df.columns.get_loc('EAN')
     yug_df.to_excel('Результаты/Остатки.xlsx', index=False)
 
 
