@@ -7,7 +7,7 @@
 import pandas as pd
 
 
-CONFIG = {
+WAREHOUSE_DICT = {
     'Краснодар': 'Raw_Assortment_ALIDI_KRASNODAR.xlsx',
     'Пятигорск': 'Raw_Assortment_ALIDI_PYATIGORSK.xlsx',
     'Волгоград': 'Raw_Assortment_ALIDI_VOLGOGRAD.xlsx',
@@ -32,7 +32,7 @@ def get_warehouse_data(file_path, warehouse):
 def main():
     path_to_folder = 'Исходники/Ассортимент МР Юг/'
     warehouse_df = []
-    for warehouse, file in CONFIG.items():
+    for warehouse, file in WAREHOUSE_DICT.items():
         warehouse_df.append(get_warehouse_data(
             path_to_folder + file,
             warehouse
