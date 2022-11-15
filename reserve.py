@@ -8,6 +8,7 @@ from remains import get_filtered_df
 
 
 EMPTY_ROWS = 2
+
 WAREHOUSE = {
     '    800WHDIS': 'Краснодар',
     '    803WHDIS': 'Пятигорск',
