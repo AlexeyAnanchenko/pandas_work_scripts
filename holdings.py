@@ -6,14 +6,21 @@
 
 import pandas as pd
 
+POINT = 'Точка доставки'
 
 def main():
     excel = pd.ExcelFile('Исходники/Холдинги-Резервы.xlsx')
     df_full = excel.parse('Точка доставки-Холдинг')
     df = pd.concat([
-        df_full[["Точка доставки", "Основной холдинг"]].rename(columns={"Точка доставки": "Коды"}),
-        df_full[["Плательщик", "Основной холдинг"]].rename(columns={"Плательщик": "Коды"}),
-        df_full[["Холдинг", "Основной холдинг"]].rename(columns={"Холдинг": "Коды"})],
+        df_full[["Точка доставки", "Основной холдинг"]].rename(
+            columns={"Точка доставки": "Коды"}
+        ),
+        df_full[["Плательщик", "Основной холдинг"]].rename(
+            columns={"Плательщик": "Коды"}
+        ),
+        df_full[["Холдинг", "Основной холдинг"]].rename(
+            columns={"Холдинг": "Коды"}
+        )],
         ignore_index=True
     ).drop_duplicates()
     result_data = {}
@@ -22,14 +29,18 @@ def main():
         ch1 = '('
         ch2 = ')'
         for values in df[column]:
-            try:
+            if ch1 in str(values):
                 cleared_values.append(
                     values[(values.find(ch1) + 1):values.find(ch2)]
                 )
-            except Exception:
-                print(values)
+            else:
+                cleared_values.append('Удалить строку')
         result_data[column] = cleared_values
-    pd.DataFrame(result_data).to_excel('Результаты/Холдинги.xlsx', index=False)
+    df_result = pd.DataFrame(result_data)
+    df_result[df_result['Коды'] != 'Удалить строку'].to_excel(
+        'Результаты/Холдинги.xlsx',
+        index=False
+    )
 
 
 if __name__ == "__main__":
