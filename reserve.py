@@ -23,7 +23,9 @@ def main():
         'Исходники/1275 - Резервы и резервы-квоты по холдингам.xlsx'
     )
     df = get_filtered_df(excel, WAREHOUSE, skiprows=EMPTY_ROWS)
-    print(df[['Код холдинга']])
+    holdings = pd.ExcelFile('Результаты/Холдинги.xlsx').parse()
+    df = df.merge(holdings, on='Код холдинга', how='left')
+    df.to_excel('Результаты/Резервы.xlsx', index=False)
 
 
 if __name__ == "__main__":

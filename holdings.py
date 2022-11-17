@@ -11,16 +11,20 @@ POINT = 'Точка доставки'
 PAYMENT = 'Плательщик'
 HOLDING = 'Холдинг'
 M_HOLDING = 'Основной холдинг'
-CODES = 'Коды'
+NAME_M_HOLDING = 'Наименование основного холдинга'
+CODES = 'Код холдинга'
 
 
 def main():
     excel = pd.ExcelFile('Исходники/Холдинги-Резервы.xlsx')
     df_full = excel.parse('Точка доставки-Холдинг')
     df = pd.concat([
-        df_full[[POINT, M_HOLDING]].rename(columns={POINT: CODES}),
-        df_full[[PAYMENT, M_HOLDING]].rename(columns={PAYMENT: CODES}),
-        df_full[[HOLDING, M_HOLDING]].rename(columns={HOLDING: CODES})],
+        df_full[[POINT, M_HOLDING, NAME_M_HOLDING]].rename(
+            columns={POINT: CODES}),
+        df_full[[PAYMENT, M_HOLDING, NAME_M_HOLDING]].rename(
+            columns={PAYMENT: CODES}),
+        df_full[[HOLDING, M_HOLDING, NAME_M_HOLDING]].rename(
+            columns={HOLDING: CODES})],
         ignore_index=True
     ).drop_duplicates()
     result_data = {}
@@ -36,6 +40,7 @@ def main():
             else:
                 cleared_values.append('Удалить строку')
         result_data[column] = cleared_values
+    result_data[NAME_M_HOLDING] = df[NAME_M_HOLDING].to_list()
     df_result = pd.DataFrame(result_data)
     df_result[df_result[CODES] != 'Удалить строку'].to_excel(
         'Результаты/Холдинги.xlsx',
