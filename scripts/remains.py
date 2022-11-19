@@ -4,7 +4,7 @@
 """
 
 import pandas as pd
-
+from service import get_filtered_df
 
 FULL_REST = 'Полное наличие  (уч.ЕИ) '
 AVIALABLE_REST = 'Доступно (уч.ЕИ) '
@@ -24,17 +24,11 @@ WAREHOUSE = {
 }
 
 
-def get_filtered_df(excel, dict_warehouses, skiprows=0):
-    full_df = excel.parse(skiprows=skiprows)
-    filter_df = full_df[full_df[WHS].isin(list(dict_warehouses.keys()))]
-    return filter_df.replace({WHS: dict_warehouses})
-
-
 def main():
     xl = pd.ExcelFile(
         '../Исходники/1082 - Доступность товара по складам (PG).xlsx'
     )
-    filter_df = get_filtered_df(xl, WAREHOUSE)
+    filter_df = get_filtered_df(xl, WHS, WAREHOUSE)
     filter_df.insert(
         len(filter_df.axes[1]),
         RESERVE,
