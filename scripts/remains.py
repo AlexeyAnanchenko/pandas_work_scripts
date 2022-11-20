@@ -4,7 +4,9 @@
 """
 
 import pandas as pd
-from service import get_filtered_df
+
+from service import get_filtered_df, save_to_excel
+
 
 FULL_REST = 'Полное наличие  (уч.ЕИ) '
 AVIALABLE_REST = 'Доступно (уч.ЕИ) '
@@ -58,7 +60,7 @@ def main():
         LINK, WHS, EAN, NAME,
         FULL_REST, RESERVE, AVIALABLE_REST, QUOTA, FREE_REST
     ])
-    yug_df.to_excel('../Результаты/Остатки.xlsx', index=False)
+    save_to_excel('../Результаты/Остатки.xlsx', yug_df)
 
 
 if __name__ == "__main__":

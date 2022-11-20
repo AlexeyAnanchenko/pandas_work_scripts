@@ -6,6 +6,8 @@
 
 import pandas as pd
 
+from service import save_to_excel
+
 
 WAREHOUSE_DICT = {
     'Краснодар': 'Raw_Assortment_ALIDI_KRASNODAR.xlsx',
@@ -38,7 +40,7 @@ def main():
             warehouse
         ))
     df_result = pd.concat(warehouse_df, ignore_index=True)
-    df_result.to_excel('../Результаты/Ассортимент.xlsx', index=False)
+    save_to_excel('../Результаты/Ассортимент.xlsx', df_result)
 
 
 if __name__ == "__main__":

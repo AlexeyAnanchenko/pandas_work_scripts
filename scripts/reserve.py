@@ -4,7 +4,8 @@
 """
 
 import pandas as pd
-from service import get_filtered_df
+
+from service import get_filtered_df, save_to_excel
 from holdings import NAME_M_HOLDING, M_HOLDING, CODES
 
 
@@ -36,7 +37,7 @@ def main():
     excel = pd.ExcelFile(
         '../Исходники/1275 - Резервы и резервы-квоты по холдингам.xlsx'
     )
-    df = get_filtered_df(excel, WHS, WAREHOUSE, skiprows=EMPTY_ROWS)
+    df = get_filtered_df(excel, WAREHOUSE, WHS, skiprows=EMPTY_ROWS)
     holdings = pd.ExcelFile('../Результаты/Холдинги.xlsx').parse()
     df = df.merge(holdings, on=CODES, how='left')
     idx = df[df[M_HOLDING].isnull()].index
@@ -83,7 +84,7 @@ def main():
         TOTAL_RSV,
         group_df[SOFT_HARD_RSV] + group_df[QUOTA_BY_AVAILABLE]
     )
-    group_df.round().to_excel('../Результаты/Резервы.xlsx', index=False)
+    save_to_excel('../Результаты/Резервы.xlsx', group_df.round())
 
 
 if __name__ == "__main__":

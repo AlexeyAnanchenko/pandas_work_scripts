@@ -6,6 +6,8 @@
 
 import pandas as pd
 
+from service import save_to_excel
+
 
 POINT = 'Точка доставки'
 PAYMENT = 'Плательщик'
@@ -42,9 +44,9 @@ def main():
         result_data[column] = cleared_values
     result_data[NAME_M_HOLDING] = df[NAME_M_HOLDING].to_list()
     df_result = pd.DataFrame(result_data)
-    df_result[df_result[CODES] != 'Удалить строку'].to_excel(
+    save_to_excel(
         '../Результаты/Холдинги.xlsx',
-        index=False
+        df_result[df_result[CODES] != 'Удалить строку']
     )
 
 

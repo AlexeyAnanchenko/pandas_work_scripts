@@ -4,7 +4,7 @@
 """
 
 import pandas as pd
-from service import get_filtered_df
+from service import get_filtered_df, save_to_excel
 
 
 WHS = 'Бизнес-единица'
@@ -44,7 +44,8 @@ def main():
         LINK, WHS_RENAME, EAN, PRODUCT_NAME,
         columns[-NUM_MONTH], columns[-NUM_MONTH + 1], columns[-NUM_MONTH + 2]
     ])
-    group_df.to_excel('../Результаты/Закупки.xlsx', index=False)
+    save_to_excel('../Результаты/Закупки.xlsx', group_df)
+    # group_df.to_excel('../Результаты/Закупки.xlsx', index=False)
 
 
 if __name__ == "__main__":
