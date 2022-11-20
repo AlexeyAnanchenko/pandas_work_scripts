@@ -28,7 +28,7 @@ def main():
     xl = pd.ExcelFile(
         '../Исходники/1082 - Доступность товара по складам (PG).xlsx'
     )
-    filter_df = get_filtered_df(xl, WHS, WAREHOUSE)
+    filter_df = get_filtered_df(xl, WAREHOUSE, WHS)
     filter_df.insert(
         len(filter_df.axes[1]),
         RESERVE,
@@ -54,6 +54,10 @@ def main():
         on='EAN',
         how='left',
     )
+    yug_df = yug_df.reindex(columns=[
+        LINK, WHS, EAN, NAME,
+        FULL_REST, RESERVE, AVIALABLE_REST, QUOTA, FREE_REST
+    ])
     yug_df.to_excel('../Результаты/Остатки.xlsx', index=False)
 
 
