@@ -24,9 +24,9 @@ def save_to_excel(path, df):
     Записывает данные в excel с автоматическим подбором ширины столбцов
     """
     sheet = 'Лист1'
-    num_row = 0
-    height_row = 50
-    min_width = 15
+    num_row_header = 0
+    height_header = 50
+    min_wdh_col = 15
 
     # Убираем формат заголовка таблицы по умолчанию
     pandas.io.formats.excel.ExcelFormatter.header_style = None
@@ -39,10 +39,10 @@ def save_to_excel(path, df):
         'text_wrap': True, 'bold': True,
         'align': 'center', 'valign': 'vcenter'
     })
-    worksheet.set_row(num_row, height_row, cell_format=cell_form)
+    worksheet.set_row(num_row_header, height_header, cell_format=cell_form)
 
     for column in df:
-        column_width = max(df[column].astype(str).map(len).max(), min_width)
+        column_width = max(df[column].astype(str).map(len).max(), min_wdh_col)
         col_idx = df.columns.get_loc(column)
         writer.sheets[sheet].set_column(col_idx, col_idx, column_width)
 
