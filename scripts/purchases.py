@@ -12,7 +12,7 @@ WHS_RENAME = 'Склад'
 EAN = 'EAN'
 PRODUCT_NAME = 'Наименование товара'
 LINK = 'Сцепка'
-NUM_MONTH = 3
+NUM_MONTHS = 3
 EMPTY_ROWS = 10
 WAREHOUSES = {
     'Склад DIS г. Краснодар': 'Краснодар',
@@ -29,23 +29,22 @@ def main():
     df.insert(0, LINK, df[WHS] + df[EAN].map(int).map(str))
     df = df.rename(columns={WHS: WHS_RENAME})
     columns = list(df.columns)
+    int_col = {}
+
+    for i in range(NUM_MONTHS):
+        int_col[columns[-NUM_MONTHS + i]] = 'sum'
+
     group_df = df.groupby([
         LINK, WHS_RENAME, EAN
-    ]).agg({
-        columns[-NUM_MONTH]: 'sum',
-        columns[-NUM_MONTH + 1]: 'sum',
-        columns[-NUM_MONTH + 2]: 'sum'
-    }).reset_index()
+    ]).agg(int_col).reset_index()
     group_df = group_df.merge(
         df[[LINK, PRODUCT_NAME]].drop_duplicates(subset=[LINK]),
         on=LINK, how='left'
     )
-    group_df = group_df.reindex(columns=[
-        LINK, WHS_RENAME, EAN, PRODUCT_NAME,
-        columns[-NUM_MONTH], columns[-NUM_MONTH + 1], columns[-NUM_MONTH + 2]
-    ])
+    reindex_col = [LINK, WHS_RENAME, EAN, PRODUCT_NAME]
+    reindex_col.extend([i for i in int_col.keys()])
+    group_df = group_df.reindex(columns=reindex_col)
     save_to_excel('../Результаты/Закупки.xlsx', group_df)
-    # group_df.to_excel('../Результаты/Закупки.xlsx', index=False)
 
 
 if __name__ == "__main__":

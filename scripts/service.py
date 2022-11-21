@@ -21,12 +21,12 @@ def get_filtered_df(excel, dict_warehouses, name_column_whs, skiprows=0):
 
 def save_to_excel(path, df):
     """
-    Записывает данные в excel с автоматическим подбором ширины столбцов
+    Записывает данные в excel с настройкой форматов
     """
     sheet = 'Лист1'
     num_row_header = 0
     height_header = 50
-    min_wdh_col = 15
+    min_wdh_col = 14
 
     # Убираем формат заголовка таблицы по умолчанию
     pandas.io.formats.excel.ExcelFormatter.header_style = None
@@ -42,7 +42,11 @@ def save_to_excel(path, df):
     worksheet.set_row(num_row_header, height_header, cell_format=cell_form)
 
     for column in df:
-        column_width = max(df[column].astype(str).map(len).max(), min_wdh_col)
+        column_width = max(
+            df[column].astype(str).map(len).max(),
+            min_wdh_col,
+            len(column) / 2
+        )
         col_idx = df.columns.get_loc(column)
         writer.sheets[sheet].set_column(col_idx, col_idx, column_width)
 
