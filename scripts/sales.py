@@ -4,6 +4,8 @@
 """
 
 import pandas as pd
+from datetime import date
+from dateutil.relativedelta import relativedelta
 
 from service import get_filtered_df, save_to_excel
 
@@ -85,10 +87,17 @@ def sales_by_client():
     cuts_all = sum_all_col(cut_col, CUTS)
     sales_all = sum_all_col(sales_col, SALES)
     cuts_sales_all = sum_all_col(cuts_sales_col, CUTS_SALES)
+    first_day_current_month = date(date.today().year, date.today().month, 1)
+    delta = relativedelta(months=(3 - 1))
+    divide_for_avarage = (
+        date.today() - (first_day_current_month - delta)
+    ).days
+    avarage_days_in_month = 365 / 12
 
-    for i in [cuts_all, sales_all, cuts_sales_all]:
-        group_df[AVARAGE + i] = group_df[i] / NUM_MONTHS
-
+    for name_col in [cuts_all, sales_all, cuts_sales_all]:
+        group_df[AVARAGE + name_col] = (group_df[name_col]
+                                        / divide_for_avarage
+                                        * avarage_days_in_month)
     return group_df
 
 
