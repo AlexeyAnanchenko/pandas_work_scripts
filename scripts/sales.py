@@ -16,7 +16,6 @@ REASON_FOR_CUTS = 3
 WHS = 'Склад'
 EAN = 'EAN'
 M_HOLDING = 'Основной холдинг'
-SALES_DIRECT = 'Направление продаж'
 PRODUCT_NAME = 'Наименование товара'
 LINK_WHS_NAME = 'Сцепка Склад-Наименование холдинга-ШК'
 LINK_WHS = 'Сцепка Склад-ШК'
@@ -34,6 +33,8 @@ WAREHOUSES = {
 
 
 def sales_by_client():
+    """Формирование фрейма данных продаж в разрезе клиент-склад-шк"""
+
     excel = pd.ExcelFile('../Исходники/Продажи общие.xlsx')
     full_df = get_filtered_df(excel, WAREHOUSES, WHS, skiprows=EMPTY_ROWS)
     full_df.insert(
@@ -84,26 +85,57 @@ def sales_by_client():
         group_df[name_col] = group_df[[col for col in reason_col]].sum(axis=1)
         return name_col
 
-    cuts_all = sum_all_col(cut_col, CUTS)
-    sales_all = sum_all_col(sales_col, SALES)
-    cuts_sales_all = sum_all_col(cuts_sales_col, CUTS_SALES)
+    sum_all_columns = [
+        sum_all_col(cut_col, CUTS),
+        sum_all_col(sales_col, SALES),
+        sum_all_col(cuts_sales_col, CUTS_SALES)
+    ]
+
     first_day_current_month = date(date.today().year, date.today().month, 1)
     delta = relativedelta(months=(3 - 1))
     divide_for_avarage = (
         date.today() - (first_day_current_month - delta)
     ).days
     avarage_days_in_month = 365 / 12
+    avarage_col = []
 
-    for name_col in [cuts_all, sales_all, cuts_sales_all]:
-        group_df[AVARAGE + name_col] = (group_df[name_col]
-                                        / divide_for_avarage
-                                        * avarage_days_in_month)
-    return group_df
+    for name_col in sum_all_columns:
+        new_name = AVARAGE + name_col
+        group_df[new_name] = (group_df[name_col]
+                              / divide_for_avarage
+                              * avarage_days_in_month)
+        avarage_col.append(new_name)
+
+    numeric_col = [
+        cut_col + sales_col + cuts_sales_col + sum_all_columns + avarage_col
+    ]
+
+    return group_df, numeric_col
+
+
+def sales_by_warehouses(dataframe, numeric_columns):
+    """Формирование фрейма данных продаж в разрезе склад-шк"""
+
+    dataframe.insert(
+        0, LINK_WHS,
+        dataframe[WHS] + dataframe[EAN].map(int).map(str)
+    )
+    sequence_col = [LINK_WHS, WHS, EAN, PRODUCT_NAME]
+    numeric_col_dict = {}
+
+    for col_list in numeric_columns:
+        for col in col_list:
+            numeric_col_dict[col] = 'sum'
+
+    df = dataframe.groupby(sequence_col).agg(numeric_col_dict).reset_index()
+    return df
 
 
 def main():
-    df = sales_by_client()
+    df, numeric_columns = sales_by_client()
     save_to_excel('../Результаты/Продажи по клиентам и складам.xlsx', df)
+    df = sales_by_warehouses(df, numeric_columns)
+    save_to_excel('../Результаты/Продажи по складам.xlsx', df)
 
 
 if __name__ == "__main__":
