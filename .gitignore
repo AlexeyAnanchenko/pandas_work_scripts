@@ -1,10 +1,11 @@
 get-pip.py
 test.py
-venv/
+env/
 Исходники/
 Результаты/
 ./get-pip.py
 ./test.py
 ./venv/
+./env/
 ./Исходники/
 ./Результаты/
