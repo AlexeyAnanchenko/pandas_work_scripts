@@ -74,6 +74,7 @@ def main():
     )
     group_df.loc[group_df[QUOTA_BY_AVAILABLE].isnull(), QUOTA_BY_AVAILABLE] = 0
     group_df.drop(QUOTA_RSV + BY_LINK, axis=1, inplace=True)
+    group_df[SOFT_HARD_RSV] = group_df[SOFT_RSV] + group_df[HARD_RSV]
     group_df.insert(
         len(group_df.axes[1]),
         SOFT_HARD_RSV,

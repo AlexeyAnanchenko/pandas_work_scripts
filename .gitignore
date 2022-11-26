@@ -1,6 +1,8 @@
 get-pip.py
 test.py
 env/
+scripts/category.py
+scripts/__pycache__/
 Исходники/
 Результаты/
 ./get-pip.py
@@ -9,3 +11,5 @@ env/
 ./env/
 ./Исходники/
 ./Результаты/
+./scripts/category.py
+./scripts/__pycache__/
