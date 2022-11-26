@@ -3,6 +3,7 @@ test.py
 env/
 scripts/category.py
 scripts/__pycache__/
+scripts/_pycache_/
 Исходники/
 Результаты/
 ./get-pip.py
