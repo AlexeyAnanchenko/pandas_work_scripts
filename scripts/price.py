@@ -16,6 +16,11 @@ WHS_SRS = 'Склад'
 EAN_SRS = 'Штрих код'
 PRODUCT_NAME_SRS = 'Описание товара'
 PRICE_SRS = 'Цена'
+EAN_ELB = 'Штрих-код штуки'
+PRODUCT_NAME_ELB = 'Наименование продукта'
+PRICE_ELB = 'Цена Прайса'
+PRICE_ELB_ADD = ' Эльбрус, NIV с НДС'
+SKIPROWS_ELB = 10
 WAREHOUSE_SRS = [
     '    800WHDIS',
     '    800WHELB',
@@ -51,9 +56,29 @@ def main():
             PRICE_SRS: PRICE
         })],
         ignore_index=True
+    )
+
+    # Добавляем NIV Эльбрус
+    elb_xl = pd.ExcelFile('../Исходники/Прайс/Прайс Эльбрус.xlsx')
+    elb_df = elb_xl.parse('Цены от 2 млн', skiprows=SKIPROWS_ELB)[
+        [EAN_ELB, PRODUCT_NAME_ELB, PRICE_ELB]
+    ]
+    elb_df = elb_df.rename(columns={
+            EAN_ELB: EAN,
+            PRODUCT_NAME_ELB: PRODUCT_NAME,
+            PRICE_ELB: PRICE_ELB + PRICE_ELB_ADD
+    })
+
+    df = pd.concat([df, elb_df[[EAN, PRODUCT_NAME]]], ignore_index=True)
+    df = pd.merge(
+        df,
+        elb_df[[EAN, PRICE_ELB + PRICE_ELB_ADD]],
+        on=EAN,
+        how='left'
     ).drop_duplicates(subset=[EAN])
     df.dropna(subset=[EAN], inplace=True)
 
+    # save_to_excel('../Результаты/Прайс Эльбрус.xlsx', elb_df)
     save_to_excel('../Результаты/Прайс.xlsx', df)
 
 
