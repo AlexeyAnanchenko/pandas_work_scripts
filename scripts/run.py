@@ -3,6 +3,7 @@ import subprocess
 
 scripts = [
     'assortment',
+    'price',
     'directory',
     'holdings',
     'purchases',

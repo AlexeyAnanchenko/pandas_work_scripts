@@ -78,7 +78,6 @@ def main():
     ).drop_duplicates(subset=[EAN])
     df.dropna(subset=[EAN], inplace=True)
 
-    # save_to_excel('../Результаты/Прайс Эльбрус.xlsx', elb_df)
     save_to_excel('../Результаты/Прайс.xlsx', df)
 
 

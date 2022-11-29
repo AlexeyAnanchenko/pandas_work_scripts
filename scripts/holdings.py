@@ -6,7 +6,7 @@
 
 import pandas as pd
 
-from service import save_to_excel
+from service import save_to_excel, CODES
 
 
 POINT = 'Точка доставки'
@@ -14,7 +14,6 @@ PAYMENT = 'Плательщик'
 HOLDING = 'Холдинг'
 M_HOLDING = 'Основной холдинг'
 NAME_M_HOLDING = 'Наименование основного холдинга'
-CODES = 'Код холдинга/плательщика/точки доставки'
 
 
 def main():

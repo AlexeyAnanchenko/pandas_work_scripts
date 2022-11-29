@@ -1,15 +1,16 @@
 """
-Скрипт подготавливает файл с резервами в удобном формате 
+Скрипт подготавливает файл с резервами в удобном формате
 
 """
 
 import pandas as pd
 
-from service import get_filtered_df, save_to_excel
-from holdings import NAME_M_HOLDING, M_HOLDING, CODES
+from service import get_filtered_df, save_to_excel, CODES
+from holdings import NAME_M_HOLDING, M_HOLDING
 
 
 EMPTY_ROWS = 2
+HOLDING_LOC = 'Код холдинга'
 RSV_HOLDING = 'Наименование'
 WHS = 'Склад'
 EAN = 'EAN'
@@ -39,7 +40,10 @@ def main():
     )
     df = get_filtered_df(excel, WAREHOUSE, WHS, skiprows=EMPTY_ROWS)
     holdings = pd.ExcelFile('../Результаты/Холдинги.xlsx').parse()
-    df = df.merge(holdings, on=CODES, how='left')
+    df = pd.merge(
+        df.rename(columns={HOLDING_LOC: CODES}),
+        holdings, on=CODES, how='left'
+    )
     idx = df[df[M_HOLDING].isnull()].index
     df.loc[idx, M_HOLDING] = df.loc[idx, CODES]
     df.loc[idx, NAME_M_HOLDING] = df.loc[idx, RSV_HOLDING]
