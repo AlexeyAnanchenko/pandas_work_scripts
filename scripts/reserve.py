@@ -5,8 +5,8 @@
 
 import pandas as pd
 
-from service import get_filtered_df, save_to_excel, CODES
-from holdings import NAME_M_HOLDING, M_HOLDING
+from service import get_filtered_df, save_to_excel
+from service import CODES, HOLDING, NAME_HOLDING
 
 
 EMPTY_ROWS = 2
@@ -44,12 +44,13 @@ def main():
         df.rename(columns={HOLDING_LOC: CODES}),
         holdings, on=CODES, how='left'
     )
-    idx = df[df[M_HOLDING].isnull()].index
-    df.loc[idx, M_HOLDING] = df.loc[idx, CODES]
-    df.loc[idx, NAME_M_HOLDING] = df.loc[idx, RSV_HOLDING]
+    save_to_excel('../Результаты/Резервы промежуточные.xlsx', df)
+    idx = df[df[HOLDING].isnull()].index
+    df.loc[idx, HOLDING] = df.loc[idx, CODES]
+    df.loc[idx, NAME_HOLDING] = df.loc[idx, RSV_HOLDING]
     df.loc[df[AVAILABLE] < 0, AVAILABLE] = 0
     group_df = df.groupby([
-        WHS, M_HOLDING, NAME_M_HOLDING, EAN, PRODUCT_NAME
+        WHS, HOLDING, NAME_HOLDING, EAN, PRODUCT_NAME
     ]).agg({
         SOFT_RSV: 'sum',
         HARD_RSV: 'sum',
@@ -59,7 +60,7 @@ def main():
     group_df.insert(0, LINK_WHS, group_df[WHS] + group_df[EAN].map(str))
     group_df.insert(
         0, LINK_WHS_NAME,
-        group_df[WHS] + group_df[NAME_M_HOLDING] + group_df[EAN].map(str)
+        group_df[WHS] + group_df[NAME_HOLDING] + group_df[EAN].map(str)
     )
     group_df = group_df.merge(
         group_df.groupby([LINK_WHS]).agg({QUOTA_RSV: 'sum'}),

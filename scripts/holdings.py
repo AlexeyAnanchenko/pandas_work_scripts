@@ -6,12 +6,12 @@
 
 import pandas as pd
 
-from service import save_to_excel, CODES
+from service import save_to_excel, CODES, HOLDING, NAME_HOLDING
 
 
 POINT = 'Точка доставки'
 PAYMENT = 'Плательщик'
-HOLDING = 'Холдинг'
+HOLDING_LOC = 'Холдинг'
 M_HOLDING = 'Основной холдинг'
 NAME_M_HOLDING = 'Наименование основного холдинга'
 
@@ -19,13 +19,20 @@ NAME_M_HOLDING = 'Наименование основного холдинга'
 def main():
     excel = pd.ExcelFile('../Исходники/Холдинги-Резервы.xlsx')
     df_full = excel.parse('Точка доставки-Холдинг')
+    df_full = df_full.rename(columns={
+        NAME_M_HOLDING: NAME_HOLDING, M_HOLDING: HOLDING
+    })
+    holding_holding = df_full[[HOLDING, NAME_HOLDING]]
+    holding_holding.insert(0, M_HOLDING, df_full[HOLDING])
     df = pd.concat([
-        df_full[[POINT, M_HOLDING, NAME_M_HOLDING]].rename(
+        df_full[[POINT, HOLDING, NAME_HOLDING]].rename(
             columns={POINT: CODES}),
-        df_full[[PAYMENT, M_HOLDING, NAME_M_HOLDING]].rename(
+        df_full[[PAYMENT, HOLDING, NAME_HOLDING]].rename(
             columns={PAYMENT: CODES}),
-        df_full[[HOLDING, M_HOLDING, NAME_M_HOLDING]].rename(
-            columns={HOLDING: CODES})],
+        df_full[[HOLDING_LOC, HOLDING, NAME_HOLDING]].rename(
+            columns={HOLDING_LOC: CODES}),
+        holding_holding.rename(
+            columns={M_HOLDING: CODES})],
         ignore_index=True
     ).drop_duplicates()
     result_data = {}
@@ -41,7 +48,7 @@ def main():
             else:
                 cleared_values.append('Удалить строку')
         result_data[column] = cleared_values
-    result_data[NAME_M_HOLDING] = df[NAME_M_HOLDING].to_list()
+    result_data[NAME_HOLDING] = df[NAME_HOLDING].to_list()
     df_result = pd.DataFrame(result_data)
     save_to_excel(
         '../Результаты/Холдинги.xlsx',
