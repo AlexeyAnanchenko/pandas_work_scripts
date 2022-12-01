@@ -44,7 +44,6 @@ def main():
         df.rename(columns={HOLDING_LOC: CODES}),
         holdings, on=CODES, how='left'
     )
-    save_to_excel('../Результаты/Резервы промежуточные.xlsx', df)
     idx = df[df[HOLDING].isnull()].index
     df.loc[idx, HOLDING] = df.loc[idx, CODES]
     df.loc[idx, NAME_HOLDING] = df.loc[idx, RSV_HOLDING]
