@@ -8,10 +8,10 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 
 from service import get_filtered_df, save_to_excel
+from service import NUM_MONTHS
 
 
 EMPTY_ROWS = 13
-NUM_MONTHS = 3
 REASON_FOR_CUTS = 3
 WHS = 'Склад'
 EAN = 'EAN'

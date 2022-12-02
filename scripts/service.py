@@ -31,6 +31,7 @@ HARD_RSV = 'Жесткий резерв, шт'
 SOFT_HARD_RSV = 'Мягкие + жёсткие резервы, шт'
 QUOTA_BY_AVAILABLE = 'Резерв квота с учётом доступного стока'
 TOTAL_RSV = 'В резерве всего'
+NUM_MONTHS = 3
 
 
 def get_filtered_df(excel, dict_warehouses, name_column_whs, skiprows=0):
@@ -77,3 +78,17 @@ def save_to_excel(path, df):
         writer.sheets[sheet].set_column(col_idx, col_idx, column_width)
 
     writer.close()
+
+
+def numeric_col_purch(df):
+    """Возвращает словарь с числовыми столбцами закупок"""
+
+    columns = list(df.columns)
+    last_month = columns[-1]
+    first_month = columns[-NUM_MONTHS]
+    col_dict = {
+        'first': first_month,
+        'last': last_month,
+        'all': columns
+    }
+    return col_dict

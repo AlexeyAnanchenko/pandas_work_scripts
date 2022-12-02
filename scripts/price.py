@@ -5,12 +5,12 @@
 
 import pandas as pd
 
-from service import save_to_excel
+from service import save_to_excel, EAN, PRODUCT, BASE_PRICE, ELB_PRICE
 
 
 SKIPROWS = 7
 PRODUCT_NAME = 'Название продукта '
-EAN = 'EAN Код штуки'
+EAN_LOC = 'EAN Код штуки'
 PRICE = '  Базовая цена за шт.  '
 WHS_SRS = 'Склад'
 EAN_SRS = 'Штрих код'
@@ -34,14 +34,14 @@ def main():
     # Формируем GIV
     price = pd.ExcelFile('../Исходники/Прайс/ALIDI NORD.xlsx')
     price_df = price.parse(skiprows=SKIPROWS)[[
-        PRODUCT_NAME, EAN, PRICE
+        PRODUCT_NAME, EAN_LOC, PRICE
     ]]
     df = pd.merge(
-        price_df[[EAN, PRICE]].drop_duplicates(),
-        price_df[[EAN, PRODUCT_NAME]].drop_duplicates(subset=[EAN]),
-        on=EAN, how='left'
+        price_df[[EAN_LOC, PRICE]].drop_duplicates(),
+        price_df[[EAN_LOC, PRODUCT_NAME]].drop_duplicates(subset=[EAN_LOC]),
+        on=EAN_LOC, how='left'
     )
-    df = df.reindex(columns=[EAN, PRODUCT_NAME, PRICE])
+    df = df.reindex(columns=[EAN_LOC, PRODUCT_NAME, PRICE])
 
     srs_xl = pd.ExcelFile('../Исходники/Прайс/1344 Выгрузка цен из 4106.xlsx')
     srs_df = srs_xl.parse()
@@ -51,7 +51,7 @@ def main():
 
     df = pd.concat(
         [df, srs_df.rename(columns={
-            EAN_SRS: EAN,
+            EAN_SRS: EAN_LOC,
             PRODUCT_NAME_SRS: PRODUCT_NAME,
             PRICE_SRS: PRICE
         })],
@@ -64,20 +64,25 @@ def main():
         [EAN_ELB, PRODUCT_NAME_ELB, PRICE_ELB]
     ]
     elb_df = elb_df.rename(columns={
-            EAN_ELB: EAN,
+            EAN_ELB: EAN_LOC,
             PRODUCT_NAME_ELB: PRODUCT_NAME,
             PRICE_ELB: PRICE_ELB + PRICE_ELB_ADD
     })
 
-    df = pd.concat([df, elb_df[[EAN, PRODUCT_NAME]]], ignore_index=True)
+    df = pd.concat([df, elb_df[[EAN_LOC, PRODUCT_NAME]]], ignore_index=True)
     df = pd.merge(
         df,
-        elb_df[[EAN, PRICE_ELB + PRICE_ELB_ADD]],
-        on=EAN,
+        elb_df[[EAN_LOC, PRICE_ELB + PRICE_ELB_ADD]],
+        on=EAN_LOC,
         how='left'
-    ).drop_duplicates(subset=[EAN])
-    df.dropna(subset=[EAN], inplace=True)
-
+    ).drop_duplicates(subset=[EAN_LOC])
+    df.dropna(subset=[EAN_LOC], inplace=True)
+    df = df.rename(columns={
+        EAN_LOC: EAN,
+        PRODUCT_NAME: PRODUCT,
+        PRICE: BASE_PRICE,
+        PRICE_ELB + PRICE_ELB_ADD: ELB_PRICE
+    })
     save_to_excel('../Результаты/Прайс.xlsx', df)
 
 
