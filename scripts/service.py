@@ -7,6 +7,7 @@ import pandas as pd
 import pandas.io.formats.excel
 
 
+NUM_MONTHS = 3
 EAN = 'EAN штуки'
 PRODUCT = 'Наименование товара'
 SU = 'SU штуки'
@@ -31,7 +32,6 @@ HARD_RSV = 'Жесткий резерв, шт'
 SOFT_HARD_RSV = 'Мягкие + жёсткие резервы, шт'
 QUOTA_BY_AVAILABLE = 'Резерв квота с учётом доступного стока'
 TOTAL_RSV = 'В резерве всего'
-NUM_MONTHS = 3
 
 
 def get_filtered_df(excel, dict_warehouses, name_column_whs, skiprows=0):
