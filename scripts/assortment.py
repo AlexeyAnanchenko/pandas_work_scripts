@@ -6,8 +6,7 @@
 
 import pandas as pd
 
-from service import save_to_excel, LINK, WHS, EAN
-
+from service import save_to_excel, LINK, WHS, EAN, BASE_DIR
 
 SHEET_CRIT = 'Критические коды'
 SHEET_ASSORT = 'Ассортимент'
@@ -38,7 +37,7 @@ def get_warehouse_data(file_path, warehouse):
 
 
 def main():
-    path_to_folder = '../Исходники/Ассортимент МР Юг/'
+    path_to_folder = f'{BASE_DIR}/Исходники/Ассортимент МР Юг/'
     warehouse_df = []
     for warehouse, file in WAREHOUSE_DICT.items():
         warehouse_df.append(get_warehouse_data(
@@ -46,7 +45,7 @@ def main():
             warehouse
         ))
     df_result = pd.concat(warehouse_df, ignore_index=True)
-    save_to_excel('../Результаты/Ассортимент.xlsx', df_result)
+    save_to_excel(f'{BASE_DIR}/Результаты/Ассортимент.xlsx', df_result)
 
 
 if __name__ == "__main__":

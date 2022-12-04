@@ -6,7 +6,7 @@
 
 import pandas as pd
 
-from service import save_to_excel, CODES, HOLDING, NAME_HOLDING
+from service import save_to_excel, CODES, HOLDING, NAME_HOLDING, BASE_DIR
 
 
 POINT = 'Точка доставки'
@@ -17,7 +17,7 @@ NAME_M_HOLDING = 'Наименование основного холдинга'
 
 
 def main():
-    excel = pd.ExcelFile('../Исходники/Холдинги-Резервы.xlsx')
+    excel = pd.ExcelFile(f'{BASE_DIR}/Исходники/Холдинги-Резервы.xlsx')
     df_full = excel.parse('Точка доставки-Холдинг')
     df_full = df_full.rename(columns={
         NAME_M_HOLDING: NAME_HOLDING, M_HOLDING: HOLDING
@@ -51,7 +51,7 @@ def main():
     result_data[NAME_HOLDING] = df[NAME_HOLDING].to_list()
     df_result = pd.DataFrame(result_data)
     save_to_excel(
-        '../Результаты/Холдинги.xlsx',
+        f'{BASE_DIR}/Результаты/Холдинги.xlsx',
         df_result[df_result[CODES] != 'Удалить строку']
     )
 

@@ -7,7 +7,7 @@ import re
 import pandas as pd
 
 from category import CATEGORY_BREND, CATEGORY_SUBSECTOR, CATEGORY_SUBBREND
-from service import save_to_excel
+from service import save_to_excel, BASE_DIR
 from service import PRODUCT, LEVEL_1, LEVEL_2, LEVEL_3, SU, MSU, EAN
 
 
@@ -24,7 +24,7 @@ NO_DATA_VALUE = 'Нет данных'
 
 
 def main():
-    excel = pd.ExcelFile('../Исходники/Справочник.xlsx')
+    excel = pd.ExcelFile(f'{BASE_DIR}/Исходники/Справочник.xlsx')
     df_full = excel.parse(skiprows=SKIPROWS)[[
         ACTIVE_GCAS, EAN_LOC, PRODUCT_NAME, SUBBREND, BREND, SUBSECTOR, SU_LOC
     ]].sort_index(ascending=False)
@@ -59,7 +59,7 @@ def main():
         PRODUCT_NAME: PRODUCT,
         EAN_LOC: EAN
     })
-    save_to_excel('../Результаты/Справочник_ШК.xlsx', df)
+    save_to_excel(f'{BASE_DIR}/Результаты/Справочник_ШК.xlsx', df)
 
 
 if __name__ == "__main__":

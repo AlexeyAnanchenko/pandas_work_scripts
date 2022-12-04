@@ -7,6 +7,7 @@ import pandas as pd
 
 from service import get_filtered_df, save_to_excel, LINK, WHS, EAN, PRODUCT
 from service import FULL_REST, AVAILABLE_REST, SOFT_HARD_RSV, FREE_REST, QUOTA
+from service import BASE_DIR
 
 
 FULL_REST_LOC = 'Полное наличие  (уч.ЕИ) '
@@ -28,7 +29,7 @@ WAREHOUSE = {
 
 def main():
     xl = pd.ExcelFile(
-        '../Исходники/1082 - Доступность товара по складам (PG).xlsx'
+        f'{BASE_DIR}/Исходники/1082 - Доступность товара по складам (PG).xlsx'
     )
     filter_df = get_filtered_df(xl, WAREHOUSE, WHS_LOC)
     filter_df = filter_df.rename(columns={
@@ -60,7 +61,7 @@ def main():
         LINK, WHS, EAN, PRODUCT,
         FULL_REST, SOFT_HARD_RSV, AVAILABLE_REST, QUOTA, FREE_REST
     ])
-    save_to_excel('../Результаты/Остатки.xlsx', yug_df)
+    save_to_excel(f'{BASE_DIR}/Результаты/Остатки.xlsx', yug_df)
 
 
 if __name__ == "__main__":

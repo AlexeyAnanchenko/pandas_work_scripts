@@ -5,7 +5,10 @@
 
 import pandas as pd
 import pandas.io.formats.excel
+from os.path import abspath, dirname
 
+
+BASE_DIR = dirname(dirname(abspath(__file__)))
 
 NUM_MONTHS = 3
 EAN = 'EAN штуки'

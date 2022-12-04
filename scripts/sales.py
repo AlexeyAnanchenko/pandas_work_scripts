@@ -7,7 +7,7 @@ import pandas as pd
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
-from service import get_filtered_df, save_to_excel
+from service import get_filtered_df, save_to_excel, BASE_DIR
 from service import WHS, EAN, NAME_HOLDING, PRODUCT, NUM_MONTHS
 from service import LINK, LINK_HOLDING, CUTS, SALES, CUTS_SALES, AVARAGE
 
@@ -30,7 +30,7 @@ WAREHOUSES = {
 def sales_by_client():
     """Формирование фрейма данных продаж в разрезе клиент-склад-шк"""
 
-    excel = pd.ExcelFile('../Исходники/Продажи общие.xlsx')
+    excel = pd.ExcelFile(f'{BASE_DIR}/Исходники/Продажи общие.xlsx')
     full_df = get_filtered_df(excel, WAREHOUSES, WHS, skiprows=EMPTY_ROWS)
     full_df = full_df.rename(columns={
         EAN_LOC: EAN,
@@ -142,9 +142,11 @@ def sales_by_warehouses(dataframe, numeric_columns):
 
 def main():
     df, numeric_columns = sales_by_client()
-    save_to_excel('../Результаты/Продажи по клиентам и складам.xlsx', df)
+    save_to_excel(
+        f'{BASE_DIR}/Результаты/Продажи по клиентам и складам.xlsx', df
+    )
     df = sales_by_warehouses(df, numeric_columns)
-    save_to_excel('../Результаты/Продажи по складам.xlsx', df)
+    save_to_excel(f'{BASE_DIR}/Результаты/Продажи по складам.xlsx', df)
 
 
 if __name__ == "__main__":

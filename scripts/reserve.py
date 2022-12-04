@@ -5,7 +5,7 @@
 
 import pandas as pd
 
-from service import get_filtered_df, save_to_excel
+from service import get_filtered_df, save_to_excel, BASE_DIR
 from service import CODES, HOLDING, NAME_HOLDING, LINK_HOLDING, LINK, WHS
 from service import SOFT_RSV, HARD_RSV, SOFT_HARD_RSV, QUOTA, PRODUCT
 from service import QUOTA_BY_AVAILABLE, AVAILABLE_REST, TOTAL_RSV, EAN
@@ -33,10 +33,11 @@ WAREHOUSE = {
 
 def main():
     excel = pd.ExcelFile(
-        '../Исходники/1275 - Резервы и резервы-квоты по холдингам.xlsx'
+        f'{BASE_DIR}/Исходники/'
+        '1275 - Резервы и резервы-квоты по холдингам.xlsx'
     )
     df = get_filtered_df(excel, WAREHOUSE, WHS_LOC, skiprows=EMPTY_ROWS)
-    holdings = pd.ExcelFile('../Результаты/Холдинги.xlsx').parse()
+    holdings = pd.ExcelFile(f'{BASE_DIR}/Результаты/Холдинги.xlsx').parse()
     df = pd.merge(
         df.rename(columns={HOLDING_LOC: CODES}),
         holdings, on=CODES, how='left'
@@ -89,7 +90,7 @@ def main():
         QUOTA_RSV: QUOTA,
         AVAILABLE: AVAILABLE_REST
     })
-    save_to_excel('../Результаты/Резервы.xlsx', group_df.round())
+    save_to_excel(f'{BASE_DIR}/Результаты/Резервы.xlsx', group_df.round())
 
 
 if __name__ == "__main__":

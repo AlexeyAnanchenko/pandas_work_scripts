@@ -1,5 +1,6 @@
 import subprocess
 
+from service import BASE_DIR
 
 scripts = [
     'assortment',
@@ -12,9 +13,8 @@ scripts = [
     'sales',
 ]
 
+
 for script in scripts:
     subprocess.Popen([
-        'python.exe',
-        'C:/Users/ananchenko.as/Desktop/pandas_work_scripts'
-        '/scripts/{}.py'.format(script)
+        'python.exe', f'{BASE_DIR}/scripts/{script}.py'
     ], shell=True).wait()
