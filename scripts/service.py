@@ -32,6 +32,10 @@ HARD_RSV = 'Жесткий резерв, шт'
 SOFT_HARD_RSV = 'Мягкие + жёсткие резервы, шт'
 QUOTA_BY_AVAILABLE = 'Резерв квота с учётом доступного стока'
 TOTAL_RSV = 'В резерве всего'
+CUTS = 'Урезания '
+SALES = 'Продажи '
+CUTS_SALES = 'Урезания + продажи '
+AVARAGE = 'Средние '
 
 
 def get_filtered_df(excel, dict_warehouses, name_column_whs, skiprows=0):
@@ -39,6 +43,7 @@ def get_filtered_df(excel, dict_warehouses, name_column_whs, skiprows=0):
     Возвращает dataframe из excel, отфильтрованный по складам
     с заменой наименований складов
     """
+
     full_df = excel.parse(skiprows=skiprows)
     filter_df = full_df[full_df[name_column_whs].isin(
         list(dict_warehouses.keys())
@@ -47,9 +52,8 @@ def get_filtered_df(excel, dict_warehouses, name_column_whs, skiprows=0):
 
 
 def save_to_excel(path, df):
-    """
-    Записывает данные в excel с настройкой форматов
-    """
+    """Записывает данные в excel с настройкой форматов"""
+
     sheet = 'Лист1'
     num_row_header = 0
     height_header = 50
