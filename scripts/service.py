@@ -84,7 +84,7 @@ def save_to_excel(path, df):
     writer.close()
 
 
-def numeric_col_purch(df):
+def get_col_purch(df):
     """Возвращает словарь с числовыми столбцами закупок"""
 
     columns = list(df.columns)
@@ -95,4 +95,39 @@ def numeric_col_purch(df):
         'last': last_month,
         'all': columns
     }
+    return col_dict
+
+
+def get_col_sales(df):
+    """Возвращает словарь с числовыми столбцами продаж"""
+    col_view = 3
+    avg_col = 3
+
+    columns = list(df.columns)[-(NUM_MONTHS * col_view + avg_col)]
+    cuts = columns[:NUM_MONTHS]
+    sales = columns[NUM_MONTHS: NUM_MONTHS + NUM_MONTHS]
+    cuts_sales = columns[NUM_MONTHS: NUM_MONTHS + NUM_MONTHS]
+    avg = columns[:NUM_MONTHS]
+    last_cut = cuts[-1]
+    last_sale = sales[-1]
+    last_cut_sale = cuts_sales[-1]
+    last = [last_cut + last_sale + last_cut_sale]
+    avg_cut = avg[0]
+    avg_sale = avg[1]
+    avg_cut_sale = avg[2]
+
+    col_dict = {
+        'cuts': cuts,
+        'sales': sales,
+        'cuts_sales': cuts_sales,
+        'avg': avg,
+        'last_cut': last_cut,
+        'last_sale': last_sale,
+        'last_cut_sale': last_cut_sale,
+        'last': last,
+        'avg_cut': avg_cut,
+        'avg_sale': avg_sale,
+        'avg_cut_sale': avg_cut_sale,
+    }
+
     return col_dict
