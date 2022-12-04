@@ -9,8 +9,12 @@ from os.path import abspath, dirname
 
 
 BASE_DIR = dirname(dirname(abspath(__file__)))
+SOURCE_DIR = BASE_DIR + '/Исходники/'
+RESULT_DIR = BASE_DIR + '/Результаты/'
 
 NUM_MONTHS = 3
+TARGET_STOCK = 1
+
 EAN = 'EAN штуки'
 PRODUCT = 'Наименование товара'
 SU = 'SU штуки'
@@ -39,6 +43,17 @@ CUTS = 'Урезания '
 SALES = 'Продажи '
 CUTS_SALES = 'Урезания + продажи '
 AVARAGE = 'Средние '
+OVERSTOCK = f'Сток свыше {TARGET_STOCK} месяца (-ев) продаж, шт'
+
+TABLE_ASSORTMENT = 'Ассортимент.xlsx'
+TABLE_DIRECTORY = 'Справочник_ШК.xlsx'
+TABLE_HOLDINGS = 'Холдинги.xlsx'
+TABLE_PRICE = 'Прайс.xlsx'
+TABLE_PURCHASES = 'Закупки.xlsx'
+TABLE_REMAINS = 'Остатки.xlsx'
+TABLE_SALES_HOLDINGS = 'Продажи по клиентам и складам.xlsx'
+TABLE_SALES = 'Продажи по складам.xlsx'
+TABLE_RESERVE = 'Резервы.xlsx'
 
 
 def get_filtered_df(excel, dict_warehouses, name_column_whs, skiprows=0):
@@ -106,15 +121,15 @@ def get_col_sales(df):
     col_view = 3
     avg_col = 3
 
-    columns = list(df.columns)[-(NUM_MONTHS * col_view + avg_col)]
+    columns = list(df.columns)[-(NUM_MONTHS * col_view + avg_col):]
     cuts = columns[:NUM_MONTHS]
     sales = columns[NUM_MONTHS: NUM_MONTHS + NUM_MONTHS]
-    cuts_sales = columns[NUM_MONTHS: NUM_MONTHS + NUM_MONTHS]
-    avg = columns[:NUM_MONTHS]
+    cuts_sales = columns[-(NUM_MONTHS + NUM_MONTHS): -NUM_MONTHS]
+    avg = columns[-NUM_MONTHS:]
     last_cut = cuts[-1]
     last_sale = sales[-1]
     last_cut_sale = cuts_sales[-1]
-    last = [last_cut + last_sale + last_cut_sale]
+    last = [last_cut, last_sale, last_cut_sale]
     avg_cut = avg[0]
     avg_sale = avg[1]
     avg_cut_sale = avg[2]
@@ -134,3 +149,14 @@ def get_col_sales(df):
     }
 
     return col_dict
+
+
+def get_data(file):
+    """Возвращает dataframe из обработанных данных"""
+    excel = pd.ExcelFile(f'{BASE_DIR}/Результаты/{file}')
+    df = excel.parse()
+    if file == TABLE_PURCHASES:
+        return df, get_col_purch(df)
+    if file in [TABLE_SALES_HOLDINGS, TABLE_SALES]:
+        return df, get_col_sales(df)
+    return df

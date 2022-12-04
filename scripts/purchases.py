@@ -4,10 +4,11 @@
 """
 
 import pandas as pd
-from service import get_filtered_df, save_to_excel, BASE_DIR
-from service import LINK, WHS, EAN, PRODUCT, NUM_MONTHS
+from service import get_filtered_df, save_to_excel, SOURCE_DIR, RESULT_DIR
+from service import LINK, WHS, EAN, PRODUCT, NUM_MONTHS, TABLE_PURCHASES
 
 
+SOURCE_FILE = 'Куб_Закупки.xlsx'
 WHS_LOC = 'Бизнес-единица'
 EAN_LOC = 'EAN'
 PRODUCT_NAME = 'Наименование товара'
@@ -22,7 +23,7 @@ WAREHOUSES = {
 
 
 def main():
-    xl = pd.ExcelFile(f'{BASE_DIR}/Исходники/Куб_Закупки.xlsx')
+    xl = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
     df = get_filtered_df(xl, WAREHOUSES, WHS_LOC, skiprows=EMPTY_ROWS)
     df.insert(0, LINK, df[WHS_LOC] + df[EAN_LOC].map(int).map(str))
     df = df.rename(columns={WHS_LOC: WHS, EAN_LOC: EAN})
@@ -44,7 +45,7 @@ def main():
     reindex_col = [LINK, WHS, EAN, PRODUCT]
     reindex_col.extend([i for i in int_col.keys()])
     group_df = group_df.reindex(columns=reindex_col)
-    save_to_excel(f'{BASE_DIR}/Результаты/Закупки.xlsx', group_df)
+    save_to_excel(RESULT_DIR + TABLE_PURCHASES, group_df)
 
 
 if __name__ == "__main__":

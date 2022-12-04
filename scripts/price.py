@@ -5,10 +5,13 @@
 
 import pandas as pd
 
-from service import save_to_excel, BASE_DIR
+from service import save_to_excel, TABLE_PRICE, SOURCE_DIR, RESULT_DIR
 from service import EAN, PRODUCT, BASE_PRICE, ELB_PRICE
 
 
+SOURCE_FILE_PRICE = 'Прайс/ALIDI NORD.xlsx'
+SOURCE_FILE_ELB = 'Прайс/Прайс Эльбрус.xlsx'
+SOURCE_FILE_SRS = 'Прайс/1344 Выгрузка цен из 4106.xlsx'
 SKIPROWS = 7
 PRODUCT_NAME = 'Название продукта '
 EAN_LOC = 'EAN Код штуки'
@@ -33,7 +36,7 @@ WAREHOUSE_SRS = [
 
 def main():
     # Формируем GIV
-    price = pd.ExcelFile(f'{BASE_DIR}/Исходники/Прайс/ALIDI NORD.xlsx')
+    price = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE_PRICE)
     price_df = price.parse(skiprows=SKIPROWS)[[
         PRODUCT_NAME, EAN_LOC, PRICE
     ]]
@@ -44,9 +47,7 @@ def main():
     )
     df = df.reindex(columns=[EAN_LOC, PRODUCT_NAME, PRICE])
 
-    srs_xl = pd.ExcelFile(
-        f'{BASE_DIR}/Исходники/Прайс/1344 Выгрузка цен из 4106.xlsx'
-    )
+    srs_xl = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE_SRS)
     srs_df = srs_xl.parse()
     srs_df = srs_df[srs_df[WHS_SRS].isin(WAREHOUSE_SRS)][[
         EAN_SRS, PRODUCT_NAME_SRS, PRICE_SRS
@@ -62,7 +63,7 @@ def main():
     )
 
     # Добавляем NIV Эльбрус
-    elb_xl = pd.ExcelFile(f'{BASE_DIR}/Исходники/Прайс/Прайс Эльбрус.xlsx')
+    elb_xl = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE_ELB)
     elb_df = elb_xl.parse('Цены от 2 млн', skiprows=SKIPROWS_ELB)[
         [EAN_ELB, PRODUCT_NAME_ELB, PRICE_ELB]
     ]
@@ -86,7 +87,7 @@ def main():
         PRICE: BASE_PRICE,
         PRICE_ELB + PRICE_ELB_ADD: ELB_PRICE
     })
-    save_to_excel(f'{BASE_DIR}/Результаты/Прайс.xlsx', df)
+    save_to_excel(RESULT_DIR + TABLE_PRICE, df)
 
 
 if __name__ == "__main__":

@@ -5,11 +5,13 @@
 
 import pandas as pd
 
-from service import get_filtered_df, save_to_excel, LINK, WHS, EAN, PRODUCT
+from service import get_filtered_df, save_to_excel, get_data
+from service import LINK, WHS, EAN, PRODUCT, TARGET_STOCK, OVERSTOCK
 from service import FULL_REST, AVAILABLE_REST, SOFT_HARD_RSV, FREE_REST, QUOTA
-from service import BASE_DIR
+from service import TABLE_REMAINS, TABLE_SALES, SOURCE_DIR, RESULT_DIR
 
 
+SOURCE_FILE = '1082 - Доступность товара по складам (PG).xlsx'
 FULL_REST_LOC = 'Полное наличие  (уч.ЕИ) '
 AVAILABLE_REST_LOC = 'Доступно (уч.ЕИ) '
 RESERVE = 'Резерв (уч.ЕИ) '
@@ -18,6 +20,7 @@ FREE_REST_LOC = 'Свободный остаток (уч.ЕИ)'
 WHS_LOC = 'Склад'
 EAN_LOC = 'EAN'
 NAME = 'Наименование'
+
 WAREHOUSE = {
     '800WHDIS': 'Краснодар',
     '803WHDIS': 'Пятигорск',
@@ -28,9 +31,7 @@ WAREHOUSE = {
 
 
 def main():
-    xl = pd.ExcelFile(
-        f'{BASE_DIR}/Исходники/1082 - Доступность товара по складам (PG).xlsx'
-    )
+    xl = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
     filter_df = get_filtered_df(xl, WAREHOUSE, WHS_LOC)
     filter_df = filter_df.rename(columns={
         WHS_LOC: WHS,
@@ -61,7 +62,19 @@ def main():
         LINK, WHS, EAN, PRODUCT,
         FULL_REST, SOFT_HARD_RSV, AVAILABLE_REST, QUOTA, FREE_REST
     ])
-    save_to_excel(f'{BASE_DIR}/Результаты/Остатки.xlsx', yug_df)
+
+    sales, sales_col = get_data(TABLE_SALES)
+    avg_cut_sale = sales_col['avg_cut_sale']
+    yug_df = yug_df.merge(sales[[LINK, avg_cut_sale]], on=LINK, how='left')
+    yug_df[OVERSTOCK] = (
+        yug_df[FULL_REST] - yug_df[avg_cut_sale] * TARGET_STOCK
+    ).round()
+    yug_df.drop(avg_cut_sale, axis=1, inplace=True)
+    idx = yug_df[yug_df[OVERSTOCK].isnull()].index
+    yug_df.loc[idx, OVERSTOCK] = yug_df.loc[idx, FULL_REST]
+    yug_df.loc[yug_df[OVERSTOCK] < 0, OVERSTOCK] = 0
+
+    save_to_excel(RESULT_DIR + TABLE_REMAINS, yug_df)
 
 
 if __name__ == "__main__":

@@ -5,12 +5,14 @@
 
 import pandas as pd
 
-from service import get_filtered_df, save_to_excel, BASE_DIR
+from service import get_filtered_df, save_to_excel
 from service import CODES, HOLDING, NAME_HOLDING, LINK_HOLDING, LINK, WHS
 from service import SOFT_RSV, HARD_RSV, SOFT_HARD_RSV, QUOTA, PRODUCT
 from service import QUOTA_BY_AVAILABLE, AVAILABLE_REST, TOTAL_RSV, EAN
+from service import TABLE_RESERVE, SOURCE_DIR, RESULT_DIR, TABLE_HOLDINGS
 
 
+SOURCE_FILE = '1275 - Резервы и резервы-квоты по холдингам.xlsx'
 EMPTY_ROWS = 2
 HOLDING_LOC = 'Код холдинга'
 RSV_HOLDING = 'Наименование'
@@ -32,12 +34,9 @@ WAREHOUSE = {
 
 
 def main():
-    excel = pd.ExcelFile(
-        f'{BASE_DIR}/Исходники/'
-        '1275 - Резервы и резервы-квоты по холдингам.xlsx'
-    )
+    excel = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
     df = get_filtered_df(excel, WAREHOUSE, WHS_LOC, skiprows=EMPTY_ROWS)
-    holdings = pd.ExcelFile(f'{BASE_DIR}/Результаты/Холдинги.xlsx').parse()
+    holdings = pd.ExcelFile(RESULT_DIR + TABLE_HOLDINGS).parse()
     df = pd.merge(
         df.rename(columns={HOLDING_LOC: CODES}),
         holdings, on=CODES, how='left'
@@ -90,7 +89,7 @@ def main():
         QUOTA_RSV: QUOTA,
         AVAILABLE: AVAILABLE_REST
     })
-    save_to_excel(f'{BASE_DIR}/Результаты/Резервы.xlsx', group_df.round())
+    save_to_excel(RESULT_DIR + TABLE_RESERVE, group_df.round())
 
 
 if __name__ == "__main__":
