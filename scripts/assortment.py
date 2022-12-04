@@ -6,14 +6,13 @@
 
 import pandas as pd
 
-from service import save_to_excel, LINK
+from service import save_to_excel, LINK, WHS, EAN
 
 
 SHEET_CRIT = 'Критические коды'
 SHEET_ASSORT = 'Ассортимент'
 EAN_CRIT = 'EAN'
 EAN_ASSORT = 'EAN Заказа'
-WHS_LOC = 'Склад'
 WAREHOUSE_DICT = {
     'Краснодар': 'Raw_Assortment_ALIDI_KRASNODAR.xlsx',
     'Пятигорск': 'Raw_Assortment_ALIDI_PYATIGORSK.xlsx',
@@ -27,11 +26,13 @@ def get_warehouse_data(file_path, warehouse):
     """Формирует активный ассортимент по заданному складу"""
     xl = pd.ExcelFile(file_path)
     df_critical = xl.parse(SHEET_CRIT)[[EAN_CRIT]]
+    df_critical = df_critical.rename(columns={EAN_CRIT: EAN})
     df_avialable = xl.parse(SHEET_ASSORT)[[EAN_ASSORT]]
-    df_avialable = df_avialable.rename(columns={EAN_ASSORT: EAN_CRIT})
+    df_avialable = df_avialable.rename(columns={EAN_ASSORT: EAN})
+
     df = pd.concat([df_critical, df_avialable], ignore_index=True)
-    df[WHS_LOC] = f'{warehouse}'
-    df.insert(0, LINK, df[WHS_LOC] + df[EAN_CRIT].map(str))
+    df[WHS] = f'{warehouse}'
+    df.insert(0, LINK, df[WHS] + df[EAN].map(str))
     df = df.drop_duplicates()
     return df
 
