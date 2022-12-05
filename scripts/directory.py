@@ -7,11 +7,14 @@ import re
 import pandas as pd
 
 from category import CATEGORY_BREND, CATEGORY_SUBSECTOR, CATEGORY_SUBBREND
-from service import PRODUCT, LEVEL_1, LEVEL_2, LEVEL_3, SU, MSU, EAN
-from service import SOURCE_DIR, RESULT_DIR, TABLE_DIRECTORY, save_to_excel
+from service import PRODUCT, LEVEL_1, LEVEL_2, LEVEL_3, SU, MSU, EAN, ELB_PRICE
+from service import SOURCE_DIR, RESULT_DIR, TABLE_DIRECTORY, TABLE_PRICE
+from service import MATRIX, MATRIX_LY, save_to_excel, get_data, BASE_PRICE
 
 
-SOURCE_FILE = 'Справочник.xlsx'
+SOURCE_FILE = 'Справочник/Справочник.xlsx'
+SOURCE_MATRIX = 'Справочник/Матрица Эльбрус.xlsx'
+SOURCE_ELB = 'Справочник/Матрица ЛЮ.xlsx'
 MEGA = 1000
 SKIPROWS = 2
 ACTIVE_GCAS = 'Активный GCAS?(на дату формирования отчета)'
@@ -24,7 +27,7 @@ SU_LOC = 'SU фактор штуки'
 NO_DATA_VALUE = 'Нет данных'
 
 
-def main():
+def get_category_msu():
     excel = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
     df_full = excel.parse(skiprows=SKIPROWS)[[
         ACTIVE_GCAS, EAN_LOC, PRODUCT_NAME, SUBBREND, BREND, SUBSECTOR, SU_LOC
@@ -60,7 +63,35 @@ def main():
         PRODUCT_NAME: PRODUCT,
         EAN_LOC: EAN
     })
-    save_to_excel(RESULT_DIR + TABLE_DIRECTORY, df)
+
+    return df
+
+
+def added_matrix(dataframe):
+    matrix_df = pd.ExcelFile(SOURCE_DIR + SOURCE_MATRIX).parse()
+    matrix__df_LY = pd.ExcelFile(SOURCE_DIR + SOURCE_ELB).parse()
+    matrix_df[MATRIX] = 'Да'
+    matrix__df_LY[MATRIX_LY] = 'Да'
+    dataframe = dataframe.merge(
+        matrix_df.rename(columns={matrix_df.columns[0]: EAN}),
+        on=EAN, how='left'
+    )
+    dataframe = dataframe.merge(
+        matrix__df_LY.rename(columns={matrix__df_LY.columns[0]: EAN}),
+        on=EAN, how='left'
+    )
+    return dataframe
+
+
+def added_price(dataframe):
+    price = get_data(TABLE_PRICE)[[EAN, BASE_PRICE, ELB_PRICE]]
+    dataframe = dataframe.merge(price, on=EAN, how='left')
+    return dataframe
+
+
+def main():
+    directory = added_price(added_matrix(get_category_msu()))
+    save_to_excel(RESULT_DIR + TABLE_DIRECTORY, directory)
 
 
 if __name__ == "__main__":

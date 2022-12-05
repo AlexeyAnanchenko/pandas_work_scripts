@@ -44,6 +44,8 @@ SALES = 'Продажи '
 CUTS_SALES = 'Урезания + продажи '
 AVARAGE = 'Средние '
 OVERSTOCK = f'Сток свыше {TARGET_STOCK} месяца (-ев) продаж, шт'
+MATRIX = 'Матрица Эльбрус'
+MATRIX_LY = 'Матрица Эльбрус (Лоджистик-Юг)'
 
 TABLE_ASSORTMENT = 'Ассортимент.xlsx'
 TABLE_DIRECTORY = 'Справочник_ШК.xlsx'
