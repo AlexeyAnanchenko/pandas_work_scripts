@@ -69,7 +69,7 @@ def main():
     yug_df[OVERSTOCK] = (
         yug_df[FULL_REST] - yug_df[avg_cut_sale] * TARGET_STOCK
     ).round()
-    yug_df.drop(avg_cut_sale, axis=1, inplace=True)
+    # yug_df.drop(avg_cut_sale, axis=1, inplace=True)
     idx = yug_df[yug_df[OVERSTOCK].isnull()].index
     yug_df.loc[idx, OVERSTOCK] = yug_df.loc[idx, FULL_REST]
     yug_df.loc[yug_df[OVERSTOCK] < 0, OVERSTOCK] = 0
