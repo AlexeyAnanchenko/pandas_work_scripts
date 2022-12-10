@@ -2,10 +2,16 @@
 Скрипт подготавливает файл с закупками в удобном формате
 
 """
+from sys import path
+from os.path import dirname, basename
+path.append(dirname(dirname(__file__)))
 
 import pandas as pd
-from service import get_filtered_df, save_to_excel, SOURCE_DIR, RESULT_DIR
-from service import LINK, WHS, EAN, PRODUCT, NUM_MONTHS, TABLE_PURCHASES
+
+from hidden_settings import WAREHOUSE_PURCH
+from service import get_filtered_df, save_to_excel
+from settings import SOURCE_DIR, RESULT_DIR, LINK, WHS, EAN
+from settings import PRODUCT, NUM_MONTHS, TABLE_PURCHASES
 
 
 SOURCE_FILE = 'Куб_Закупки.xlsx'
@@ -13,18 +19,11 @@ WHS_LOC = 'Бизнес-единица'
 EAN_LOC = 'EAN'
 PRODUCT_NAME = 'Наименование товара'
 EMPTY_ROWS = 10
-WAREHOUSES = {
-    'Склад DIS г. Краснодар': 'Краснодар',
-    'Склад DIS г. Пятигорск': 'Пятигорск',
-    'Склад DIS г. Волгоград': 'Волгоград',
-    'Склад Эльбрус г. Краснодар': 'Краснодар-ELB',
-    'Склад Эльбрус г. Пятигорск': 'Пятигорск-ELB'
-}
 
 
 def main():
     xl = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
-    df = get_filtered_df(xl, WAREHOUSES, WHS_LOC, skiprows=EMPTY_ROWS)
+    df = get_filtered_df(xl, WAREHOUSE_PURCH, WHS_LOC, skiprows=EMPTY_ROWS)
     df.insert(0, LINK, df[WHS_LOC] + df[EAN_LOC].map(int).map(str))
     df = df.rename(columns={WHS_LOC: WHS, EAN_LOC: EAN})
     columns = list(df.columns)
@@ -46,6 +45,7 @@ def main():
     reindex_col.extend([i for i in int_col.keys()])
     group_df = group_df.reindex(columns=reindex_col)
     save_to_excel(RESULT_DIR + TABLE_PURCHASES, group_df)
+    print('Скрипт {} выполнен!'.format(basename(__file__)))
 
 
 if __name__ == "__main__":

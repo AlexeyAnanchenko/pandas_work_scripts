@@ -3,11 +3,15 @@
 плательщиков, холдингов к основному холдингу
 
 """
+from sys import path
+from os.path import dirname, basename
+path.append(dirname(dirname(__file__)))
 
 import pandas as pd
 
-from service import save_to_excel, CODES, HOLDING, NAME_HOLDING
-from service import SOURCE_DIR, RESULT_DIR, TABLE_HOLDINGS
+from service import save_to_excel
+from settings import CODES, HOLDING, NAME_HOLDING
+from settings import SOURCE_DIR, RESULT_DIR, TABLE_HOLDINGS
 
 
 SOURCE_FILE = 'Холдинги-Резервы.xlsx'
@@ -56,6 +60,7 @@ def main():
         RESULT_DIR + TABLE_HOLDINGS,
         df_result[df_result[CODES] != 'Удалить строку']
     )
+    print('Скрипт {} выполнен!'.format(basename(__file__)))
 
 
 if __name__ == "__main__":

@@ -2,11 +2,16 @@
 Формирует файл соответствия - ШК-Цена GIV-Цена NIV
 
 """
+from sys import path
+from os.path import dirname, basename
+path.append(dirname(dirname(__file__)))
 
 import pandas as pd
 
-from service import save_to_excel, TABLE_PRICE, SOURCE_DIR, RESULT_DIR
-from service import EAN, PRODUCT, BASE_PRICE, ELB_PRICE
+from service import save_to_excel
+from hidden_settings import WAREHOUSE_PRICE
+from settings import TABLE_PRICE, SOURCE_DIR, RESULT_DIR
+from settings import EAN, PRODUCT, BASE_PRICE, ELB_PRICE
 
 
 SOURCE_FILE_PRICE = 'Прайс/ALIDI NORD.xlsx'
@@ -25,13 +30,6 @@ PRODUCT_NAME_ELB = 'Наименование продукта'
 PRICE_ELB = 'Цена Прайса'
 PRICE_ELB_ADD = ' Эльбрус, NIV с НДС'
 SKIPROWS_ELB = 10
-WAREHOUSE_SRS = [
-    '    800WHDIS',
-    '    800WHELB',
-    '    803WHDIS',
-    '    803WHELB',
-    '    815WHDIS'
-]
 
 
 def main():
@@ -49,7 +47,7 @@ def main():
 
     srs_xl = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE_SRS)
     srs_df = srs_xl.parse()
-    srs_df = srs_df[srs_df[WHS_SRS].isin(WAREHOUSE_SRS)][[
+    srs_df = srs_df[srs_df[WHS_SRS].isin(WAREHOUSE_PRICE)][[
         EAN_SRS, PRODUCT_NAME_SRS, PRICE_SRS
     ]].drop_duplicates(subset=[EAN_SRS])
 
@@ -68,9 +66,9 @@ def main():
         [EAN_ELB, PRODUCT_NAME_ELB, PRICE_ELB]
     ]
     elb_df = elb_df.rename(columns={
-            EAN_ELB: EAN_LOC,
-            PRODUCT_NAME_ELB: PRODUCT_NAME,
-            PRICE_ELB: PRICE_ELB + PRICE_ELB_ADD
+        EAN_ELB: EAN_LOC,
+        PRODUCT_NAME_ELB: PRODUCT_NAME,
+        PRICE_ELB: PRICE_ELB + PRICE_ELB_ADD
     })
 
     df = pd.concat([df, elb_df[[EAN_LOC, PRODUCT_NAME]]], ignore_index=True)
@@ -88,6 +86,7 @@ def main():
         PRICE_ELB + PRICE_ELB_ADD: ELB_PRICE
     })
     save_to_excel(RESULT_DIR + TABLE_PRICE, df)
+    print('Скрипт {} выполнен!'.format(basename(__file__)))
 
 
 if __name__ == "__main__":

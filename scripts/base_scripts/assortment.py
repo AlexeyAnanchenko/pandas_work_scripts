@@ -3,24 +3,21 @@
 из разных файлов
 
 """
+from sys import path
+from os.path import dirname, basename
+path.append(dirname(dirname(__file__)))
 
 import pandas as pd
 
-from service import save_to_excel, LINK, WHS, EAN
-from service import SOURCE_DIR, RESULT_DIR, TABLE_ASSORTMENT
+from service import save_to_excel
+from hidden_settings import WAREHOUSE_ASSORT
+from settings import SOURCE_DIR, RESULT_DIR, TABLE_ASSORTMENT, LINK, WHS, EAN
 
 PATH_ASSORTMENT = 'Ассортимент МР Юг/'
 SHEET_CRIT = 'Критические коды'
 SHEET_ASSORT = 'Ассортимент'
 EAN_CRIT = 'EAN'
 EAN_ASSORT = 'EAN Заказа'
-WAREHOUSE_DICT = {
-    'Краснодар': 'Raw_Assortment_ALIDI_KRASNODAR.xlsx',
-    'Пятигорск': 'Raw_Assortment_ALIDI_PYATIGORSK.xlsx',
-    'Волгоград': 'Raw_Assortment_ALIDI_VOLGOGRAD.xlsx',
-    'Краснодар-ELB': 'Raw_Assortment_ALIDI_KRASNODAR_Elbrus.xlsx',
-    'Пятигорск-ELB': 'Raw_Assortment_ALIDI_PYATIGORSK_Elbrus.xlsx'
-}
 
 
 def get_warehouse_data(file_path, warehouse):
@@ -41,13 +38,14 @@ def get_warehouse_data(file_path, warehouse):
 def main():
     path_to_folder = SOURCE_DIR + PATH_ASSORTMENT
     warehouse_df = []
-    for warehouse, file in WAREHOUSE_DICT.items():
+    for warehouse, file in WAREHOUSE_ASSORT.items():
         warehouse_df.append(get_warehouse_data(
             path_to_folder + file,
             warehouse
         ))
     df_result = pd.concat(warehouse_df, ignore_index=True)
     save_to_excel(RESULT_DIR + TABLE_ASSORTMENT, df_result)
+    print('Скрипт {} выполнен!'.format(basename(__file__)))
 
 
 if __name__ == "__main__":

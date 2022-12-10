@@ -2,14 +2,19 @@
 Формирует файл соответствия - ШК-SU-MSU
 
 """
+from sys import path
+from os.path import dirname, basename
+path.append(dirname(dirname(__file__)))
 
 import re
 import pandas as pd
 
-from category import CATEGORY_BREND, CATEGORY_SUBSECTOR, CATEGORY_SUBBREND
-from service import PRODUCT, LEVEL_1, LEVEL_2, LEVEL_3, SU, MSU, EAN, ELB_PRICE
-from service import SOURCE_DIR, RESULT_DIR, TABLE_DIRECTORY, TABLE_PRICE
-from service import MATRIX, MATRIX_LY, save_to_excel, get_data, BASE_PRICE
+from service import save_to_excel, get_data
+from hidden_settings import CATEGORY_BREND
+from hidden_settings import CATEGORY_SUBSECTOR, CATEGORY_SUBBREND
+from settings import PRODUCT, LEVEL_1, LEVEL_2, LEVEL_3, SU, MSU, EAN
+from settings import SOURCE_DIR, RESULT_DIR, TABLE_DIRECTORY, TABLE_PRICE
+from settings import MATRIX, MATRIX_LY, BASE_PRICE, ELB_PRICE
 
 
 SOURCE_FILE = 'Справочник/Справочник.xlsx'
@@ -92,6 +97,7 @@ def added_price(dataframe):
 def main():
     directory = added_price(added_matrix(get_category_msu()))
     save_to_excel(RESULT_DIR + TABLE_DIRECTORY, directory)
+    print('Скрипт {} выполнен!'.format(basename(__file__)))
 
 
 if __name__ == "__main__":

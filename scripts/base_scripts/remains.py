@@ -2,13 +2,17 @@
 Скрипт подготавливает файл с остатками в удобном формате
 
 """
+from sys import path
+from os.path import dirname, basename
+path.append(dirname(dirname(__file__)))
 
 import pandas as pd
 
+from hidden_settings import WAREHOUSE_REMAIN
 from service import get_filtered_df, save_to_excel, get_data
-from service import LINK, WHS, EAN, PRODUCT, TARGET_STOCK, OVERSTOCK
-from service import FULL_REST, AVAILABLE_REST, SOFT_HARD_RSV, FREE_REST, QUOTA
-from service import TABLE_REMAINS, TABLE_SALES, SOURCE_DIR, RESULT_DIR
+from settings import LINK, WHS, EAN, PRODUCT, TARGET_STOCK, OVERSTOCK
+from settings import FULL_REST, AVAILABLE_REST, SOFT_HARD_RSV, FREE_REST, QUOTA
+from settings import TABLE_REMAINS, TABLE_SALES, SOURCE_DIR, RESULT_DIR
 
 
 SOURCE_FILE = '1082 - Доступность товара по складам (PG).xlsx'
@@ -21,18 +25,10 @@ WHS_LOC = 'Склад'
 EAN_LOC = 'EAN'
 NAME = 'Наименование'
 
-WAREHOUSE = {
-    '800WHDIS': 'Краснодар',
-    '803WHDIS': 'Пятигорск',
-    '815WHDIS': 'Волгоград',
-    '800WHELB': 'Краснодар-ELB',
-    '803WHELB': 'Пятигорск-ELB'
-}
-
 
 def main():
     xl = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
-    filter_df = get_filtered_df(xl, WAREHOUSE, WHS_LOC)
+    filter_df = get_filtered_df(xl, WAREHOUSE_REMAIN, WHS_LOC)
     filter_df = filter_df.rename(columns={
         WHS_LOC: WHS,
         EAN_LOC: EAN,
@@ -69,12 +65,12 @@ def main():
     yug_df[OVERSTOCK] = (
         yug_df[FULL_REST] - yug_df[avg_cut_sale] * TARGET_STOCK
     ).round()
-    # yug_df.drop(avg_cut_sale, axis=1, inplace=True)
     idx = yug_df[yug_df[OVERSTOCK].isnull()].index
     yug_df.loc[idx, OVERSTOCK] = yug_df.loc[idx, FULL_REST]
     yug_df.loc[yug_df[OVERSTOCK] < 0, OVERSTOCK] = 0
 
     save_to_excel(RESULT_DIR + TABLE_REMAINS, yug_df)
+    print('Скрипт {} выполнен!'.format(basename(__file__)))
 
 
 if __name__ == "__main__":

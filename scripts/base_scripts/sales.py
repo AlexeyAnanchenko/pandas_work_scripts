@@ -2,15 +2,19 @@
 Скрипт подготавливает файл с продажами в удобном формате
 
 """
+from sys import path
+from os.path import dirname, basename
+path.append(dirname(dirname(__file__)))
 
 import pandas as pd
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
+from hidden_settings import WAREHOUSES_SALES
 from service import get_filtered_df, save_to_excel
-from service import WHS, EAN, NAME_HOLDING, PRODUCT, NUM_MONTHS
-from service import LINK, LINK_HOLDING, CUTS, SALES, CUTS_SALES, AVARAGE
-from service import SOURCE_DIR, RESULT_DIR, TABLE_SALES_HOLDINGS, TABLE_SALES
+from settings import WHS, EAN, NAME_HOLDING, PRODUCT, NUM_MONTHS
+from settings import LINK, LINK_HOLDING, CUTS, SALES, CUTS_SALES, AVARAGE
+from settings import SOURCE_DIR, RESULT_DIR, TABLE_SALES_HOLDINGS, TABLE_SALES
 
 
 SOURCE_FILE = 'Продажи общие.xlsx'
@@ -20,20 +24,15 @@ WHS_LOC = 'Склад'
 EAN_LOC = 'EAN'
 M_HOLDING = 'Основной холдинг'
 PRODUCT_NAME = 'Наименование товара'
-WAREHOUSES = {
-    'Склад DIS г. Краснодар (800WHDIS)': 'Краснодар',
-    'Склад DIS г. Пятигорск (803WHDIS)': 'Пятигорск',
-    'Склад DIS г. Волгоград (815WHDIS)': 'Волгоград',
-    'Склад Эльбрус г. Краснодар (800WHELB)': 'Краснодар-ELB',
-    'Склад Эльбрус г. Пятигорск (803WHELB)': 'Пятигорск-ELB'
-}
 
 
 def sales_by_client():
     """Формирование фрейма данных продаж в разрезе клиент-склад-шк"""
 
     excel = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
-    full_df = get_filtered_df(excel, WAREHOUSES, WHS, skiprows=EMPTY_ROWS)
+    full_df = get_filtered_df(
+        excel, WAREHOUSES_SALES, WHS, skiprows=EMPTY_ROWS
+    )
     full_df = full_df.rename(columns={
         EAN_LOC: EAN,
         WHS_LOC: WHS,
@@ -147,6 +146,7 @@ def main():
     save_to_excel(RESULT_DIR + TABLE_SALES_HOLDINGS, df)
     df = sales_by_warehouses(df, numeric_columns)
     save_to_excel(RESULT_DIR + TABLE_SALES, df)
+    print('Скрипт {} выполнен!'.format(basename(__file__)))
 
 
 if __name__ == "__main__":

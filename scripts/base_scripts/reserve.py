@@ -2,14 +2,18 @@
 Скрипт подготавливает файл с резервами в удобном формате
 
 """
+from sys import path
+from os.path import dirname, basename
+path.append(dirname(dirname(__file__)))
 
 import pandas as pd
 
+from hidden_settings import WAREHOUSE_RESERVE
 from service import get_filtered_df, save_to_excel
-from service import CODES, HOLDING, NAME_HOLDING, LINK_HOLDING, LINK, WHS
-from service import SOFT_RSV, HARD_RSV, SOFT_HARD_RSV, QUOTA, PRODUCT
-from service import QUOTA_BY_AVAILABLE, AVAILABLE_REST, TOTAL_RSV, EAN
-from service import TABLE_RESERVE, SOURCE_DIR, RESULT_DIR, TABLE_HOLDINGS
+from settings import CODES, HOLDING, NAME_HOLDING, LINK_HOLDING, LINK, WHS
+from settings import SOFT_RSV, HARD_RSV, SOFT_HARD_RSV, QUOTA, PRODUCT
+from settings import QUOTA_BY_AVAILABLE, AVAILABLE_REST, TOTAL_RSV, EAN
+from settings import TABLE_RESERVE, SOURCE_DIR, RESULT_DIR, TABLE_HOLDINGS
 
 
 SOURCE_FILE = '1275 - Резервы и резервы-квоты по холдингам.xlsx'
@@ -24,18 +28,13 @@ HARD_RSV_LOC = 'Жесткий резерв'
 QUOTA_RSV = 'Резерв квота остаток'
 BY_LINK = '_всего, по ШК-Склад'
 AVAILABLE = 'Доступность на складе'
-WAREHOUSE = {
-    '    800WHDIS': 'Краснодар',
-    '    803WHDIS': 'Пятигорск',
-    '    815WHDIS': 'Волгоград',
-    '    800WHELB': 'Краснодар-ELB',
-    '    803WHELB': 'Пятигорск-ELB'
-}
 
 
 def main():
     excel = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
-    df = get_filtered_df(excel, WAREHOUSE, WHS_LOC, skiprows=EMPTY_ROWS)
+    df = get_filtered_df(
+        excel, WAREHOUSE_RESERVE, WHS_LOC, skiprows=EMPTY_ROWS
+    )
     holdings = pd.ExcelFile(RESULT_DIR + TABLE_HOLDINGS).parse()
     df = pd.merge(
         df.rename(columns={HOLDING_LOC: CODES}),
@@ -67,8 +66,9 @@ def main():
     group_df.insert(
         len(group_df.axes[1]),
         QUOTA_BY_AVAILABLE,
-        (group_df[QUOTA_RSV] / group_df[QUOTA_RSV + BY_LINK])
-        * group_df[QUOTA_RSV + BY_LINK].where(
+        (group_df[QUOTA_RSV] / group_df[QUOTA_RSV + BY_LINK]) * group_df[
+            QUOTA_RSV + BY_LINK
+        ].where(
             group_df[QUOTA_RSV + BY_LINK] < group_df[AVAILABLE],
             other=group_df[AVAILABLE]
         )
@@ -90,6 +90,7 @@ def main():
         AVAILABLE: AVAILABLE_REST
     })
     save_to_excel(RESULT_DIR + TABLE_RESERVE, group_df.round())
+    print('Скрипт {} выполнен!'.format(basename(__file__)))
 
 
 if __name__ == "__main__":
