@@ -1,7 +1,7 @@
 get-pip.py
 test.py
 env/
-scripts/category.py
+scripts/hidden_settings.py
 __pycache__
 __pycache__/
 _pycache_/
@@ -15,5 +15,5 @@ scripts/_pycache_/
 ./env/
 ./Исходники/
 ./Результаты/
-./scripts/category.py
+./scripts/hidden_settings.py
 ./scripts/__pycache__/
