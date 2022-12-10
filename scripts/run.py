@@ -7,12 +7,12 @@ from service import BASE_DIR
 scripts = [
     'assortment',
     'price',
-    # 'directory',
-    # 'holdings',
-    # 'purchases',
-    # 'remains',
-    # 'reserve',
-    # 'sales',
+    'directory',
+    'holdings',
+    'purchases',
+    'remains',
+    'reserve',
+    'sales',
 ]
 
 
