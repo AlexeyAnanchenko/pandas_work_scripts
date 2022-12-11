@@ -9,9 +9,9 @@ import pandas as pd
 
 from hidden_settings import WAREHOUSE_RESERVE
 from service import get_filtered_df, save_to_excel, print_complete
-from settings import CODES, HOLDING, NAME_HOLDING, LINK_HOLDING, LINK, WHS
+from settings import CODES, HOLDING, NAME_HOLDING, LINK_HOLDING, LINK, WHS, EAN
 from settings import SOFT_RSV, HARD_RSV, SOFT_HARD_RSV, QUOTA, PRODUCT
-from settings import QUOTA_BY_AVAILABLE, AVAILABLE_REST, TOTAL_RSV, EAN
+from settings import QUOTA_BY_AVAILABLE, AVAILABLE_REST, TOTAL_RSV, DATE_RSV
 from settings import TABLE_RESERVE, SOURCE_DIR, RESULT_DIR, TABLE_HOLDINGS
 
 
@@ -27,6 +27,8 @@ HARD_RSV_LOC = 'Жесткий резерв'
 QUOTA_RSV = 'Резерв квота остаток'
 BY_LINK = '_всего, по ШК-Склад'
 AVAILABLE = 'Доступность на складе'
+EXPECTED_DATE = 'Дата ожидаемой доставки'
+RESERVE_FOR = 'Дата резерва По'
 
 
 def main():
@@ -43,13 +45,16 @@ def main():
     df.loc[idx, HOLDING] = df.loc[idx, CODES]
     df.loc[idx, NAME_HOLDING] = df.loc[idx, RSV_HOLDING]
     df.loc[df[AVAILABLE] < 0, AVAILABLE] = 0
+    idx_date = df.loc[df[EXPECTED_DATE].isnull()].index
+    df.loc[idx_date, EXPECTED_DATE] = df.loc[idx_date, RESERVE_FOR]
     group_df = df.groupby([
         WHS_LOC, HOLDING, NAME_HOLDING, EAN_LOC, PRODUCT_NAME
     ]).agg({
         SOFT_RSV_LOC: 'sum',
         HARD_RSV_LOC: 'sum',
         QUOTA_RSV: 'sum',
-        AVAILABLE: 'max'
+        AVAILABLE: 'max',
+        EXPECTED_DATE: 'max'
     }).reset_index()
     group_df.insert(0, LINK, group_df[WHS_LOC] + group_df[EAN_LOC].map(str))
     group_df.insert(
@@ -86,7 +91,8 @@ def main():
         SOFT_RSV_LOC: SOFT_RSV,
         HARD_RSV_LOC: HARD_RSV,
         QUOTA_RSV: QUOTA,
-        AVAILABLE: AVAILABLE_REST
+        AVAILABLE: AVAILABLE_REST,
+        EXPECTED_DATE: DATE_RSV
     })
     save_to_excel(RESULT_DIR + TABLE_RESERVE, group_df.round())
     print_complete(__file__)
