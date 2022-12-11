@@ -1,10 +1,11 @@
+__pycache__/
 get-pip.py
 test.py
 env/
 scripts/hidden_settings.py
 __pycache__
-__pycache__/
-_pycache_/
+./__pycache__/
+./_pycache_/
 scripts/__pycache__/
 scripts/_pycache_/
 Исходники/
