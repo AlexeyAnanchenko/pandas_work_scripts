@@ -2,11 +2,11 @@
 Скрипт подготавливает файл с продажами в удобном формате
 
 """
-from sys import path
-from os.path import dirname, basename
-path.append(dirname(dirname(__file__)))
+from utils import path_import
+path_import.path_append()
 
 import pandas as pd
+from os.path import basename
 from datetime import date
 from dateutil.relativedelta import relativedelta
 

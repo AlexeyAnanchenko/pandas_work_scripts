@@ -3,11 +3,11 @@
 плательщиков, холдингов к основному холдингу
 
 """
-from sys import path
-from os.path import dirname, basename
-path.append(dirname(dirname(__file__)))
+from utils import path_import
+path_import.path_append()
 
 import pandas as pd
+from os.path import basename
 
 from service import save_to_excel
 from settings import CODES, HOLDING, NAME_HOLDING

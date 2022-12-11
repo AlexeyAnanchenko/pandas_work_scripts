@@ -2,12 +2,12 @@
 Формирует файл соответствия - ШК-SU-MSU
 
 """
-from sys import path
-from os.path import dirname, basename
-path.append(dirname(dirname(__file__)))
+from utils import path_import
+path_import.path_append()
 
 import re
 import pandas as pd
+from os.path import basename
 
 from service import save_to_excel, get_data
 from hidden_settings import CATEGORY_BREND

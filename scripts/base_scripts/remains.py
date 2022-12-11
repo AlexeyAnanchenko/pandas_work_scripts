@@ -2,11 +2,11 @@
 Скрипт подготавливает файл с остатками в удобном формате
 
 """
-from sys import path
-from os.path import dirname, basename
-path.append(dirname(dirname(__file__)))
+from utils import path_import
+path_import.path_append()
 
 import pandas as pd
+from os.path import basename
 
 from hidden_settings import WAREHOUSE_REMAIN
 from service import get_filtered_df, save_to_excel, get_data
