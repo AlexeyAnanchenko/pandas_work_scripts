@@ -2,14 +2,13 @@
 Скрипт подготавливает файл с резервами в удобном формате
 
 """
-from utils import path_import
-path_import.path_append()
+import utils
+utils.path_append()
 
 import pandas as pd
-from os.path import basename
 
 from hidden_settings import WAREHOUSE_RESERVE
-from service import get_filtered_df, save_to_excel
+from service import get_filtered_df, save_to_excel, print_complete
 from settings import CODES, HOLDING, NAME_HOLDING, LINK_HOLDING, LINK, WHS
 from settings import SOFT_RSV, HARD_RSV, SOFT_HARD_RSV, QUOTA, PRODUCT
 from settings import QUOTA_BY_AVAILABLE, AVAILABLE_REST, TOTAL_RSV, EAN
@@ -90,7 +89,7 @@ def main():
         AVAILABLE: AVAILABLE_REST
     })
     save_to_excel(RESULT_DIR + TABLE_RESERVE, group_df.round())
-    print('Скрипт {} выполнен!'.format(basename(__file__)))
+    print_complete(__file__)
 
 
 if __name__ == "__main__":

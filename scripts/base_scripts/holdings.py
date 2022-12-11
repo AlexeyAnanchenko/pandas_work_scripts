@@ -3,13 +3,12 @@
 плательщиков, холдингов к основному холдингу
 
 """
-from utils import path_import
-path_import.path_append()
+import utils
+utils.path_append()
 
 import pandas as pd
-from os.path import basename
 
-from service import save_to_excel
+from service import save_to_excel, print_complete
 from settings import CODES, HOLDING, NAME_HOLDING
 from settings import SOURCE_DIR, RESULT_DIR, TABLE_HOLDINGS
 
@@ -60,7 +59,7 @@ def main():
         RESULT_DIR + TABLE_HOLDINGS,
         df_result[df_result[CODES] != 'Удалить строку']
     )
-    print('Скрипт {} выполнен!'.format(basename(__file__)))
+    print_complete(__file__)
 
 
 if __name__ == "__main__":

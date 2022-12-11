@@ -5,6 +5,7 @@
 
 import pandas as pd
 import pandas.io.formats.excel
+from os.path import basename
 
 from settings import BASE_DIR, NUM_MONTHS
 from settings import TABLE_PURCHASES, TABLE_SALES_HOLDINGS, TABLE_SALES
@@ -114,3 +115,8 @@ def get_data(file):
     if file in [TABLE_SALES_HOLDINGS, TABLE_SALES]:
         return df, get_col_sales(df)
     return df
+
+
+def print_complete(file):
+    """Функция выводит сообщение об отработке скрипта"""
+    print('Скрипт {} выполнен!'.format(basename(file)))

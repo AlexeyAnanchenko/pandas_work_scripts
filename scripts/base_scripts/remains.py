@@ -2,14 +2,13 @@
 Скрипт подготавливает файл с остатками в удобном формате
 
 """
-from utils import path_import
-path_import.path_append()
+import utils
+utils.path_append()
 
 import pandas as pd
-from os.path import basename
 
 from hidden_settings import WAREHOUSE_REMAIN
-from service import get_filtered_df, save_to_excel, get_data
+from service import get_filtered_df, save_to_excel, get_data, print_complete
 from settings import LINK, WHS, EAN, PRODUCT, TARGET_STOCK, OVERSTOCK
 from settings import FULL_REST, AVAILABLE_REST, SOFT_HARD_RSV, FREE_REST, QUOTA
 from settings import TABLE_REMAINS, TABLE_SALES, SOURCE_DIR, RESULT_DIR
@@ -70,7 +69,7 @@ def main():
     yug_df.loc[yug_df[OVERSTOCK] < 0, OVERSTOCK] = 0
 
     save_to_excel(RESULT_DIR + TABLE_REMAINS, yug_df)
-    print('Скрипт {} выполнен!'.format(basename(__file__)))
+    print_complete(__file__)
 
 
 if __name__ == "__main__":

@@ -2,16 +2,15 @@
 Скрипт подготавливает файл с продажами в удобном формате
 
 """
-from utils import path_import
-path_import.path_append()
+import utils
+utils.path_append()
 
 import pandas as pd
-from os.path import basename
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
 from hidden_settings import WAREHOUSES_SALES
-from service import get_filtered_df, save_to_excel
+from service import get_filtered_df, save_to_excel, print_complete
 from settings import WHS, EAN, NAME_HOLDING, PRODUCT, NUM_MONTHS
 from settings import LINK, LINK_HOLDING, CUTS, SALES, CUTS_SALES, AVARAGE
 from settings import SOURCE_DIR, RESULT_DIR, TABLE_SALES_HOLDINGS, TABLE_SALES
@@ -146,7 +145,7 @@ def main():
     save_to_excel(RESULT_DIR + TABLE_SALES_HOLDINGS, df)
     df = sales_by_warehouses(df, numeric_columns)
     save_to_excel(RESULT_DIR + TABLE_SALES, df)
-    print('Скрипт {} выполнен!'.format(basename(__file__)))
+    print_complete(__file__)
 
 
 if __name__ == "__main__":

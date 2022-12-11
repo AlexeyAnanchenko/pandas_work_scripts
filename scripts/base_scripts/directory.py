@@ -2,14 +2,13 @@
 Формирует файл соответствия - ШК-SU-MSU
 
 """
-from utils import path_import
-path_import.path_append()
+import utils
+utils.path_append()
 
 import re
 import pandas as pd
-from os.path import basename
 
-from service import save_to_excel, get_data
+from service import save_to_excel, get_data, print_complete
 from hidden_settings import CATEGORY_BREND
 from hidden_settings import CATEGORY_SUBSECTOR, CATEGORY_SUBBREND
 from settings import PRODUCT, LEVEL_1, LEVEL_2, LEVEL_3, SU, MSU, EAN
@@ -97,7 +96,7 @@ def added_price(dataframe):
 def main():
     directory = added_price(added_matrix(get_category_msu()))
     save_to_excel(RESULT_DIR + TABLE_DIRECTORY, directory)
-    print('Скрипт {} выполнен!'.format(basename(__file__)))
+    print_complete(__file__)
 
 
 if __name__ == "__main__":

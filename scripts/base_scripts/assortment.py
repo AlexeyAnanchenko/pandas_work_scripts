@@ -4,13 +4,12 @@
 
 """
 
-from utils import path_import
-path_import.path_append()
+import utils
+utils.path_append()
 
 import pandas as pd
-from os.path import basename
 
-from service import save_to_excel
+from service import save_to_excel, print_complete
 from hidden_settings import WAREHOUSE_ASSORT
 from settings import SOURCE_DIR, RESULT_DIR, TABLE_ASSORTMENT, LINK, WHS, EAN
 
@@ -46,7 +45,7 @@ def main():
         ))
     df_result = pd.concat(warehouse_df, ignore_index=True)
     save_to_excel(RESULT_DIR + TABLE_ASSORTMENT, df_result)
-    print('Скрипт {} выполнен!'.format(basename(__file__)))
+    print_complete(__file__)
 
 
 if __name__ == "__main__":

@@ -2,13 +2,12 @@
 Формирует файл соответствия - ШК-Цена GIV-Цена NIV
 
 """
-from utils import path_import
-path_import.path_append()
+import utils
+utils.path_append()
 
 import pandas as pd
-from os.path import basename
 
-from service import save_to_excel
+from service import save_to_excel, print_complete
 from hidden_settings import WAREHOUSE_PRICE
 from settings import TABLE_PRICE, SOURCE_DIR, RESULT_DIR
 from settings import EAN, PRODUCT, BASE_PRICE, ELB_PRICE
@@ -86,7 +85,7 @@ def main():
         PRICE_ELB + PRICE_ELB_ADD: ELB_PRICE
     })
     save_to_excel(RESULT_DIR + TABLE_PRICE, df)
-    print('Скрипт {} выполнен!'.format(basename(__file__)))
+    print_complete(__file__)
 
 
 if __name__ == "__main__":

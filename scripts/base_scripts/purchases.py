@@ -2,14 +2,13 @@
 Скрипт подготавливает файл с закупками в удобном формате
 
 """
-from utils import path_import
-path_import.path_append()
+import utils
+utils.path_append()
 
 import pandas as pd
-from os.path import basename
 
 from hidden_settings import WAREHOUSE_PURCH
-from service import get_filtered_df, save_to_excel
+from service import get_filtered_df, save_to_excel, print_complete
 from settings import SOURCE_DIR, RESULT_DIR, LINK, WHS, EAN
 from settings import PRODUCT, NUM_MONTHS, TABLE_PURCHASES
 
@@ -45,7 +44,7 @@ def main():
     reindex_col.extend([i for i in int_col.keys()])
     group_df = group_df.reindex(columns=reindex_col)
     save_to_excel(RESULT_DIR + TABLE_PURCHASES, group_df)
-    print('Скрипт {} выполнен!'.format(basename(__file__)))
+    print_complete(__file__)
 
 
 if __name__ == "__main__":
