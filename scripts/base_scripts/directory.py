@@ -11,9 +11,9 @@ import pandas as pd
 from service import save_to_excel, get_data, print_complete
 from hidden_settings import CATEGORY_BREND
 from hidden_settings import CATEGORY_SUBSECTOR, CATEGORY_SUBBREND
-from settings import PRODUCT, LEVEL_1, LEVEL_2, LEVEL_3, SU, MSU, EAN
+from settings import PRODUCT, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_0
 from settings import SOURCE_DIR, RESULT_DIR, TABLE_DIRECTORY, TABLE_PRICE
-from settings import MATRIX, MATRIX_LY, BASE_PRICE, ELB_PRICE
+from settings import MATRIX, MATRIX_LY, BASE_PRICE, ELB_PRICE, SU, MSU, EAN
 
 
 SOURCE_FILE = 'Справочник/Справочник.xlsx'
@@ -24,6 +24,7 @@ SKIPROWS = 2
 ACTIVE_GCAS = 'Активный GCAS?(на дату формирования отчета)'
 PRODUCT_NAME = 'Короткое наименование (рус)'
 EAN_LOC = 'EAN штуки'
+DETAIL_SUBBREND = 'Детали суббренда (англ)'  # 0 уровень
 SUBBREND = 'СубБренд (англ)'  # 1 уровень
 BREND = 'Бренд (англ)'  # 2 уровень
 SUBSECTOR = 'СубСектор (англ)'  # 3 уровень
@@ -34,7 +35,8 @@ NO_DATA_VALUE = 'Нет данных'
 def get_category_msu():
     excel = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
     df_full = excel.parse(skiprows=SKIPROWS)[[
-        ACTIVE_GCAS, EAN_LOC, PRODUCT_NAME, SUBBREND, BREND, SUBSECTOR, SU_LOC
+        ACTIVE_GCAS, EAN_LOC, PRODUCT_NAME, DETAIL_SUBBREND,
+        SUBBREND, BREND, SUBSECTOR, SU_LOC
     ]].sort_index(ascending=False)
     df_full = df_full.sort_values(by=[ACTIVE_GCAS], kind='mergesort').drop(
         ACTIVE_GCAS, axis=1
@@ -60,6 +62,7 @@ def get_category_msu():
 
     df[MSU] = df[SU_LOC] / MEGA
     df = df.rename(columns={
+        DETAIL_SUBBREND: LEVEL_0,
         SUBBREND: LEVEL_1,
         BREND: LEVEL_2,
         SUBSECTOR: LEVEL_3,
@@ -94,7 +97,7 @@ def added_price(dataframe):
 
 
 def delete_level(df):
-    df = df.drop(labels=[LEVEL_1, LEVEL_2], axis=1)
+    df = df.drop(labels=[LEVEL_0, LEVEL_1, LEVEL_2], axis=1)
     return df
 
 
