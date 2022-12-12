@@ -93,8 +93,14 @@ def added_price(dataframe):
     return dataframe
 
 
+def delete_level(df):
+    df = df.drop(labels=[LEVEL_1, LEVEL_2], axis=1)
+    return df
+
+
 def main():
     directory = added_price(added_matrix(get_category_msu()))
+    directory = delete_level(directory)
     save_to_excel(RESULT_DIR + TABLE_DIRECTORY, directory)
     print_complete(__file__)
 
