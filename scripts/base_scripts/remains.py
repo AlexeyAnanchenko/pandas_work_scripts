@@ -12,6 +12,7 @@ from service import get_filtered_df, save_to_excel, get_data, print_complete
 from settings import LINK, WHS, EAN, PRODUCT, TARGET_STOCK, OVERSTOCK
 from settings import FULL_REST, AVAILABLE_REST, SOFT_HARD_RSV, FREE_REST, QUOTA
 from settings import TABLE_REMAINS, TABLE_SALES, SOURCE_DIR, RESULT_DIR
+from settings import TABLE_DIRECTORY, MSU, FULL_REST_MSU, OVERSTOCK_MSU
 
 
 SOURCE_FILE = '1082 - Доступность товара по складам (PG).xlsx'
@@ -25,7 +26,7 @@ EAN_LOC = 'EAN'
 NAME = 'Наименование'
 
 
-def main():
+def create_remains():
     xl = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
     filter_df = get_filtered_df(xl, WAREHOUSE_REMAIN, WHS_LOC)
     filter_df = filter_df.rename(columns={
@@ -57,18 +58,34 @@ def main():
         LINK, WHS, EAN, PRODUCT,
         FULL_REST, SOFT_HARD_RSV, AVAILABLE_REST, QUOTA, FREE_REST
     ])
+    return yug_df
 
+
+def added_overstock(df):
     sales, sales_col = get_data(TABLE_SALES)
     avg_cut_sale = sales_col['avg_cut_sale']
-    yug_df = yug_df.merge(sales[[LINK, avg_cut_sale]], on=LINK, how='left')
-    yug_df[OVERSTOCK] = (
-        yug_df[FULL_REST] - yug_df[avg_cut_sale] * TARGET_STOCK
-    ).round()
-    idx = yug_df[yug_df[OVERSTOCK].isnull()].index
-    yug_df.loc[idx, OVERSTOCK] = yug_df.loc[idx, FULL_REST]
-    yug_df.loc[yug_df[OVERSTOCK] < 0, OVERSTOCK] = 0
+    df = df.merge(sales[[LINK, avg_cut_sale]], on=LINK, how='left')
+    df[OVERSTOCK] = (df[FULL_REST] - df[avg_cut_sale] * TARGET_STOCK).round()
+    idx = df[df[OVERSTOCK].isnull()].index
+    df.loc[idx, OVERSTOCK] = df.loc[idx, FULL_REST]
+    df.loc[df[OVERSTOCK] < 0, OVERSTOCK] = 0
+    df.drop(labels=list(df[df[FULL_REST] == 0].index), axis=0, inplace=True)
+    df.loc[df[df[avg_cut_sale].isnull()].index, avg_cut_sale] = 0
+    return df
 
-    save_to_excel(RESULT_DIR + TABLE_REMAINS, yug_df)
+
+def conversion_msu(df):
+    direct = get_data(TABLE_DIRECTORY)
+    df = df.merge(direct[[EAN, MSU]], on=EAN, how='left')
+    df[FULL_REST_MSU] = df[FULL_REST] * df[MSU]
+    df[OVERSTOCK_MSU] = df[OVERSTOCK] * df[MSU]
+    df.drop(MSU, axis=1, inplace=True)
+    return df
+
+
+def main():
+    result_df = conversion_msu(added_overstock(create_remains()))
+    save_to_excel(RESULT_DIR + TABLE_REMAINS, result_df)
     print_complete(__file__)
 
 

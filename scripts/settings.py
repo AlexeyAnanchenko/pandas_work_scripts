@@ -42,6 +42,8 @@ SALES = 'Продажи '
 CUTS_SALES = 'Урезания + продажи '
 AVARAGE = 'Средние '
 OVERSTOCK = f'Сток свыше {TARGET_STOCK} месяца (-ев) продаж, шт'
+FULL_REST_MSU = FULL_REST.replace('шт', 'msu')
+OVERSTOCK_MSU = OVERSTOCK.replace('шт', 'msu')
 MATRIX = 'Матрица Эльбрус'
 MATRIX_LY = 'Матрица Эльбрус (Лоджистик-Юг)'
 
