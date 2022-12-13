@@ -17,6 +17,7 @@ FACTOR = 'Фактор'
 
 
 def get_factors():
+    """Получить отфильтрованный dataframe по факторам"""
     df = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE).parse()
     df = df[df[FACTOR].isin(WORKING_FACTORS)]
     return df
