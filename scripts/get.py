@@ -22,19 +22,15 @@ session.headers.update({
     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
     'Origin': 'https://r.alidi.ru',
     'Referer': referer,
-    'Sec-Fetch-Dest': 
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'same-origin',
+    'X-MicrosoftAjax': 'Delta=true',
+    'X-Requested-With': 'XMLHttpRequest',
+    'sec-ch-ua': '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"'
 })
-
-
-Sec-Fetch-Dest: empty
-Sec-Fetch-Mode: cors
-Sec-Fetch-Site: same-origin
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36
-X-MicrosoftAjax: Delta=true
-X-Requested-With: XMLHttpRequest
-sec-ch-ua: "Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"
-sec-ch-ua-mobile: ?0
-sec-ch-ua-platform: "Windows"
 
 
 # response = session.get(url_rem)
@@ -44,6 +40,6 @@ sec-ch-ua-platform: "Windows"
 
 
 response = session.post(url, data)
-print(dict(response.request.headers))
+print(response.status_code)
 with open("SRS.text", "w") as file:
-    file.write(response.request.headers)
+    file.write(response.text)
