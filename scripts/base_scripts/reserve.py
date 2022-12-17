@@ -13,6 +13,7 @@ from settings import CODES, HOLDING, NAME_HOLDING, LINK_HOLDING, LINK, WHS, EAN
 from settings import SOFT_RSV, HARD_RSV, SOFT_HARD_RSV, QUOTA, PRODUCT
 from settings import QUOTA_BY_AVAILABLE, AVAILABLE_REST, TOTAL_RSV, DATE_RSV
 from settings import TABLE_RESERVE, SOURCE_DIR, RESULT_DIR, TABLE_HOLDINGS
+from update_data import update_reserve
 
 
 SOURCE_FILE = '1275 - Резервы и резервы-квоты по холдингам.xlsx'
@@ -32,6 +33,7 @@ RESERVE_FOR = 'Дата резерва По'
 
 
 def main():
+    update_reserve(SOURCE_FILE)
     excel = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
     df = get_filtered_df(
         excel, WAREHOUSE_RESERVE, WHS_LOC, skiprows=EMPTY_ROWS
