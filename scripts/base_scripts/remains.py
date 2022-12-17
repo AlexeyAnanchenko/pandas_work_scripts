@@ -13,6 +13,7 @@ from settings import LINK, WHS, EAN, PRODUCT, TARGET_STOCK, OVERSTOCK
 from settings import FULL_REST, AVAILABLE_REST, SOFT_HARD_RSV, FREE_REST, QUOTA
 from settings import TABLE_REMAINS, TABLE_SALES, SOURCE_DIR, RESULT_DIR
 from settings import TABLE_DIRECTORY, MSU, FULL_REST_MSU, OVERSTOCK_MSU
+from update_data import update_remains
 
 
 SOURCE_FILE = '1082 - Доступность товара по складам (PG).xlsx'
@@ -84,6 +85,7 @@ def conversion_msu(df):
 
 
 def main():
+    update_remains(SOURCE_FILE)
     result_df = conversion_msu(added_overstock(create_remains()))
     save_to_excel(RESULT_DIR + TABLE_REMAINS, result_df)
     print_complete(__file__)

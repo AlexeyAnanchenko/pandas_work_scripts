@@ -10,7 +10,6 @@ from selenium.webdriver.chrome.options import Options
 
 from hidden_settings import USER, PASSWORD
 from settings import SOURCE_DIR
-from remains import SOURCE_FILE as SOURCE_FILE_REMAINS
 
 DOWNLOADS = "C:\\Users\\ananchenko.as\\Downloads\\"
 
@@ -32,7 +31,7 @@ url_remains = (f'https://{USER}:{PASSWORD}@r.alidi.ru/ReportServer/Pages/'
 
 
 def escort_download(dir, file):
-    """Функция сопровождает выгрузку с сервера отчётов"""
+    """Функция сопровождает выгрузку файла с сервера отчётов"""
     if file in os.listdir(DOWNLOADS):
         os.remove(dir + file)
     flag = True
@@ -46,7 +45,7 @@ def escort_download(dir, file):
     shutil.move(DOWNLOADS + file, dir + file)
 
 
-def update_remains():
+def update_remains(source_file):
     """Скачивает обновлённый отчёт по остаткам"""
     try:
         driver.get(url_remains)
@@ -64,7 +63,15 @@ def update_remains():
         driver.implicitly_wait(2)
         excel = driver.find_element(By.XPATH, "//a[@title='Excel']")
         excel.click()
-        escort_download(SOURCE_DIR, SOURCE_FILE_REMAINS)
+        escort_download(SOURCE_DIR, source_file)
         print('Выгрузка по остаткам обновлена')
+    finally:
+        driver.quit()
+
+
+def update_reserve(source_file):
+    """Скачивает обновлённый отчёт по резервам"""
+    try:
+        driver.get()
     finally:
         driver.quit()
