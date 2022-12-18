@@ -7,81 +7,66 @@ import shutil
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.select import Select
 
-from hidden_settings import USER, PASSWORD
 from settings import SOURCE_DIR
+from hidden_settings import url_remains, url_reserve, url_price
 
-DOWNLOADS = "C:\\Users\\ananchenko.as\\Downloads\\"
 
 options = Options()
 options.add_argument('–disable-blink-features=BlockCredentialedSubresources')
 options.add_argument('headless')
 options.add_experimental_option("prefs", {
-    "download.default_directory": DOWNLOADS
+    "download.default_directory": SOURCE_DIR
 })
 driver = webdriver.Chrome(options=options)
 
-url_remains = (f'https://{USER}:{PASSWORD}@r.alidi.ru/ReportServer/Pages/'
-               'ReportViewer.aspx?%2F%D0%9B%D0%BE%D0%B3%D0%B8%D1%81%D1%82'
-               '%D0%B8%D0%BA%D0%B0%2F%D0%97%D0%B0%D0%BA%D1%83%D0%BF%D0%BA'
-               '%D0%B8%2F1082%20-%20%D0%94%D0%BE%D1%81%D1%82%D1%83%D0%BF%'
-               'D0%BD%D0%BE%D1%81%D1%82%D1%8C%20%D1%82%D0%BE%D0%B2%D0%B0%'
-               'D1%80%D0%B0%20%D0%BF%D0%BE%20%D1%81%D0%BA%D0%BB%D0%B0%D0%'
-               'B4%D0%B0%D0%BC%20(PG)&rc:showbackbutton=true')
-url_reserve = (f'https://{USER}:{PASSWORD}@r.alidi.ru/ReportServer/Pages/'
-               'ReportViewer.aspx?%2F%D0%9B%D0%BE%D0%B3%D0%B8%D1%81%D1%8'
-               '2%D0%B8%D0%BA%D0%B0%2F%D0%97%D0%B0%D0%BA%D1%83%D0%BF%D0%'
-               'BA%D0%B8%2F1275%20-%20%D0%A0%D0%B5%D0%B7%D0%B5%D1%80%D0%'
-               'B2%D1%8B%20%D0%B8%20%D1%80%D0%B5%D0%B7%D0%B5%D1%80%D0%B2'
-               '%D1%8B-%D0%BA%D0%B2%D0%BE%D1%82%D1%8B%20%D0%BF%D0%BE%20%'
-               'D1%85%D0%BE%D0%BB%D0%B4%D0%B8%D0%BD%D0%B3%D0%B0%D0%BC&rc'
-               ':showbackbutton=true')
+
+def view_report_click(driver, waiting_word):
+    """Функция нажимает на кнопку 'Посмотреть отчёт' в SRS и ждёт отчёт"""
+    view_report_name = 'ReportViewerControl$ctl04$ctl00'
+    view_report = driver.find_element(By.NAME, view_report_name)
+    view_report.click()
+    while waiting_word not in driver.page_source:
+        time.sleep(3)
 
 
-def escort_download(driver, file):
-    """
-    Функция сопровождает выгрузку файла с сервера отчётов
-    до папки с исходниками
-    """
+def escort_download_srs(driver, file, folder=None):
+    """Функция сопровождает выгрузку файла из SRS в исходники"""
     export_id = 'ReportViewerControl_ctl05_ctl04_ctl00_ButtonLink'
     export = driver.find_element(By.ID, export_id)
     export.click()
     driver.implicitly_wait(2)
     excel = driver.find_element(By.XPATH, "//a[@title='Excel']")
-    excel.click()
-    if file in os.listdir(DOWNLOADS):
+    if file in os.listdir(SOURCE_DIR):
         os.remove(SOURCE_DIR + file)
+    excel.click()
     flag = True
-
     while flag:
-        if file not in os.listdir(DOWNLOADS):
+        if file not in os.listdir(SOURCE_DIR):
             time.sleep(2)
         else:
             flag = False
-
-    shutil.move(DOWNLOADS + file, SOURCE_DIR + file)
+    if folder is not None:
+        if file in os.listdir(folder):
+            os.remove(folder + file)
+        shutil.move(SOURCE_DIR + file, folder + file)
 
 
 def update_remains(source_file):
-    """Скачивает обновлённый отчёт по остаткам"""
+    """Формирует обновлённый отчёт по остаткам"""
     try:
         driver.get(url_remains)
         driver.implicitly_wait(20)
-        submit_name = "ReportViewerControl$ctl04$ctl00"
-        submit = driver.find_element(By.NAME, submit_name)
-        submit.click()
-
-        while 'GCAS' not in driver.page_source:
-            time.sleep(3)
-
-        escort_download(driver, source_file)
+        view_report_click(driver, 'GCAS')
+        escort_download_srs(driver, source_file)
         print('Выгрузка по остаткам обновлена')
     finally:
         driver.quit()
 
 
 def update_reserve(source_file):
-    """Скачивает обновлённый отчёт по резервам"""
+    """Формирует обновлённый отчёт по резервам"""
     try:
         driver.get(url_reserve)
         driver.implicitly_wait(20)
@@ -102,14 +87,29 @@ def update_reserve(source_file):
         check_with_date = driver.find_element(By.NAME, check_with_date_name)
         check_with_date.click()
         driver.implicitly_wait(2)
-        view_report_name = 'ReportViewerControl$ctl04$ctl00'
-        view_report = driver.find_element(By.NAME, view_report_name)
-        view_report.click()
-
-        while 'Мягкий резерв' not in driver.page_source:
-            time.sleep(3)
-
-        escort_download(driver, source_file)
+        view_report_click(driver, 'Мягкий резерв')
+        escort_download_srs(driver, source_file)
         print('Выгрузка по резервам обновлена')
+    finally:
+        driver.quit()
+
+
+def update_price(source_file, folder):
+    """Формирует обновлённый отчёт по базовым ценам"""
+    try:
+        driver.get(url_price)
+        driver.implicitly_wait(20)
+        select_pg = 'ReportViewerControl$ctl04$ctl03$ddValue'
+        Select(driver.find_element(By.NAME, select_pg)).select_by_value('64')
+        driver.implicitly_wait(2)
+        select_whs = 'ReportViewerControl$ctl04$ctl05$ddValue'
+        Select(driver.find_element(By.NAME, select_whs)).select_by_value('1')
+        time.sleep(2)
+        select_null = 'ReportViewerControl$ctl04$ctl17$ddValue'
+        Select(driver.find_element(By.NAME, select_null)).select_by_value('1')
+        driver.implicitly_wait(2)
+        view_report_click(driver, 'GCAS')
+        escort_download_srs(driver, source_file, folder)
+        print('Выгрузка по базовым ценам обновлена')
     finally:
         driver.quit()

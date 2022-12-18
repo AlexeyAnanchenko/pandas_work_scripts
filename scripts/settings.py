@@ -6,8 +6,8 @@ from os.path import abspath, dirname
 
 
 BASE_DIR = dirname(dirname(abspath(__file__)))
-SOURCE_DIR = BASE_DIR + '/Исходники/'
-RESULT_DIR = BASE_DIR + '/Результаты/'
+SOURCE_DIR = BASE_DIR + '\\Исходники\\'
+RESULT_DIR = BASE_DIR + '\\Результаты\\'
 
 NUM_MONTHS = 3
 TARGET_STOCK = 1

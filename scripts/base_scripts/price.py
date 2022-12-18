@@ -11,11 +11,12 @@ from service import save_to_excel, print_complete
 from hidden_settings import WAREHOUSE_PRICE
 from settings import TABLE_PRICE, SOURCE_DIR, RESULT_DIR
 from settings import EAN, PRODUCT, BASE_PRICE, ELB_PRICE
+from update_data import update_price
 
-
-SOURCE_FILE_PRICE = 'Прайс/ALIDI NORD.xlsx'
-SOURCE_FILE_ELB = 'Прайс/Прайс Эльбрус.xlsx'
-SOURCE_FILE_SRS = 'Прайс/1344 Выгрузка цен из 4106.xlsx'
+DIR_PRICE = 'Прайс\\'
+SOURCE_FILE_PRICE = 'ALIDI NORD.xlsx'
+SOURCE_FILE_ELB = 'Прайс Эльбрус.xlsx'
+SOURCE_FILE_SRS = '1344 Выгрузка цен из 4106.xlsx'
 SKIPROWS = 7
 PRODUCT_NAME = 'Название продукта '
 EAN_LOC = 'EAN Код штуки'
@@ -33,7 +34,8 @@ SKIPROWS_ELB = 10
 
 def main():
     # Формируем GIV
-    price = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE_PRICE)
+    update_price(SOURCE_FILE_SRS, SOURCE_DIR + DIR_PRICE)
+    price = pd.ExcelFile(SOURCE_DIR + DIR_PRICE + SOURCE_FILE_PRICE)
     price_df = price.parse(skiprows=SKIPROWS)[[
         PRODUCT_NAME, EAN_LOC, PRICE
     ]]
@@ -44,7 +46,7 @@ def main():
     )
     df = df.reindex(columns=[EAN_LOC, PRODUCT_NAME, PRICE])
 
-    srs_xl = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE_SRS)
+    srs_xl = pd.ExcelFile(SOURCE_DIR + DIR_PRICE + SOURCE_FILE_SRS)
     srs_df = srs_xl.parse()
     srs_df = srs_df[srs_df[WHS_SRS].isin(WAREHOUSE_PRICE)][[
         EAN_SRS, PRODUCT_NAME_SRS, PRICE_SRS
@@ -60,7 +62,7 @@ def main():
     )
 
     # Добавляем NIV Эльбрус
-    elb_xl = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE_ELB)
+    elb_xl = pd.ExcelFile(SOURCE_DIR + DIR_PRICE + SOURCE_FILE_ELB)
     elb_df = elb_xl.parse('Цены от 2 млн', skiprows=SKIPROWS_ELB)[
         [EAN_ELB, PRODUCT_NAME_ELB, PRICE_ELB]
     ]
