@@ -104,7 +104,7 @@ def update_price(source_file, folder):
         driver.implicitly_wait(2)
         select_whs = 'ReportViewerControl$ctl04$ctl05$ddValue'
         Select(driver.find_element(By.NAME, select_whs)).select_by_value('1')
-        time.sleep(2)
+        time.sleep(3)
         select_null = 'ReportViewerControl$ctl04$ctl17$ddValue'
         Select(driver.find_element(By.NAME, select_null)).select_by_value('1')
         driver.implicitly_wait(2)
