@@ -47,6 +47,12 @@ FULL_REST_MSU = FULL_REST.replace('шт', 'msu')
 OVERSTOCK_MSU = OVERSTOCK.replace('шт', 'msu')
 MATRIX = 'Матрица Эльбрус'
 MATRIX_LY = 'Матрица Эльбрус (Лоджистик-Юг)'
+FACTOR = 'Фактор'
+FACTOR_NUM = 'Номер фактора'
+LINK_FACTOR = 'Ссылка на фактор'
+DATE_CREATION = 'Дата создания фактора'
+DATE_START = 'Дата начала действия фактора'
+DATE_EXPIRATION = 'Дата окончания действия фактора'
 
 TABLE_ASSORTMENT = 'Ассортимент.xlsx'
 TABLE_DIRECTORY = 'Справочник_ШК.xlsx'
@@ -58,3 +64,5 @@ TABLE_SALES_HOLDINGS = 'Продажи по клиентам и складам.x
 TABLE_SALES = 'Продажи по складам.xlsx'
 TABLE_RESERVE = 'Резервы.xlsx'
 TABLE_FACTORS = 'Факторы.xlsx'
+
+DATE_COL = [DATE_RSV, DATE_CREATION, DATE_START, DATE_EXPIRATION]

@@ -7,7 +7,7 @@ import pandas as pd
 import pandas.io.formats.excel
 from os.path import basename
 
-from settings import BASE_DIR, NUM_MONTHS
+from settings import BASE_DIR, NUM_MONTHS, DATE_COL
 from settings import TABLE_PURCHASES, TABLE_SALES_HOLDINGS, TABLE_SALES
 
 
@@ -31,9 +31,17 @@ def save_to_excel(path, df):
     num_row_header = 0
     height_header = 50
     min_wdh_col = 14
+    max_wdh_col = 50
 
     # Убираем формат заголовка таблицы по умолчанию
     pandas.io.formats.excel.ExcelFormatter.header_style = None
+
+    for column in df:
+        if column in DATE_COL:
+            to_date_dict = {}
+            for val in df[column]:
+                to_date_dict[val] = val.date()
+            df = df.replace({column: to_date_dict})
 
     writer = pd.ExcelWriter(path)
     df.to_excel(writer, sheet_name=sheet, index=False)
@@ -46,14 +54,16 @@ def save_to_excel(path, df):
     worksheet.set_row(num_row_header, height_header, cell_format=cell_form)
 
     for column in df:
-        column_width = max(
-            df[column].astype(str).map(len).max(),
-            min_wdh_col,
-            len(column) / 2
+        column_width = min(
+            max(
+                df[column].astype(str).map(len).max(),
+                min_wdh_col,
+                len(column) / 2
+            ),
+            max_wdh_col
         )
         col_idx = df.columns.get_loc(column)
         writer.sheets[sheet].set_column(col_idx, col_idx, column_width)
-
     writer.close()
 
 
