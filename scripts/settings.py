@@ -11,6 +11,7 @@ RESULT_DIR = BASE_DIR + '\\Результаты\\'
 
 NUM_MONTHS = 3
 TARGET_STOCK = 1
+FACTOR_START = '01.12.2022'
 
 EAN = 'EAN штуки'
 PRODUCT = 'Наименование товара'
