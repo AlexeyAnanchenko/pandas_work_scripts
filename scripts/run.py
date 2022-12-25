@@ -8,6 +8,7 @@ scripts = [
     'assortment',
     'price',
     'directory',
+    'factors',
     'holdings',
     'purchases',
     'remains',

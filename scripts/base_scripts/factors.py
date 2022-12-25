@@ -11,6 +11,7 @@ from hidden_settings import WAREHOUSE_FACTORS
 from service import save_to_excel, print_complete
 from settings import SOURCE_DIR, RESULT_DIR, TABLE_FACTORS, WHS, FACTOR
 from settings import FACTOR_NUM, REF_FACTOR
+from update_data import update_factors_nfe, update_factors_pbi
 
 
 SOURCE_FILE = 'NovoForecastServer_РезультатыПоиска.xlsx'
@@ -68,6 +69,8 @@ def add_pbi_col(df):
 
 
 def main():
+    update_factors_nfe(SOURCE_FILE)
+    update_factors_pbi(SOURCE_FILE_PB)
     factors = add_pbi_col(add_num_factors(filtered_factors()))
     save_to_excel(RESULT_DIR + TABLE_FACTORS, factors)
     print_complete(__file__)

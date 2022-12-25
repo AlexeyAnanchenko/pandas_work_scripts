@@ -18,12 +18,12 @@ from hidden_settings import USER_NFE, PASSWORD_NFE
 options = Options()
 options.add_argument('–disable-blink-features=BlockCredentialedSubresources')
 options.add_argument('headless')
+options.add_argument('log-level=1')
 options.add_experimental_option("prefs", {
     "download.default_directory": SOURCE_DIR
 })
 driver = webdriver.Chrome(options=options)
 
-PROVIDER = 'PROCTER&GAMBLE'
 EXPORT_PBI = 'data.xlsx'
 
 
@@ -120,54 +120,71 @@ def update_price(source_file, folder):
         driver.quit()
 
 
-def update_factors_nfe():
+def login_nfe(url):
+    """Залогиниться в NFE"""
+    driver.get(url)
+
+    while "Логин" not in driver.page_source:
+        time.sleep(2)
+
+    part_id = 'ctl00_ctl00_PageContent_Content_Login_FormLayout_'
+    login = driver.find_element(By.ID, part_id + 'Login_TextBox_I')
+    login.send_keys(USER_NFE)
+    driver.implicitly_wait(2)
+    password = driver.find_element(By.ID, part_id + 'Password_TextBox_I')
+    password.send_keys(PASSWORD_NFE)
+    driver.implicitly_wait(2)
+    driver.find_element(By.ID, part_id + 'Login_Button_CD').click()
+
+    while 'Меню' not in driver.page_source:
+        time.sleep(2)
+
+
+def update_factors_nfe(source_file):
     """Формирует обновлённый отчёт по факторам из NFE"""
     try:
-        driver.get(url_factors_nfe)
-        driver.implicitly_wait(10)
-        time.sleep(1)
-        driver.find_element(
-            By.ID,
-            'ctl00_ctl00_PageContent_Content_Login_FormLayout_Login_TextBox_I'
-        ).send_keys(USER_NFE)
+        login_nfe(url_factors_nfe)
+        part_id = 'ctl00_ctl00_PageContent_Content_Scorecards_PageControl_'
+        driver.find_element(By.ID, part_id + 'T1T').click()
         driver.implicitly_wait(2)
         driver.find_element(
-            By.ID,
-            'ctl00_ctl00_PageContent_Content_Login_FormLayout_Password_TextB'
-            'ox_I'
-        ).send_keys(PASSWORD_NFE)
-        driver.implicitly_wait(2)
-        driver.find_element(
-            By.ID,
-            'ctl00_ctl00_PageContent_Content_Login_FormLayout_Login_Button_CD'
-        ).click()
-        driver.implicitly_wait(10)
-        time.sleep(1)
-        driver.find_element(
-            By.ID,
-            'ctl00_ctl00_PageContent_Content_Scorecards_PageControl_T1T'
-        ).click()
-        driver.implicitly_wait(2)
-        driver.find_element(
-            By.ID,
-            'ctl00_ctl00_PageContent_Content_Scorecards_PageControl_SearchFilt'
-            'er_FormLayout_DateFrom_DateEdit_I'
+            By.ID, part_id + 'SearchFilter_FormLayout_DateFrom_DateEdit_I'
         ).send_keys(FACTOR_START)
         driver.implicitly_wait(2)
         driver.find_element(
-            By.ID,
-            'ctl00_ctl00_PageContent_Content_Scorecards_PageControl_SearchFil'
-            'ter_FormLayout_Supplier_ComboBox_DDD_L_LBI4T0'
+            By.ID, part_id + 'SearchFilter_FormLayout_Supplier_ComboBox_B-1'
         ).click()
         driver.implicitly_wait(2)
         driver.find_element(
             By.ID,
-            'ctl00_ctl00_PageContent_Content_Scorecards_PageControl_SearchFilt'
-            'er_FormLayout_Search_Button_I'
+            part_id + 'SearchFilter_FormLayout_Supplier_ComboBox_DDD_L_LBI4T0'
         ).click()
         driver.implicitly_wait(2)
-        time.sleep(3)
-    finally:
+        driver.find_element(
+            By.ID, part_id + 'SearchFilter_FormLayout_Search_Button'
+        ).click()
+        driver.implicitly_wait(2)
+
+        while 'Традиция' not in driver.page_source:
+            time.sleep(2)
+
+        if source_file in os.listdir(SOURCE_DIR):
+            os.remove(SOURCE_DIR + source_file)
+        driver.find_element(
+            By.ID,
+            part_id + 'SearchResult_FormLayout_SearchResult_ToolbarExportUser'
+            'ControlItems_MenuExportButtons_DXI2_'
+        ).click()
+        flag = True
+
+        while flag:
+            if source_file not in os.listdir(SOURCE_DIR):
+                time.sleep(2)
+            else:
+                flag = False
+
+        print('Выгрузка по факторам из NFE обновлена!')
+    except Exception:
         driver.quit()
 
 
