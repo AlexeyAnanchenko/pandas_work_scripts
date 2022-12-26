@@ -57,13 +57,19 @@ def filtered_factors(file=SOURCE_FILE, column=FACTOR, skip=0):
 
 
 def add_num_factors(df):
-    """Функция добавляет номер фактора из строк"""
-    cleared_rows = []
+    """Функция добавляет номер фактора и преобразует ссылки"""
+    prefix = 'https://forecast.alidi.ru/'
+    num_factors = []
+    ref = {}
     ch_1 = '>'
     ch_2 = '<'
+    ch_3 = 'href="'
+    ch_4 = '">'
     for row in df[REF_FACTOR_LOC]:
-        cleared_rows.append(row[(row.find(ch_1) + 1):row.find(ch_2, 1)])
-    df[FACTOR_NUM] = cleared_rows
+        num_factors.append(row[(row.find(ch_1) + 1):row.find(ch_2, 1)])
+        ref[row] = prefix + row[(row.find(ch_3) + len(ch_3)):row.find(ch_4)]
+    df[FACTOR_NUM] = num_factors
+    df = df.replace({REF_FACTOR_LOC: ref})
     return df
 
 
