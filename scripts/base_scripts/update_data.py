@@ -155,17 +155,19 @@ def update_factors_nfe(source_file):
             By.ID, part_id + 'SearchFilter_FormLayout_Supplier_ComboBox_B-1'
         ).click()
         driver.implicitly_wait(2)
+        time.sleep(1)
         driver.find_element(
             By.ID,
             part_id + 'SearchFilter_FormLayout_Supplier_ComboBox_DDD_L_LBI4T0'
         ).click()
         driver.implicitly_wait(2)
+        time.sleep(1)
         driver.find_element(
             By.ID, part_id + 'SearchFilter_FormLayout_Search_Button'
         ).click()
         driver.implicitly_wait(2)
 
-        while 'Традиция' not in driver.page_source:
+        while 'SearchResult_GridView_DXDataRow0' not in driver.page_source:
             time.sleep(2)
 
         if source_file in os.listdir(SOURCE_DIR):

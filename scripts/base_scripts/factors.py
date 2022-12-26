@@ -16,7 +16,7 @@ from settings import FACTOR_NUM, REF_FACTOR, DATE_EXPIRATION, FACTOR_PERIOD
 from settings import FACTOR_STATUS, DATE_CREATION, DATE_START, NAME_HOLDING
 from settings import EAN, PRODUCT, LEVEL_3, DESCRIPTION, USER, PLAN_NFE
 from settings import FACT_NFE, ADJUSTMENT_PBI, SALES_PBI, RESERVES_PBI
-from settings import CUTS_PBI
+from settings import CUTS_PBI, LINK, LINK_HOLDING
 from update_data import update_factors_nfe, update_factors_pbi
 
 
@@ -89,6 +89,8 @@ def add_pbi_col(df):
         df_pb[[LINK_FACTOR, ORDER_LOC, SALES_LOC, RESERVES_LOC, CUTS_LOC]],
         on=LINK_FACTOR, how='left'
     )
+    df[LINK] = df[WHS] + df[EAN_LOC].map(str)
+    df[LINK_HOLDING] = df[WHS] + df[HOLDING_LOC] + df[EAN_LOC].map(str)
     return df
 
 
@@ -109,11 +111,11 @@ def split_by_month(df):
 
 def reindex_rename(df):
     result_df = df[[
-        FACTOR_LOC, REF_FACTOR_LOC, FACTOR_NUM, FACTOR_STATUS_LOC,
-        FACTOR_PERIOD, DATE_CREATION_LOC, DATE_START_LOC, DATE_EXPIRATION_LOC,
-        WHS, HOLDING_LOC, EAN_LOC, PRODUCT_LOC, LEVEL_3_LOC, DESCRIPTION_LOC,
-        USER_LOC, PLAN_LOC, FACT_LOC, ORDER_LOC, SALES_LOC, RESERVES_LOC,
-        CUTS_LOC
+        LINK, LINK_HOLDING, FACTOR_LOC, REF_FACTOR_LOC, FACTOR_NUM,
+        FACTOR_STATUS_LOC, FACTOR_PERIOD, DATE_CREATION_LOC, DATE_START_LOC,
+        DATE_EXPIRATION_LOC, WHS, HOLDING_LOC, EAN_LOC, PRODUCT_LOC,
+        LEVEL_3_LOC, DESCRIPTION_LOC, USER_LOC, PLAN_LOC, FACT_LOC, ORDER_LOC,
+        SALES_LOC, RESERVES_LOC, CUTS_LOC
     ]].rename(columns={
         FACTOR_LOC: FACTOR, REF_FACTOR_LOC: REF_FACTOR,
         FACTOR_STATUS_LOC: FACTOR_STATUS, DATE_CREATION_LOC: DATE_CREATION,

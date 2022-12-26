@@ -8,6 +8,7 @@ from os.path import abspath, dirname
 BASE_DIR = dirname(dirname(abspath(__file__)))
 SOURCE_DIR = BASE_DIR + '\\Исходники\\'
 RESULT_DIR = BASE_DIR + '\\Результаты\\'
+REPORT_DIR = RESULT_DIR + '\\Отчёты\\'
 
 NUM_MONTHS = 3
 TARGET_STOCK = 1
@@ -75,5 +76,7 @@ TABLE_SALES_HOLDINGS = 'Продажи по клиентам и складам.x
 TABLE_SALES = 'Продажи по складам.xlsx'
 TABLE_RESERVE = 'Резервы.xlsx'
 TABLE_FACTORS = 'Факторы.xlsx'
+
+REPORT_POTENTIAL_SALES = 'Потенциальные продажи.xlsx'
 
 DATE_COL = [DATE_RSV, DATE_CREATION, DATE_START, DATE_EXPIRATION]
