@@ -130,10 +130,10 @@ def login_nfe(url):
     part_id = 'ctl00_ctl00_PageContent_Content_Login_FormLayout_'
     login = driver.find_element(By.ID, part_id + 'Login_TextBox_I')
     login.send_keys(USER_NFE)
-    driver.implicitly_wait(2)
+    driver.implicitly_wait(3)
     password = driver.find_element(By.ID, part_id + 'Password_TextBox_I')
     password.send_keys(PASSWORD_NFE)
-    driver.implicitly_wait(2)
+    driver.implicitly_wait(3)
     driver.find_element(By.ID, part_id + 'Login_Button_CD').click()
 
     while 'Меню' not in driver.page_source:
@@ -146,26 +146,26 @@ def update_factors_nfe(source_file):
         login_nfe(url_factors_nfe)
         part_id = 'ctl00_ctl00_PageContent_Content_Scorecards_PageControl_'
         driver.find_element(By.ID, part_id + 'T1T').click()
-        driver.implicitly_wait(2)
+        driver.implicitly_wait(3)
         driver.find_element(
             By.ID, part_id + 'SearchFilter_FormLayout_DateFrom_DateEdit_I'
         ).send_keys(FACTOR_START)
-        driver.implicitly_wait(2)
+        driver.implicitly_wait(3)
         driver.find_element(
             By.ID, part_id + 'SearchFilter_FormLayout_Supplier_ComboBox_B-1'
         ).click()
-        driver.implicitly_wait(2)
+        driver.implicitly_wait(3)
         time.sleep(1)
         driver.find_element(
             By.ID,
             part_id + 'SearchFilter_FormLayout_Supplier_ComboBox_DDD_L_LBI4T0'
         ).click()
-        driver.implicitly_wait(2)
+        driver.implicitly_wait(3)
         time.sleep(1)
         driver.find_element(
             By.ID, part_id + 'SearchFilter_FormLayout_Search_Button'
         ).click()
-        driver.implicitly_wait(2)
+        driver.implicitly_wait(3)
 
         while 'SearchResult_GridView_DXDataRow0' not in driver.page_source:
             time.sleep(2)
