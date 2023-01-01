@@ -17,7 +17,7 @@ from settings import FACTOR_STATUS, DATE_CREATION, DATE_START, NAME_HOLDING
 from settings import EAN, PRODUCT, LEVEL_3, DESCRIPTION, USER, PLAN_NFE
 from settings import FACT_NFE, ADJUSTMENT_PBI, SALES_PBI, RESERVES_PBI
 from settings import CUTS_PBI, LINK, LINK_HOLDING
-from update_data import update_factors_nfe, update_factors_pbi
+# from update_data import update_factors_nfe, update_factors_pbi
 
 
 SOURCE_FILE = 'NovoForecastServer_РезультатыПоиска.xlsx'
@@ -129,8 +129,8 @@ def reindex_rename(df):
 
 
 def main():
-    update_factors_nfe(SOURCE_FILE)
-    update_factors_pbi(SOURCE_FILE_PB)
+    # update_factors_nfe(SOURCE_FILE)
+    # update_factors_pbi(SOURCE_FILE_PB)
     factors = split_by_month(add_pbi_col(add_num_factors(filtered_factors())))
     save_to_excel(RESULT_DIR + TABLE_FACTORS, reindex_rename(factors))
     print_complete(__file__)

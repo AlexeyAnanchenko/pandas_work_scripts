@@ -12,12 +12,12 @@ from selenium.webdriver.support.select import Select
 from settings import SOURCE_DIR, FACTOR_START
 from hidden_settings import url_remains, url_reserve, url_price
 from hidden_settings import url_factors_nfe, url_factors_pbi
-from hidden_settings import USER_NFE, PASSWORD_NFE
+from hidden_settings import url_factors_nfe_promo, USER_NFE, PASSWORD_NFE
 
 
 options = Options()
 options.add_argument('–disable-blink-features=BlockCredentialedSubresources')
-options.add_argument('headless')
+# options.add_argument('headless')
 options.add_argument('log-level=1')
 options.add_experimental_option("prefs", {
     "download.default_directory": SOURCE_DIR
@@ -190,6 +190,26 @@ def update_factors_nfe(source_file):
         driver.quit()
 
 
+def update_factors_nfe_promo():
+    """Обновляет файл со списком акций из NFE"""
+    try:
+        driver.get(url_factors_nfe_promo)
+
+        while "Акции" not in driver.page_source:
+            time.sleep(2)
+
+        part_id = 'ctl00_ctl00_PageToolbarPanel_PageToolbar_Toolbar_Tool'
+        export_id = part_id + 'BarPanel_UserControl_PageToolbarMenu_DXI14_P'
+        driver.find_element(By.ID, export_id).click()
+        driver.implicitly_wait(3)
+        xlsx_id = part_id + 'BarPanel_UserControl_PageToolbarMenu_DXI14i1_T'
+        driver.find_element(By.ID, xlsx_id).click()
+        driver.implicitly_wait(3)
+        time.sleep(7)
+    finally:
+        driver.quit()
+
+
 def update_factors_pbi(source_file):
     """Формирует обновлённый отчёт по факторам из PBI отчёт для PG"""
     try:
@@ -232,3 +252,8 @@ def update_factors_pbi(source_file):
         print('Выгрузка по факторам из PBI обновлена!')
     finally:
         driver.quit()
+
+
+# from factors import SOURCE_FILE
+# update_factors_nfe(SOURCE_FILE)
+# update_factors_nfe_promo()
