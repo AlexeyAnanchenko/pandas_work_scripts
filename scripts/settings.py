@@ -65,6 +65,7 @@ USER = 'Ответственный пользователь'
 SALES_PBI = 'Продажи PBI, шт'
 CUTS_PBI = 'Урезания PBI, шт'
 RESERVES_PBI = 'Резервы PBI, шт'
+PURPOSE_PROMO = 'Цель фактора (для акций)'
 
 TABLE_ASSORTMENT = 'Ассортимент.xlsx'
 TABLE_DIRECTORY = 'Справочник_ШК.xlsx'

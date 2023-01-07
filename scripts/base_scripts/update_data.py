@@ -17,7 +17,7 @@ from hidden_settings import url_factors_nfe_promo, USER_NFE, PASSWORD_NFE
 
 options = Options()
 options.add_argument('–disable-blink-features=BlockCredentialedSubresources')
-# options.add_argument('headless')
+options.add_argument('headless')
 options.add_argument('log-level=1')
 options.add_experimental_option("prefs", {
     "download.default_directory": SOURCE_DIR
@@ -190,7 +190,7 @@ def update_factors_nfe(source_file):
         driver.quit()
 
 
-def update_factors_nfe_promo():
+def update_factors_nfe_promo(source_file):
     """Обновляет файл со списком акций из NFE"""
     try:
         driver.get(url_factors_nfe_promo)
@@ -203,10 +203,21 @@ def update_factors_nfe_promo():
         driver.find_element(By.ID, export_id).click()
         driver.implicitly_wait(3)
         xlsx_id = part_id + 'BarPanel_UserControl_PageToolbarMenu_DXI14i1_T'
+
+        if source_file in os.listdir(SOURCE_DIR):
+            os.remove(SOURCE_DIR + source_file)
+
         driver.find_element(By.ID, xlsx_id).click()
-        driver.implicitly_wait(3)
-        time.sleep(7)
-    finally:
+        flag = True
+
+        while flag:
+            if source_file not in os.listdir(SOURCE_DIR):
+                time.sleep(2)
+            else:
+                flag = False
+
+        print('Выгрузка акций из NFE обновлена!')
+    except Exception:
         driver.quit()
 
 
@@ -252,8 +263,3 @@ def update_factors_pbi(source_file):
         print('Выгрузка по факторам из PBI обновлена!')
     finally:
         driver.quit()
-
-
-# from factors import SOURCE_FILE
-# update_factors_nfe(SOURCE_FILE)
-# update_factors_nfe_promo()
