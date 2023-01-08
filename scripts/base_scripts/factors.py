@@ -17,8 +17,9 @@ from settings import FACTOR_STATUS, DATE_CREATION, DATE_START, NAME_HOLDING
 from settings import EAN, PRODUCT, LEVEL_3, DESCRIPTION, USER, PLAN_NFE
 from settings import FACT_NFE, ADJUSTMENT_PBI, SALES_PBI, RESERVES_PBI
 from settings import CUTS_PBI, LINK, LINK_HOLDING, PURPOSE_PROMO
-from update_data import update_factors_nfe, update_factors_pbi
-from update_data import update_factors_nfe_promo
+from settings import ALL_CLIENTS
+# from update_data import update_factors_nfe, update_factors_pbi
+# from update_data import update_factors_nfe_promo
 
 
 SOURCE_FILE = 'NovoForecastServer_РезультатыПоиска.xlsx'
@@ -79,6 +80,8 @@ def add_num_factors(df):
 def add_pbi_and_purpose(df):
     """Добавляет столбцы из отчёта в PBI по факторам и цель акции"""
     df_pb = filtered_factors(SOURCE_FILE_PB, TYPE_FACTOR, 2)
+    df_pb = utils.void_to(df_pb, HOLDING_LOC, ALL_CLIENTS)
+    df = utils.void_to(df, HOLDING_LOC, ALL_CLIENTS)
     df_pb.insert(
         0, LINK_FACTOR,
         (df_pb[FACTOR_NUM_PB].map(str) + df_pb[HOLDING_LOC]
@@ -141,9 +144,9 @@ def reindex_rename(df):
 
 
 def main():
-    update_factors_nfe(SOURCE_FILE)
-    update_factors_nfe_promo(SOURCE_FILE_PROMO)
-    update_factors_pbi(SOURCE_FILE_PB)
+    # update_factors_nfe(SOURCE_FILE)
+    # update_factors_nfe_promo(SOURCE_FILE_PROMO)
+    # update_factors_pbi(SOURCE_FILE_PB)
     factors = add_pbi_and_purpose(add_num_factors(filtered_factors()))
     factors = split_by_month(factors)
     save_to_excel(RESULT_DIR + TABLE_FACTORS, reindex_rename(factors))
