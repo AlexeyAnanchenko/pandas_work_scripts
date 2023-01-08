@@ -10,14 +10,15 @@ import datetime as dt
 from dateutil import relativedelta
 
 from hidden_settings import WAREHOUSE_FACTORS, prefix
-from service import save_to_excel, print_complete
+from service import save_to_excel, print_complete, get_data
 from settings import SOURCE_DIR, RESULT_DIR, TABLE_FACTORS, WHS, FACTOR
 from settings import FACTOR_NUM, REF_FACTOR, DATE_EXPIRATION, FACTOR_PERIOD
 from settings import FACTOR_STATUS, DATE_CREATION, DATE_START, NAME_HOLDING
 from settings import EAN, PRODUCT, LEVEL_3, DESCRIPTION, USER, PLAN_NFE
 from settings import FACT_NFE, ADJUSTMENT_PBI, SALES_PBI, RESERVES_PBI
 from settings import CUTS_PBI, LINK, LINK_HOLDING, PURPOSE_PROMO
-from settings import ALL_CLIENTS
+from settings import ALL_CLIENTS, TOTAL_RSV
+from settings import TABLE_SALES_HOLDINGS, TABLE_RESERVE
 # from update_data import update_factors_nfe, update_factors_pbi
 # from update_data import update_factors_nfe_promo
 
@@ -143,13 +144,44 @@ def reindex_rename(df):
     return result_df
 
 
+def add_sales_and_rsv(df):
+    sales, col_sales = get_data(TABLE_SALES_HOLDINGS)
+    rsv = get_data(TABLE_RESERVE)
+    static_col = [LINK, LINK_HOLDING, WHS, EAN, NAME_HOLDING]
+    num_col_sales = [
+        col_sales['pntm_sale'], col_sales['last_sale'],
+        col_sales['avg_cut_sale']
+    ]
+    num_col_rsv = [TOTAL_RSV]
+    clients = list(set(df[NAME_HOLDING].to_list()))
+    mult_clients = [i for i in clients if '), ' in str(i)]
+
+    if mult_clients:
+        sales = utils.group_mult_clients(
+            sales, mult_clients, static_col, num_col_sales)
+        rsv = utils.group_mult_clients(
+            rsv, mult_clients, static_col, num_col_rsv)
+
+    df = df.merge(
+        sales[static_col + num_col_sales],
+        on=static_col,
+        how='left'
+    )
+    df = df.merge(
+        rsv[static_col + num_col_rsv],
+        on=static_col,
+        how='left'
+    )
+    return df
+
+
 def main():
     # update_factors_nfe(SOURCE_FILE)
     # update_factors_nfe_promo(SOURCE_FILE_PROMO)
     # update_factors_pbi(SOURCE_FILE_PB)
     factors = add_pbi_and_purpose(add_num_factors(filtered_factors()))
-    factors = split_by_month(factors)
-    save_to_excel(RESULT_DIR + TABLE_FACTORS, reindex_rename(factors))
+    factors = add_sales_and_rsv(reindex_rename(split_by_month(factors)))
+    save_to_excel(RESULT_DIR + TABLE_FACTORS, factors)
     print_complete(__file__)
 
 

@@ -119,16 +119,16 @@ def sales_by_client():
     numeric_col = [
         cut_col + sales_col + cuts_sales_col + avarage_col
     ]
+    group_df.insert(
+        0, LINK,
+        group_df[WHS] + group_df[EAN].map(int).map(str)
+    )
     return group_df, numeric_col
 
 
 def sales_by_warehouses(dataframe, numeric_columns):
     """Формирование фрейма данных продаж в разрезе склад-шк"""
 
-    dataframe.insert(
-        0, LINK,
-        dataframe[WHS] + dataframe[EAN].map(int).map(str)
-    )
     sequence_col = [LINK, WHS, EAN, PRODUCT]
     numeric_col_dict = {}
 

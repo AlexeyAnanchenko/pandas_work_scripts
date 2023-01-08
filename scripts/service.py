@@ -94,6 +94,7 @@ def get_col_sales(df):
     last_cut = cuts[-1]
     last_sale = sales[-1]
     last_cut_sale = cuts_sales[-1]
+    penultimate_sale = sales[-2]
     last = [last_cut, last_sale, last_cut_sale]
     avg_cut = avg[0]
     avg_sale = avg[1]
@@ -107,6 +108,7 @@ def get_col_sales(df):
         'last_cut': last_cut,
         'last_sale': last_sale,
         'last_cut_sale': last_cut_sale,
+        'pntm_sale': penultimate_sale,
         'last': last,
         'avg_cut': avg_cut,
         'avg_sale': avg_sale,
