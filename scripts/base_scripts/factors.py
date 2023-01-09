@@ -223,6 +223,8 @@ def replace_general_sales(df):
     указаны, либо где холдинги традиционной торговли
     """
     sales, col_sales = get_data(TABLE_SALES)
+    rsv = get_data(TABLE_RESERVE)
+    rsv = rsv.groupby([LINK]).agg({TOTAL_RSV: 'sum'}).reset_index()
     TRAD_HOLDINGS.append(ALL_CLIENTS)
     df = df.merge(
         sales[[
@@ -232,6 +234,8 @@ def replace_general_sales(df):
         on=LINK,
         how='left'
     )
+    df = df.merge(rsv, on=LINK, how='left')
+
     idx = df[
         (df[FACTOR_PERIOD] == CURRENT) & (df[NAME_HOLDING].isin(TRAD_HOLDINGS))
     ].index
@@ -247,9 +251,11 @@ def replace_general_sales(df):
 
     idx = df[df[NAME_HOLDING].isin(TRAD_HOLDINGS)].index
     df.loc[idx, AVG_FACTOR_PERIOD] = df.loc[idx, col_sales['avg_cut_sale']]
+    df.loc[idx, RSV_FACTOR_PERIOD] = df.loc[idx, TOTAL_RSV]
     df.drop(col_sales['last_sale'], axis=1, inplace=True)
     df.drop(col_sales['pntm_sale'], axis=1, inplace=True)
     df.drop(col_sales['avg_cut_sale'], axis=1, inplace=True)
+    df.drop(TOTAL_RSV, axis=1, inplace=True)
 
     TRAD_HOLDINGS.remove(ALL_CLIENTS)
     idx = df[df[NAME_HOLDING].isin(TRAD_HOLDINGS)].index
