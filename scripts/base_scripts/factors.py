@@ -20,6 +20,7 @@ from settings import CUTS_PBI, LINK, LINK_HOLDING, PURPOSE_PROMO
 from settings import ALL_CLIENTS, TOTAL_RSV, SALES_FACTOR_PERIOD, NAME_TRAD
 from settings import AVG_FACTOR_PERIOD, RSV_FACTOR_PERIOD
 from settings import TABLE_SALES_HOLDINGS, TABLE_RESERVE, TABLE_SALES
+from settings import PAST, CURRENT, FUTURE
 from update_data import update_factors_nfe, update_factors_pbi
 from update_data import update_factors_nfe_promo
 
@@ -52,9 +53,6 @@ DATE_EXPIRATION_LOC = 'Дата окончания действия фактор
 DESCRIPTION_LOC = 'Описание'
 NUMBER_PROMO = 'Номер'
 PURPOSE = 'Цель'
-PAST = 'Прошедший'
-CURRENT = 'Текущий'
-FUTURE = 'Будущий'
 TRAD_HOLDINGS = [
     'Васильева Татьяна Викторовна ИП (8108456)',
     'Воронина Елена Сергеевна ИП (8179862)',
