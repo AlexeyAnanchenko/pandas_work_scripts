@@ -132,11 +132,3 @@ def get_data(file):
 def print_complete(file):
     """Функция выводит сообщение об отработке скрипта"""
     print('Скрипт {} выполнен!'.format(basename(file)))
-
-
-# def replace_symbol(df, column, symbol_old, symbol_new):
-#     """Функция заменяет символы в выбранном столбце dataframe"""
-#     col_list = df[column].to_list()
-#     replace_list = [str(i).replace(symbol_old, symbol_new) for i in col_list]
-#     df[column] = replace_list
-#     return df
