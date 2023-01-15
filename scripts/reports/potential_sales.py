@@ -2,6 +2,8 @@
 Формирует отчёт по максимальным потенциальным продажам текущего месяца
 
 """
+import numpy as np
+
 import utils
 utils.path_append()
 
@@ -10,9 +12,10 @@ from settings import REPORT_POTENTIAL_SALES, REPORT_DIR, TABLE_FACTORS
 from settings import FACTOR_PERIOD, FACTOR_STATUS, CURRENT, PURPOSE_PROMO
 from settings import LINK, LINK_HOLDING, FACTOR, DATE_START, DATE_EXPIRATION
 from settings import WHS, NAME_HOLDING, EAN, PRODUCT, LEVEL_3, DESCRIPTION
-from settings import USER, PLAN_NFE, FACT_NFE, SALES_FACTOR_PERIOD
+from settings import USER, PLAN_NFE, SALES_FACTOR_PERIOD, MSU
 from settings import RSV_FACTOR_PERIOD, TABLE_SALES_HOLDINGS, TABLE_RESERVE
-from settings import SOFT_HARD_RSV, NAME_TRAD, ALL_CLIENTS
+from settings import SOFT_HARD_RSV, NAME_TRAD, ALL_CLIENTS, TABLE_DIRECTORY
+from settings import ELB_PRICE
 
 
 ACTIVE_STATUS = [
@@ -22,7 +25,9 @@ ACTIVE_STATUS = [
 ]
 INACTIVE_PURPOSE = 'Минимизация потерь'
 FACTOR_SALES = 'Продажи'
-ALIDI = 'Alidi Межфилиальные продажи (80000000)'
+ALIDI_MOVING = 'Alidi Межфилиальные продажи (80000000)'
+PLAN_MINUS_FACT = 'План - Факт'
+MAX_DEMAND = 'Максимальная потребность'
 
 
 def get_factors():
@@ -35,7 +40,7 @@ def get_factors():
     df = df[[
         LINK, LINK_HOLDING, FACTOR, DATE_START, DATE_EXPIRATION,
         WHS, NAME_HOLDING, EAN, DESCRIPTION,
-        USER, PLAN_NFE, FACT_NFE, SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD
+        USER, PLAN_NFE, SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD
     ]]
     return df
 
@@ -51,27 +56,50 @@ def merge_sales_rsv(df):
 
     for data in data_list:
         merge_df = data[0]
-        replacement_col = data[1]
-        replaceable_col = data[2]
+        replaceable_col = data[1]
+        replacement_col = data[2]
         merge_col.append(replacement_col)
-        df = df.rename(columns={replaceable_col: replacement_col})
+        merge_df = merge_df.rename(columns={replaceable_col: replacement_col})
         merge_df = merge_df[merge_df[replacement_col] != 0]
         df = df.merge(merge_df[merge_col], on=merge_col, how='outer')
         merge_col.pop()
 
-    unnecessary_clients = [NAME_TRAD, ALL_CLIENTS, ALIDI]
+    col_null = [PLAN_NFE, SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD]
+    for col in col_null:
+        df.loc[df[col].isnull(), col] = 0
+
+    df = df[df[NAME_HOLDING] != ALIDI_MOVING]
+    mult_clients = [NAME_TRAD, ALL_CLIENTS]
     clients = list(set(df[NAME_HOLDING].to_list()))
-    mult_clients = [i for i in clients if '), ' in str(i)]
-    unnecessary_clients.extend(mult_clients)
+    mult_clients.extend([i for i in clients if '), ' in str(i)])
+    df[PLAN_MINUS_FACT] = (df[PLAN_NFE]
+                           - df[SALES_FACTOR_PERIOD]
+                           - df[RSV_FACTOR_PERIOD])
+    df.loc[df[PLAN_MINUS_FACT] < 0, PLAN_MINUS_FACT] = 0
+    idx = df[df[NAME_HOLDING].isin(mult_clients)].index
+    df.loc[idx, PLAN_NFE] = df.loc[idx, PLAN_MINUS_FACT]
+    df.loc[idx, SALES_FACTOR_PERIOD] = 0
+    df.loc[idx, RSV_FACTOR_PERIOD] = 0
+    df[MAX_DEMAND] = np.maximum(
+        df[PLAN_NFE],
+        df[SALES_FACTOR_PERIOD] + df[RSV_FACTOR_PERIOD]
+    )
+    return df
 
-    for client in unnecessary_clients:
-        df = df[df[NAME_HOLDING] != client]
 
+def merge_directory(df):
+    direct = get_data(TABLE_DIRECTORY)[[EAN, PRODUCT, LEVEL_3, MSU, ELB_PRICE]]
+    df = df.merge(direct, on=EAN, how='left')[[
+        LINK, LINK_HOLDING, FACTOR, DATE_START, DATE_EXPIRATION, WHS,
+        NAME_HOLDING, EAN, PRODUCT, LEVEL_3, DESCRIPTION, USER, MSU, ELB_PRICE,
+        PLAN_NFE, SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD, MAX_DEMAND,
+        PLAN_MINUS_FACT
+    ]]
     return df
 
 
 def main():
-    df = merge_sales_rsv(get_factors())
+    df = merge_directory(merge_sales_rsv(get_factors()))
     save_to_excel(REPORT_DIR + REPORT_POTENTIAL_SALES, df)
     print_complete(__file__)
 
