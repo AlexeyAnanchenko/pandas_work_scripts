@@ -56,13 +56,16 @@ def merge_sales_rsv(df):
 
     for data in data_list:
         merge_df = data[0]
-        replaceable_col = data[1]
-        replacement_col = data[2]
-        merge_col.append(replacement_col)
-        merge_df = merge_df.rename(columns={replaceable_col: replacement_col})
-        merge_df = merge_df[merge_df[replacement_col] != 0]
-        df = df.merge(merge_df[merge_col], on=merge_col, how='outer')
-        merge_col.pop()
+        added_col = data[1]
+        result_col = data[2]
+        merge_df = merge_df[merge_df[added_col] != 0]
+        df = df.merge(
+            merge_df[merge_col + [added_col]],
+            on=merge_col, how='outer'
+        )
+        idx = df[df[result_col].isnull()].index
+        df.loc[idx, result_col] = df.loc[idx, added_col]
+        df.drop(added_col, axis=1, inplace=True)
 
     col_null = [PLAN_NFE, SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD]
     for col in col_null:
@@ -84,6 +87,8 @@ def merge_sales_rsv(df):
         df[PLAN_NFE],
         df[SALES_FACTOR_PERIOD] + df[RSV_FACTOR_PERIOD]
     )
+    df.loc[idx, RSV_FACTOR_PERIOD] = 0
+    df = df[df[MAX_DEMAND] != 0]
     return df
 
 
