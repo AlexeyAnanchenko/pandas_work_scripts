@@ -5,11 +5,12 @@
 import utils
 utils.path_append()
 
+import os
 import pandas as pd
 
 from hidden_settings import WAREHOUSE_REMAIN
 from service import get_filtered_df, save_to_excel, get_data, print_complete
-from settings import LINK, WHS, EAN, PRODUCT, TARGET_STOCK, OVERSTOCK
+from settings import LINK, WHS, EAN, PRODUCT, TARGET_STOCK, OVERSTOCK, TRANZIT
 from settings import FULL_REST, AVAILABLE_REST, SOFT_HARD_RSV, FREE_REST, QUOTA
 from settings import TABLE_REMAINS, TABLE_SALES, SOURCE_DIR, RESULT_DIR
 from settings import TABLE_DIRECTORY, MSU, FULL_REST_MSU, OVERSTOCK_MSU
@@ -25,6 +26,7 @@ FREE_REST_LOC = 'Свободный остаток (уч.ЕИ)'
 WHS_LOC = 'Склад'
 EAN_LOC = 'EAN'
 NAME = 'Наименование'
+TRANZIT_LOC = 'Транзит штук'
 
 
 def create_remains():
@@ -62,6 +64,23 @@ def create_remains():
     return yug_df
 
 
+def add_transit(df):
+    list_dir = os.listdir(SOURCE_DIR)
+    transit_file = None
+    for file in list_dir:
+        if 'Транзит' in file:
+            transit_file = file
+    if transit_file is not None:
+        xl = pd.ExcelFile(SOURCE_DIR + transit_file)
+        tz_df = get_filtered_df(xl, WAREHOUSE_REMAIN, WHS_LOC)
+        tz_df = tz_df.rename(columns={TRANZIT_LOC: TRANZIT})
+        tz_df[LINK] = tz_df[WHS_LOC] + tz_df[EAN_LOC].map(str)
+        tz_df = tz_df.groupby([LINK]).agg({TRANZIT: 'sum'})
+        df = df.merge(tz_df, on=LINK, how='left')
+        df.loc[df[TRANZIT].isnull(), TRANZIT] = 0
+    return df
+
+
 def added_overstock(df):
     sales, sales_col = get_data(TABLE_SALES)
     avg_cut_sale = sales_col['avg_cut_sale']
@@ -86,7 +105,8 @@ def conversion_msu(df):
 
 def main():
     update_remains(SOURCE_FILE)
-    result_df = conversion_msu(added_overstock(create_remains()))
+    result_df = add_transit(create_remains())
+    result_df = conversion_msu(added_overstock(result_df))
     save_to_excel(RESULT_DIR + TABLE_REMAINS, result_df)
     print_complete(__file__)
 
