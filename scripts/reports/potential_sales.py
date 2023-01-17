@@ -15,7 +15,7 @@ from settings import WHS, NAME_HOLDING, EAN, PRODUCT, LEVEL_3, DESCRIPTION
 from settings import USER, PLAN_NFE, SALES_FACTOR_PERIOD, MSU
 from settings import RSV_FACTOR_PERIOD, TABLE_SALES_HOLDINGS, TABLE_RESERVE
 from settings import SOFT_HARD_RSV, NAME_TRAD, ALL_CLIENTS, TABLE_DIRECTORY
-from settings import ELB_PRICE
+from settings import ELB_PRICE, TABLE_REMAINS, TRANZIT, FREE_REST
 
 
 ACTIVE_STATUS = [
@@ -28,6 +28,7 @@ FACTOR_SALES = 'Продажи'
 ALIDI_MOVING = 'Alidi Межфилиальные продажи (80000000)'
 PLAN_MINUS_FACT = 'План - Факт'
 MAX_DEMAND = 'Максимальная потребность'
+RESULT_REMAINS = 'Остаток, шт'
 
 
 def get_factors():
@@ -100,6 +101,15 @@ def merge_directory(df):
         PLAN_NFE, SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD, MAX_DEMAND,
         PLAN_MINUS_FACT
     ]]
+    return df
+
+
+def merge_remains(df):
+    remains = get_data(TABLE_REMAINS)[[LINK, FREE_REST, TRANZIT]]
+    df = df.merge(remains, on=LINK, how='left')
+    df.loc[df[TRANZIT] < 0, TRANZIT] = 0
+    df.loc[df[FREE_REST] < 0, FREE_REST] = 0
+    df[RESULT_REMAINS] = df[FREE_REST] + df[TRANZIT]
     return df
 
 
