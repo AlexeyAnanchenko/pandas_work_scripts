@@ -107,8 +107,8 @@ def merge_directory(df):
 def merge_remains(df):
     remains = get_data(TABLE_REMAINS)[[LINK, FREE_REST, TRANZIT]]
     df = df.merge(remains, on=LINK, how='left')
-    df.loc[df[TRANZIT] < 0, TRANZIT] = 0
-    df.loc[df[FREE_REST] < 0, FREE_REST] = 0
+    df.loc[df[TRANZIT].isnull(), TRANZIT] = 0
+    df.loc[df[FREE_REST].isnull(), FREE_REST] = 0
     df[RESULT_REMAINS] = df[FREE_REST] + df[TRANZIT]
     return df
 
