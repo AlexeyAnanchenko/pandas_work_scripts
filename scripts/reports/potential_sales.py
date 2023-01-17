@@ -114,7 +114,7 @@ def merge_remains(df):
 
 
 def main():
-    df = merge_directory(merge_sales_rsv(get_factors()))
+    df = merge_remains(merge_directory(merge_sales_rsv(get_factors())))
     save_to_excel(REPORT_DIR + REPORT_POTENTIAL_SALES, df)
     print_complete(__file__)
 
