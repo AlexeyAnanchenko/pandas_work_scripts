@@ -52,15 +52,6 @@ def create_remains():
     yug_df[FREE_REST] = yug_df[AVAILABLE_REST] - yug_df[QUOTA]
     yug_df.loc[yug_df[FREE_REST] < 0, FREE_REST] = 0
     yug_df.loc[yug_df[AVAILABLE_REST] < 0, AVAILABLE_REST] = 0
-    yug_df = yug_df.merge(
-        filter_df[[EAN, PRODUCT]].drop_duplicates(subset=[EAN]),
-        on=EAN,
-        how='left',
-    )
-    yug_df = yug_df.reindex(columns=[
-        LINK, WHS, EAN, PRODUCT,
-        FULL_REST, SOFT_HARD_RSV, AVAILABLE_REST, QUOTA, FREE_REST
-    ])
     return yug_df
 
 
@@ -73,11 +64,28 @@ def add_transit(df):
     if transit_file is not None:
         xl = pd.ExcelFile(SOURCE_DIR + transit_file)
         tz_df = get_filtered_df(xl, WAREHOUSE_REMAIN, WHS_LOC)
-        tz_df = tz_df.rename(columns={TRANZIT_LOC: TRANZIT})
-        tz_df[LINK] = tz_df[WHS_LOC] + tz_df[EAN_LOC].map(str)
-        tz_df = tz_df.groupby([LINK]).agg({TRANZIT: 'sum'})
-        df = df.merge(tz_df, on=LINK, how='left')
-        df.loc[df[TRANZIT].isnull(), TRANZIT] = 0
+        tz_df = tz_df.rename(columns={
+            TRANZIT_LOC: TRANZIT,
+            EAN_LOC: EAN,
+            WHS_LOC: WHS
+        })
+        tz_df[LINK] = tz_df[WHS] + tz_df[EAN].map(str)
+        static_col = [LINK, WHS, EAN]
+        tz_df = tz_df.groupby(static_col).agg({TRANZIT: 'sum'}).reset_index()
+        df = df.merge(tz_df, on=static_col, how='outer')
+        direct = get_data(TABLE_DIRECTORY)[[EAN, PRODUCT]]
+        df = df.merge(direct, on=EAN, how='left')
+        dig_col = [
+            FULL_REST, SOFT_HARD_RSV, AVAILABLE_REST, QUOTA, FREE_REST, TRANZIT
+        ]
+        static_col.append(PRODUCT)
+        df = df.reindex(columns=static_col + dig_col)
+        for col in dig_col:
+            df.loc[df[col].isnull(), col] = 0
+        df.drop(
+            labels=list(df[(df[FULL_REST] == 0) & (df[TRANZIT] == 0)].index),
+            axis=0, inplace=True
+        )
     return df
 
 
@@ -89,7 +97,6 @@ def added_overstock(df):
     idx = df[df[OVERSTOCK].isnull()].index
     df.loc[idx, OVERSTOCK] = df.loc[idx, FULL_REST]
     df.loc[df[OVERSTOCK] < 0, OVERSTOCK] = 0
-    df.drop(labels=list(df[df[FULL_REST] == 0].index), axis=0, inplace=True)
     df.loc[df[df[avg_cut_sale].isnull()].index, avg_cut_sale] = 0
     return df
 
