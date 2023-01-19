@@ -26,9 +26,13 @@ ACTIVE_STATUS = [
 INACTIVE_PURPOSE = 'Минимизация потерь'
 FACTOR_SALES = 'Продажи'
 ALIDI_MOVING = 'Alidi Межфилиальные продажи (80000000)'
-PLAN_MINUS_FACT = 'План - Факт'
+PLAN_MINUS_FACT = 'План - Факт, шт'
+TOTAL_PLAN_MINUS_FACT = 'Сумма план - факт по Склад-EAN, шт'
 MAX_DEMAND = 'Максимальная потребность'
-RESULT_REMAINS = 'Остаток, шт'
+RESULT_REST = 'Остаток + транзит, шт'
+DIST_FREE_REST = 'Свободный остаток к распределению, шт'
+DIST_RESULT_REST = 'Остаток + транзит к распределению, шт'
+LINK_DATE = 'Сцепка с датами'
 
 
 def get_factors():
@@ -100,7 +104,9 @@ def merge_directory(df):
         WHS, NAME_HOLDING, EAN, PRODUCT, LEVEL_3, DESCRIPTION, USER, MSU,
         ELB_PRICE, PLAN_NFE, SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD,
         MAX_DEMAND, PLAN_MINUS_FACT
-    ]]
+    ]].sort_values(
+        by=[DATE_CREATION, DATE_START, FACTOR, WHS, NAME_HOLDING],
+        ascending=[True, True, False, True, True])
     return df
 
 
@@ -109,12 +115,38 @@ def merge_remains(df):
     df = df.merge(remains, on=LINK, how='left')
     df.loc[df[TRANZIT].isnull(), TRANZIT] = 0
     df.loc[df[FREE_REST].isnull(), FREE_REST] = 0
-    df[RESULT_REMAINS] = df[FREE_REST] + df[TRANZIT]
+    df[RESULT_REST] = df[FREE_REST] + df[TRANZIT]
+    return df
+
+
+def distribute_remainder(df):
+    dif_df = df.groupby([LINK]).agg({PLAN_MINUS_FACT: 'sum'}).rename(
+        columns={PLAN_MINUS_FACT: TOTAL_PLAN_MINUS_FACT}
+    )
+    df = df.merge(dif_df, on=LINK, how='left')
+    df.loc[df[TRANZIT].isnull(), TOTAL_PLAN_MINUS_FACT] = 0
+    df[DIST_RESULT_REST] = np.minimum(
+        df[RESULT_REST],
+        df[TOTAL_PLAN_MINUS_FACT]
+    )
+    df[DIST_FREE_REST] = np.minimum(df[FREE_REST], df[TOTAL_PLAN_MINUS_FACT])
+    df.insert(
+        0, LINK_DATE,
+        df[LINK_HOLDING] + df[DATE_CREATION].map(str) + df[DATE_START].map(str)
+    )
+    free_rest_df = df[
+        (df[PLAN_MINUS_FACT] != 0)
+        & (df[DIST_RESULT_REST] != 0)
+        & (df[TOTAL_PLAN_MINUS_FACT] > df[DIST_RESULT_REST])
+    ]
+    # комментарий к строке выше, по остальным берём меньшее из (план - факт и остаток)
+    save_to_excel(REPORT_DIR + 'ОТЧЁТИК.xlsx', free_rest_df)
     return df
 
 
 def main():
     df = merge_remains(merge_directory(merge_sales_rsv(get_factors())))
+    df = distribute_remainder(df)
     save_to_excel(REPORT_DIR + REPORT_POTENTIAL_SALES, df)
     print_complete(__file__)
 
