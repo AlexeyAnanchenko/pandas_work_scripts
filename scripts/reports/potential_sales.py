@@ -3,6 +3,7 @@
 
 """
 import numpy as np
+import pandas as pd
 
 import utils
 utils.path_append()
@@ -11,11 +12,11 @@ from service import save_to_excel, get_data, print_complete
 from settings import REPORT_POTENTIAL_SALES, REPORT_DIR, TABLE_FACTORS
 from settings import FACTOR_PERIOD, FACTOR_STATUS, CURRENT, PURPOSE_PROMO
 from settings import LINK, LINK_HOLDING, FACTOR, DATE_START, DATE_EXPIRATION
-from settings import WHS, NAME_HOLDING, EAN, PRODUCT, LEVEL_3, DESCRIPTION
+from settings import WHS, NAME_HOLDING, EAN, PRODUCT, LEVEL_3, FREE_REST
 from settings import USER, PLAN_NFE, SALES_FACTOR_PERIOD, MSU, DATE_CREATION
 from settings import RSV_FACTOR_PERIOD, TABLE_SALES_HOLDINGS, TABLE_RESERVE
 from settings import SOFT_HARD_RSV, NAME_TRAD, ALL_CLIENTS, TABLE_DIRECTORY
-from settings import ELB_PRICE, TABLE_REMAINS, TRANZIT, FREE_REST
+from settings import ELB_PRICE, TABLE_REMAINS, TRANZIT
 
 
 ACTIVE_STATUS = [
@@ -33,6 +34,7 @@ RESULT_REST = 'Остаток + транзит, шт'
 DIST_FREE_REST = 'Свободный остаток к распределению, шт'
 DIST_RESULT_REST = 'Остаток + транзит к распределению, шт'
 LINK_DATE = 'Сцепка с датами'
+FULL_REST_CUSTOMER = 'Остаток + Транзит под заказчика, шт'
 
 
 def get_factors():
@@ -44,8 +46,8 @@ def get_factors():
     ]
     df = df[[
         LINK, LINK_HOLDING, FACTOR, DATE_START, DATE_CREATION,
-        DATE_EXPIRATION, WHS, NAME_HOLDING, EAN, DESCRIPTION,
-        USER, PLAN_NFE, SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD
+        DATE_EXPIRATION, WHS, NAME_HOLDING, EAN, USER, PLAN_NFE,
+        SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD
     ]]
     return df
 
@@ -101,12 +103,13 @@ def merge_directory(df):
     direct = get_data(TABLE_DIRECTORY)[[EAN, PRODUCT, LEVEL_3, MSU, ELB_PRICE]]
     df = df.merge(direct, on=EAN, how='left')[[
         LINK, LINK_HOLDING, FACTOR, DATE_CREATION, DATE_START, DATE_EXPIRATION,
-        WHS, NAME_HOLDING, EAN, PRODUCT, LEVEL_3, DESCRIPTION, USER, MSU,
+        WHS, NAME_HOLDING, EAN, PRODUCT, LEVEL_3, USER, MSU,
         ELB_PRICE, PLAN_NFE, SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD,
         MAX_DEMAND, PLAN_MINUS_FACT
     ]].sort_values(
         by=[DATE_CREATION, DATE_START, FACTOR, WHS, NAME_HOLDING],
         ascending=[True, True, False, True, True])
+    df.loc[df[ELB_PRICE].isnull(), ELB_PRICE] = 0
     return df
 
 
@@ -117,6 +120,38 @@ def merge_remains(df):
     df.loc[df[FREE_REST].isnull(), FREE_REST] = 0
     df[RESULT_REST] = df[FREE_REST] + df[TRANZIT]
     return df
+
+
+def process_distribution(df, col_dis, result_col):
+    result_df = pd.DataFrame(columns=[LINK_DATE, result_col])
+    start_df = df.copy()
+
+    flag = True
+    while flag:
+        mid_df = start_df.copy().drop_duplicates(subset=LINK)
+        mid_df[result_col] = np.minimum(
+            mid_df[PLAN_MINUS_FACT],
+            mid_df[col_dis]
+        )
+        add_col = 'new'
+        mid_df[add_col] = np.maximum(
+            mid_df[col_dis] - mid_df[PLAN_MINUS_FACT], 0
+        )
+        mid_df = mid_df.drop(labels=[col_dis], axis=1)
+        mid_df[col_dis] = mid_df[add_col]
+        mid_df = mid_df.drop(labels=[add_col], axis=1)
+        start_df = start_df.drop(labels=[col_dis], axis=1)
+        start_df = start_df.merge(mid_df[[LINK, col_dis]], on=LINK, how='left')
+        result_df = pd.concat(
+            [result_df, mid_df[[LINK_DATE, result_col]]],
+            ignore_index=True
+        )
+        row_drop = mid_df[LINK_DATE].to_list()
+        start_df = start_df[~start_df.isin(row_drop).any(axis=1)]
+        if start_df.shape[0] == 0:
+            flag = False
+
+    return df.merge(result_df, on=LINK_DATE, how='left')
 
 
 def distribute_remainder(df):
@@ -134,13 +169,26 @@ def distribute_remainder(df):
         0, LINK_DATE,
         df[LINK_HOLDING] + df[DATE_CREATION].map(str) + df[DATE_START].map(str)
     )
-    free_rest_df = df[
+    full_rest_df = df[
         (df[PLAN_MINUS_FACT] != 0)
         & (df[DIST_RESULT_REST] != 0)
         & (df[TOTAL_PLAN_MINUS_FACT] > df[DIST_RESULT_REST])
-    ]
-    # комментарий к строке выше, по остальным берём меньшее из (план - факт и остаток)
-    save_to_excel(REPORT_DIR + 'ОТЧЁТИК.xlsx', free_rest_df)
+    ][[LINK_DATE, LINK, PLAN_MINUS_FACT, DIST_RESULT_REST]]
+    full_rest_df = process_distribution(
+        full_rest_df,
+        DIST_RESULT_REST,
+        FULL_REST_CUSTOMER
+    )
+    df = df.merge(
+        full_rest_df[[LINK_DATE, FULL_REST_CUSTOMER]],
+        on=LINK_DATE, how='left'
+    )
+    idx = df[df[FULL_REST_CUSTOMER].isnull()].index
+    df.loc[idx, FULL_REST_CUSTOMER] = np.minimum(
+        df.loc[idx, PLAN_MINUS_FACT],
+        df.loc[idx, DIST_RESULT_REST]
+    )
+    # save_to_excel(REPORT_DIR + 'ОТЧЁТИК.xlsx', full_rest_df)
     return df
 
 
