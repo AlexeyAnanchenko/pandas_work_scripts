@@ -88,5 +88,6 @@ TABLE_RESERVE = 'Резервы.xlsx'
 TABLE_FACTORS = 'Факторы.xlsx'
 
 REPORT_POTENTIAL_SALES = 'Потенциальные продажи.xlsx'
+REPORT_ELBRUS_FACTORS = 'Факторы Эльбрус.xlsx'
 
 DATE_COL = [DATE_RSV, DATE_CREATION, DATE_START, DATE_EXPIRATION]

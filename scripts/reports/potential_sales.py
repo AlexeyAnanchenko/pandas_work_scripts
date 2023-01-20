@@ -16,7 +16,8 @@ from settings import WHS, NAME_HOLDING, EAN, PRODUCT, LEVEL_3, FREE_REST
 from settings import USER, PLAN_NFE, SALES_FACTOR_PERIOD, MSU, DATE_CREATION
 from settings import RSV_FACTOR_PERIOD, TABLE_SALES_HOLDINGS, TABLE_RESERVE
 from settings import SOFT_HARD_RSV, NAME_TRAD, ALL_CLIENTS, TABLE_DIRECTORY
-from settings import ELB_PRICE, TABLE_REMAINS, TRANZIT
+from settings import ELB_PRICE, TABLE_REMAINS, TRANZIT, REPORT_ELBRUS_FACTORS
+from hidden_settings import WHS_POTENCTIAL_SALES, elbrus
 
 
 ACTIVE_STATUS = [
@@ -29,12 +30,17 @@ FACTOR_SALES = 'Продажи'
 ALIDI_MOVING = 'Alidi Межфилиальные продажи (80000000)'
 PLAN_MINUS_FACT = 'План - Факт, шт'
 TOTAL_PLAN_MINUS_FACT = 'Сумма план - факт по Склад-EAN, шт'
-MAX_DEMAND = 'Максимальная потребность'
+MAX_DEMAND = 'Максимальная потребность, шт'
 RESULT_REST = 'Остаток + транзит, шт'
 DIST_FREE_REST = 'Свободный остаток к распределению, шт'
 DIST_RESULT_REST = 'Остаток + транзит к распределению, шт'
 LINK_DATE = 'Сцепка с датами'
 FULL_REST_CUSTOMER = 'Остаток + Транзит под заказчика, шт'
+FREE_REST_CUSTOMER = 'Свободный остаток под заказчика, шт'
+TRANZIT_CUSTOMER = 'Транзит под заказчика, шт'
+MAX_REQUIREMENTS = 'Максимальная потребность с учётом стока, шт'
+TO_ORDER = 'К дозаказу, шт'
+TERRITORY = 'Территория'
 
 
 def get_factors():
@@ -154,6 +160,24 @@ def process_distribution(df, col_dis, result_col):
     return df.merge(result_df, on=LINK_DATE, how='left')
 
 
+def add_distribute(df, dist_col, result_col):
+    mid_df = df[
+        (df[PLAN_MINUS_FACT] != 0)
+        & (df[dist_col] != 0)
+        & (df[TOTAL_PLAN_MINUS_FACT] > df[dist_col])
+    ][[LINK_DATE, LINK, PLAN_MINUS_FACT, dist_col]]
+    mid_df = process_distribution(mid_df, dist_col, result_col)
+    df = df.merge(
+        mid_df[[LINK_DATE, result_col]],
+        on=LINK_DATE, how='left'
+    )
+    idx = df[df[result_col].isnull()].index
+    df.loc[idx, result_col] = np.minimum(
+        df.loc[idx, PLAN_MINUS_FACT], df.loc[idx, dist_col]
+    )
+    return df
+
+
 def distribute_remainder(df):
     dif_df = df.groupby([LINK]).agg({PLAN_MINUS_FACT: 'sum'}).rename(
         columns={PLAN_MINUS_FACT: TOTAL_PLAN_MINUS_FACT}
@@ -169,26 +193,14 @@ def distribute_remainder(df):
         0, LINK_DATE,
         df[LINK_HOLDING] + df[DATE_CREATION].map(str) + df[DATE_START].map(str)
     )
-    full_rest_df = df[
-        (df[PLAN_MINUS_FACT] != 0)
-        & (df[DIST_RESULT_REST] != 0)
-        & (df[TOTAL_PLAN_MINUS_FACT] > df[DIST_RESULT_REST])
-    ][[LINK_DATE, LINK, PLAN_MINUS_FACT, DIST_RESULT_REST]]
-    full_rest_df = process_distribution(
-        full_rest_df,
-        DIST_RESULT_REST,
-        FULL_REST_CUSTOMER
-    )
-    df = df.merge(
-        full_rest_df[[LINK_DATE, FULL_REST_CUSTOMER]],
-        on=LINK_DATE, how='left'
-    )
-    idx = df[df[FULL_REST_CUSTOMER].isnull()].index
-    df.loc[idx, FULL_REST_CUSTOMER] = np.minimum(
-        df.loc[idx, PLAN_MINUS_FACT],
-        df.loc[idx, DIST_RESULT_REST]
-    )
-    # save_to_excel(REPORT_DIR + 'ОТЧЁТИК.xlsx', full_rest_df)
+    df = add_distribute(df, DIST_RESULT_REST, FULL_REST_CUSTOMER)
+    df = add_distribute(df, DIST_FREE_REST, FREE_REST_CUSTOMER)
+    df[TRANZIT_CUSTOMER] = df[FULL_REST_CUSTOMER] - df[FREE_REST_CUSTOMER]
+    df[MAX_REQUIREMENTS] = (df[SALES_FACTOR_PERIOD]
+                            + df[RSV_FACTOR_PERIOD] + df[FULL_REST_CUSTOMER])
+    df[TO_ORDER] = df[PLAN_MINUS_FACT] - df[FULL_REST_CUSTOMER]
+    df.insert(3, TERRITORY, df[WHS])
+    df = df.replace({TERRITORY: WHS_POTENCTIAL_SALES})
     return df
 
 
@@ -196,6 +208,15 @@ def main():
     df = merge_remains(merge_directory(merge_sales_rsv(get_factors())))
     df = distribute_remainder(df)
     save_to_excel(REPORT_DIR + REPORT_POTENTIAL_SALES, df)
+    elb_df = df[df[TERRITORY].isin([elbrus])]
+    elb_df = elb_df.drop(
+        labels=[
+            LINK_DATE, TERRITORY, TOTAL_PLAN_MINUS_FACT, DIST_RESULT_REST,
+            DIST_FREE_REST
+        ],
+        axis=1
+    )
+    save_to_excel(REPORT_DIR + REPORT_ELBRUS_FACTORS, elb_df)
     print_complete(__file__)
 
 
