@@ -75,6 +75,9 @@ PAST = 'Прошедший'
 CURRENT = 'Текущий'
 FUTURE = 'Будущий'
 TRANZIT = 'Транзит, шт'
+INACTIVE_PURPOSE = 'Минимизация потерь'
+DATE_REGISTRY = 'Дата регистрации объёма'
+QUANT_REGISTRY = 'Зарегистрированное количество на дату, шт'
 
 TABLE_ASSORTMENT = 'Ассортимент.xlsx'
 TABLE_DIRECTORY = 'Справочник_ШК.xlsx'
@@ -86,8 +89,17 @@ TABLE_SALES_HOLDINGS = 'Продажи по клиентам и складам.x
 TABLE_SALES = 'Продажи по складам.xlsx'
 TABLE_RESERVE = 'Резервы.xlsx'
 TABLE_FACTORS = 'Факторы.xlsx'
+TABLE_REGISTRY_FACTORS = 'Реестр по факторам.xlsx'
 
 REPORT_POTENTIAL_SALES = 'Потенциальные продажи.xlsx'
 REPORT_ELBRUS_FACTORS = 'Факторы Эльбрус.xlsx'
 
-DATE_COL = [DATE_RSV, DATE_CREATION, DATE_START, DATE_EXPIRATION]
+DATE_COL = [
+    DATE_RSV, DATE_CREATION, DATE_START, DATE_EXPIRATION, DATE_REGISTRY
+]
+
+ACTIVE_STATUS = [
+    'Полностью согласован(а)',
+    'Завершен(а)',
+    'Частично согласован(а)'
+]

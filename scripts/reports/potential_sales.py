@@ -17,15 +17,10 @@ from settings import USER, PLAN_NFE, SALES_FACTOR_PERIOD, MSU, DATE_CREATION
 from settings import RSV_FACTOR_PERIOD, TABLE_SALES_HOLDINGS, TABLE_RESERVE
 from settings import SOFT_HARD_RSV, NAME_TRAD, ALL_CLIENTS, TABLE_DIRECTORY
 from settings import ELB_PRICE, TABLE_REMAINS, TRANZIT, REPORT_ELBRUS_FACTORS
+from settings import ACTIVE_STATUS, INACTIVE_PURPOSE
 from hidden_settings import WHS_POTENCTIAL_SALES, elbrus
 
 
-ACTIVE_STATUS = [
-    'Полностью согласован(а)',
-    'Завершен(а)',
-    'Частично согласован(а)'
-]
-INACTIVE_PURPOSE = 'Минимизация потерь'
 FACTOR_SALES = 'Продажи'
 ALIDI_MOVING = 'Alidi Межфилиальные продажи (80000000)'
 PLAN_MINUS_FACT = 'План - Факт, шт'
