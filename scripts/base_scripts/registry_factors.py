@@ -3,6 +3,7 @@
 import utils
 utils.path_append()
 
+import os
 import pandas as pd
 
 from settings import RESULT_DIR, TABLE_REGISTRY_FACTORS, TABLE_FACTORS
@@ -18,7 +19,24 @@ PLAN_IN_NFE = 'План в NFE, шт'
 VARIANCE = 'Различие, шт'
 
 
-def get_table():
+def check_present_registry():
+    list_dir = os.listdir(RESULT_DIR)
+    if TABLE_REGISTRY_FACTORS in list_dir:
+        return False
+    return True
+
+
+def create_registry():
+    df = pd.DataFrame(columns=[
+        LINK_FACTOR_NUM, LINK, FACTOR_PERIOD, FACTOR_NUM, DATE_CREATION,
+        DATE_START, DATE_EXPIRATION, WHS, NAME_HOLDING, EAN, PRODUCT,
+        PLAN_IN_NFE, DATE_REGISTRY, QUANT_REGISTRY
+    ])
+    save_to_excel(RESULT_DIR + TABLE_REGISTRY_FACTORS, df)
+    return
+
+
+def fix_changes():
     df_rgs = get_data(TABLE_REGISTRY_FACTORS)
     df_fct = get_data(TABLE_FACTORS)
     df_fct = df_fct[
@@ -61,7 +79,9 @@ def get_table():
 
 
 def main():
-    df = get_table()
+    if check_present_registry():
+        create_registry()
+    df = fix_changes()
     save_to_excel(RESULT_DIR + TABLE_REGISTRY_FACTORS, df)
     print_complete(__file__)
 
