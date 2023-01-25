@@ -23,6 +23,8 @@ COL_REPORT = [
     DATE_START, DATE_EXPIRATION, WHS, NAME_HOLDING, EAN, PRODUCT,
     PLAN_IN_NFE, DATE_REGISTRY, QUANT_REGISTRY
 ]
+SUBSTRACT = 'Отнять, шт'
+RESULT_COL = 'Расчётная колонка, шт'
 
 
 def check_present_registry():
@@ -92,10 +94,64 @@ def group_duplicates(df):
     return df
 
 
+def subtracting_factors(df):
+    df[LINK_DATE] = df[LINK_FACTOR_NUM] + df[DATE_REGISTRY].map(str)
+    df = df.sort_values(
+        by=[FACTOR_NUM, DATE_REGISTRY],
+        ascending=[False, False]
+    )
+    df_subtr = df[df[QUANT_REGISTRY] < 0]
+    df_subtr[SUBSTRACT] = df_subtr[QUANT_REGISTRY]
+    # оставляем только позиции больше 0 в основном df
+    df = df[df[QUANT_REGISTRY] > 0]
+
+    list_link = list(set(df_subtr[LINK_FACTOR_NUM].to_list()))
+    # дубликат основного df со строками, которые возможно придётся отнимать
+    start_df = df[df[LINK_FACTOR_NUM].isin(list_link)][[
+        LINK_DATE, LINK_FACTOR_NUM, QUANT_REGISTRY
+    ]]
+    # добавляем ко всем таким строкам сколько отнимать
+    start_df = start_df.merge(
+        df_subtr[[LINK_FACTOR_NUM, SUBSTRACT]],
+        on=LINK_FACTOR_NUM, how='left'
+    )
+    # пустой df для хранения результатов
+    result_df = pd.DataFrame(columns=[
+        LINK_DATE, LINK_FACTOR_NUM, QUANT_REGISTRY, SUBSTRACT, RESULT_COL
+    ])
+
+    flag = True
+    while flag:
+        # положительные строки, которые вычитаем в цикле (уникальные)
+        mid_df = start_df.copy().drop_duplicates(subset=LINK_FACTOR_NUM)
+        mid_df[RESULT_COL] = mid_df[QUANT_REGISTRY] + mid_df[SUBSTRACT]
+        result_df = pd.concat([result_df, mid_df], ignore_index=True)
+        # в результате строки меньше 0 зануляем
+        result_df.loc[result_df[RESULT_COL] < 0, RESULT_COL] = 0
+        if not len(mid_df.loc[mid_df[SUBSTRACT] < 0]) > 0:
+            flag = False
+        else:
+            row_drop = mid_df[LINK_DATE].to_list()
+            start_df = start_df[~start_df.isin(row_drop).any(axis=1)]
+            start_df = start_df.drop(labels=[SUBSTRACT], axis=1)
+            mid_df = mid_df.drop(labels=[SUBSTRACT], axis=1)
+            mid_df = mid_df.rename(columns={RESULT_COL: SUBSTRACT})
+            start_df = start_df.merge(
+                mid_df[[LINK_FACTOR_NUM, SUBSTRACT]],
+                on=LINK_FACTOR_NUM, how='left'
+            )
+            start_df = start_df[start_df[SUBSTRACT] < 0]
+
+    df = df.merge(result_df[[LINK_DATE, RESULT_COL]], on=LINK_DATE, how='left')
+    df.loc[df[RESULT_COL].notna(), QUANT_REGISTRY] = RESULT_COL
+    df = df[df[QUANT_REGISTRY] > 0]
+    return df
+
+
 def main():
     if check_present_registry():
         create_registry()
-    df = group_duplicates(fix_changes())
+    df = subtracting_factors(group_duplicates(fix_changes()))
     save_to_excel(RESULT_DIR + TABLE_REGISTRY_FACTORS, df)
     print_complete(__file__)
 
