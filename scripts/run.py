@@ -18,6 +18,7 @@ scripts = [
     'reserve',
     'sales',
     'factors',
+    'registry_factors'
 ]
 
 for script in scripts:
