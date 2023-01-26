@@ -10,11 +10,13 @@ scripts/__pycache__/
 scripts/_pycache_/
 Исходники/
 Результаты/
+Архив/
 ./get-pip.py
 ./test.py
 ./venv/
 ./env/
 ./Исходники/
 ./Результаты/
+./Архив/
 ./scripts/hidden_settings.py
 ./scripts/__pycache__/
