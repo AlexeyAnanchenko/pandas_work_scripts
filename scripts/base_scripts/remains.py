@@ -7,6 +7,7 @@ utils.path_append()
 
 import os
 import pandas as pd
+from datetime import datetime
 
 from hidden_settings import WAREHOUSE_REMAIN
 from service import get_filtered_df, save_to_excel, get_data, print_complete
@@ -27,6 +28,7 @@ WHS_LOC = 'Склад'
 EAN_LOC = 'EAN'
 NAME = 'Наименование'
 TRANZIT_LOC = 'Транзит штук'
+SUBSTRING = 'Транзит'
 
 
 def create_remains():
@@ -57,10 +59,13 @@ def create_remains():
 
 def add_transit(df):
     list_dir = os.listdir(SOURCE_DIR)
+    static_col = [LINK, WHS, EAN]
     transit_file = None
     for file in list_dir:
-        if 'Транзит' in file:
-            transit_file = file
+        if SUBSTRING in file:
+            date_now = datetime.now().strftime("%d.%m")
+            if date_now in file:
+                transit_file = file
     if transit_file is not None:
         xl = pd.ExcelFile(SOURCE_DIR + transit_file)
         tz_df = get_filtered_df(xl, WAREHOUSE_REMAIN, WHS_LOC)
@@ -70,22 +75,24 @@ def add_transit(df):
             WHS_LOC: WHS
         })
         tz_df[LINK] = tz_df[WHS] + tz_df[EAN].map(str)
-        static_col = [LINK, WHS, EAN]
         tz_df = tz_df.groupby(static_col).agg({TRANZIT: 'sum'}).reset_index()
         df = df.merge(tz_df, on=static_col, how='outer')
-        direct = get_data(TABLE_DIRECTORY)[[EAN, PRODUCT]]
-        df = df.merge(direct, on=EAN, how='left')
-        dig_col = [
-            FULL_REST, SOFT_HARD_RSV, AVAILABLE_REST, QUOTA, FREE_REST, TRANZIT
-        ]
-        static_col.append(PRODUCT)
-        df = df.reindex(columns=static_col + dig_col)
-        for col in dig_col:
-            df.loc[df[col].isnull(), col] = 0
-        df.drop(
-            labels=list(df[(df[FULL_REST] == 0) & (df[TRANZIT] == 0)].index),
-            axis=0, inplace=True
-        )
+    else:
+        df[TRANZIT] = 0
+
+    direct = get_data(TABLE_DIRECTORY)[[EAN, PRODUCT]]
+    df = df.merge(direct, on=EAN, how='left')
+    dig_col = [
+        FULL_REST, SOFT_HARD_RSV, AVAILABLE_REST, QUOTA, FREE_REST, TRANZIT
+    ]
+    static_col.append(PRODUCT)
+    df = df.reindex(columns=static_col + dig_col)
+    for col in dig_col:
+        df.loc[df[col].isnull(), col] = 0
+    df.drop(
+        labels=list(df[(df[FULL_REST] == 0) & (df[TRANZIT] == 0)].index),
+        axis=0, inplace=True
+    )
     return df
 
 
