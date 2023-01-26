@@ -9,6 +9,7 @@ BASE_DIR = dirname(dirname(abspath(__file__)))
 SOURCE_DIR = BASE_DIR + '\\Исходники\\'
 RESULT_DIR = BASE_DIR + '\\Результаты\\'
 REPORT_DIR = RESULT_DIR + '\\Отчёты\\'
+ARCHIVE_DIR = BASE_DIR + '\\Архив\\'
 
 NUM_MONTHS = 3
 TARGET_STOCK = 1
@@ -101,5 +102,4 @@ DATE_COL = [
 ACTIVE_STATUS = [
     'Полностью согласован(а)',
     'Завершен(а)',
-    # 'Частично согласован(а)'
 ]
