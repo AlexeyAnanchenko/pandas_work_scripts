@@ -4,6 +4,7 @@ import utils
 utils.path_append()
 
 import os
+import re
 import pandas as pd
 
 from settings import RESULT_DIR, TABLE_REGISTRY_FACTORS, TABLE_FACTORS
@@ -11,7 +12,7 @@ from settings import LINK, FACTOR_NUM, FACTOR_PERIOD, CURRENT, FUTURE
 from settings import FACTOR_STATUS, ACTIVE_STATUS, PURPOSE_PROMO, EAN
 from settings import DATE_START, DATE_CREATION, DATE_EXPIRATION, WHS
 from settings import INACTIVE_PURPOSE, NAME_HOLDING, PLAN_NFE, PRODUCT
-from settings import DATE_REGISTRY, QUANT_REGISTRY
+from settings import DATE_REGISTRY, QUANT_REGISTRY, ARCHIVE_DIR
 from service import get_data, save_to_excel, print_complete
 
 LINK_FACTOR_NUM = 'Сцепка Номер фактора-Склад-ШК'
@@ -27,21 +28,20 @@ SUBSTRACT = 'Отнять, шт'
 RESULT_COL = 'Расчётная колонка, шт'
 
 
-def check_present_registry():
-    list_dir = os.listdir(RESULT_DIR)
-    if TABLE_REGISTRY_FACTORS in list_dir:
-        return False
-    return True
+def get_archive():
+    list_dir = os.listdir(ARCHIVE_DIR)
+    list_dir.sort()
+    folder_path = ARCHIVE_DIR + list_dir.pop() + '\\'
+    list_dir = os.listdir(folder_path)
+    archive_file = None
+    for file in list_dir:
+        if re.search(TABLE_REGISTRY_FACTORS, file):
+            archive_file = folder_path + file
+    excel = pd.ExcelFile(archive_file)
+    return excel.parse()
 
 
-def create_registry():
-    df = pd.DataFrame(columns=COL_REPORT)
-    save_to_excel(RESULT_DIR + TABLE_REGISTRY_FACTORS, df)
-    return
-
-
-def fix_changes():
-    df_rgs = get_data(TABLE_REGISTRY_FACTORS)
+def fix_changes(df_rgs):
     df_fct = get_data(TABLE_FACTORS)
     df_fct = df_fct[
         (df_fct[FACTOR_PERIOD].isin([CURRENT, FUTURE]))
@@ -80,18 +80,6 @@ def fix_changes():
     df_rgs = df_rgs.merge(df_fct[change_col], on=LINK_FACTOR_NUM, how='left')
     df_rgs.dropna(subset=[FACTOR_PERIOD], inplace=True)
     return df_rgs
-
-
-def group_duplicates(df):
-    df[LINK_DATE] = df[LINK_FACTOR_NUM] + df[DATE_REGISTRY].map(str)
-    df_group = df[[LINK_DATE, QUANT_REGISTRY]].groupby([LINK_DATE]).agg(
-        {QUANT_REGISTRY: 'sum'}
-    ).reset_index()
-    df = df.drop(labels=[QUANT_REGISTRY], axis=1)
-    df = df.merge(df_group, on=LINK_DATE, how='left')
-    df = df.drop(labels=[LINK_DATE], axis=1)
-    df = df.reindex(columns=COL_REPORT).drop_duplicates()
-    return df
 
 
 def subtracting_factors(df):
@@ -156,13 +144,12 @@ def sort_and_test(df):
     }).reset_index()
     if df_test[PLAN_IN_NFE].eq(df_test[QUANT_REGISTRY]).all():
         return df
+    save_to_excel(RESULT_DIR + 'ОТКРОЙ МЕНЯ.xlsx', df)
     raise Exception('РЕЕСТР ФОРМИРУЕТСЯ ОШИБОЧНО!!!')
 
 
 def main():
-    if check_present_registry():
-        create_registry()
-    df = sort_and_test(subtracting_factors(group_duplicates(fix_changes())))
+    df = sort_and_test(subtracting_factors(fix_changes(get_archive())))
     save_to_excel(RESULT_DIR + TABLE_REGISTRY_FACTORS, df)
     print_complete(__file__)
 
