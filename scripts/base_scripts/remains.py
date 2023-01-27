@@ -7,6 +7,7 @@ utils.path_append()
 
 import os
 import pandas as pd
+import numpy as np
 from datetime import datetime
 
 from hidden_settings import WAREHOUSE_REMAIN
@@ -15,6 +16,7 @@ from settings import LINK, WHS, EAN, PRODUCT, TARGET_STOCK, OVERSTOCK, TRANZIT
 from settings import FULL_REST, AVAILABLE_REST, SOFT_HARD_RSV, FREE_REST, QUOTA
 from settings import TABLE_REMAINS, TABLE_SALES, SOURCE_DIR, RESULT_DIR
 from settings import TABLE_DIRECTORY, MSU, FULL_REST_MSU, OVERSTOCK_MSU
+from settings import TRANZIT_CURRENT, TRANZIT_NEXT
 from update_data import update_remains
 
 
@@ -28,6 +30,8 @@ WHS_LOC = 'Склад'
 EAN_LOC = 'EAN'
 NAME = 'Наименование'
 TRANZIT_LOC = 'Транзит штук'
+DATE_TRANZIT = 'Дата планируемой доставки'
+MONTH = 'Месяц транзита'
 SUBSTRING = 'Транзит'
 
 
@@ -57,7 +61,7 @@ def create_remains():
     return yug_df
 
 
-def add_transit(df):
+def add_transit_directory(df):
     list_dir = os.listdir(SOURCE_DIR)
     static_col = [LINK, WHS, EAN]
     transit_file = None
@@ -75,7 +79,23 @@ def add_transit(df):
             WHS_LOC: WHS
         })
         tz_df[LINK] = tz_df[WHS] + tz_df[EAN].map(str)
-        tz_df = tz_df.groupby(static_col).agg({TRANZIT: 'sum'}).reset_index()
+        tz_df[MONTH] = tz_df[DATE_TRANZIT].dt.strftime('%B')
+        tz_df = tz_df.pivot_table(
+            values=TRANZIT, index=static_col,
+            columns=[MONTH], aggfunc=np.sum
+        ).reset_index()
+        current_month = datetime.now().strftime("%B")
+        next_month = utils.get_next_month(current_month)
+        tz_df_col = tz_df.columns
+
+        if current_month not in tz_df_col:
+            tz_df[current_month] = 0
+        if next_month not in tz_df_col:
+            tz_df[next_month] = 0
+        tz_df = tz_df.rename(columns={
+            current_month: TRANZIT_CURRENT, next_month: TRANZIT_NEXT
+        })
+        tz_df[TRANZIT] = tz_df[TRANZIT_CURRENT] + tz_df[TRANZIT_NEXT]
         df = df.merge(tz_df, on=static_col, how='outer')
     else:
         df[TRANZIT] = 0
@@ -83,7 +103,8 @@ def add_transit(df):
     direct = get_data(TABLE_DIRECTORY)[[EAN, PRODUCT]]
     df = df.merge(direct, on=EAN, how='left')
     dig_col = [
-        FULL_REST, SOFT_HARD_RSV, AVAILABLE_REST, QUOTA, FREE_REST, TRANZIT
+        FULL_REST, SOFT_HARD_RSV, AVAILABLE_REST, QUOTA, FREE_REST,
+        TRANZIT_CURRENT, TRANZIT_NEXT, TRANZIT
     ]
     static_col.append(PRODUCT)
     df = df.reindex(columns=static_col + dig_col)
@@ -119,7 +140,7 @@ def conversion_msu(df):
 
 def main():
     update_remains(SOURCE_FILE)
-    result_df = add_transit(create_remains())
+    result_df = add_transit_directory(create_remains())
     result_df = conversion_msu(added_overstock(result_df))
     save_to_excel(RESULT_DIR + TABLE_REMAINS, result_df)
     print_complete(__file__)
