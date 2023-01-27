@@ -92,12 +92,11 @@ def add_pbi_and_purpose(df):
     df = utils.void_to(df, HOLDING_LOC, ALL_CLIENTS)
     df_pb.insert(
         0, LINK_FACTOR,
-        (df_pb[FACTOR_NUM_PB].map(str) + df_pb[HOLDING_LOC]
-         + df_pb[EAN_LOC].map(str))
+        df_pb[FACTOR_NUM_PB].map(str) + df_pb[EAN_LOC].map(str)
     )
     df.insert(
         0, LINK_FACTOR,
-        (df[FACTOR_NUM] + df[HOLDING_LOC] + df[EAN_LOC].map(str))
+        df[FACTOR_NUM] + df[EAN_LOC].map(str)
     )
     df = df.merge(
         df_pb[[LINK_FACTOR, ORDER_LOC, SALES_LOC, RESERVES_LOC, CUTS_LOC]],
