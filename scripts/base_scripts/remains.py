@@ -98,6 +98,8 @@ def add_transit_directory(df):
         tz_df[TRANZIT] = tz_df[TRANZIT_CURRENT] + tz_df[TRANZIT_NEXT]
         df = df.merge(tz_df, on=static_col, how='outer')
     else:
+        df[TRANZIT_CURRENT] = 0
+        df[TRANZIT_NEXT] = 0
         df[TRANZIT] = 0
 
     direct = get_data(TABLE_DIRECTORY)[[EAN, PRODUCT]]
