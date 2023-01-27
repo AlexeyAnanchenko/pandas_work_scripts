@@ -151,31 +151,51 @@ def reindex_rename(df):
     return result_df
 
 
-def group_mult_clients(df, mult_clients, static_col, numeric_col):
+def get_mult_clients_dict(df):
     """
-    Функция обновляет холдинги в dataframe по заданным мульти-холдингам
-    и возвращает его сгруппированным
+    Возвращает словарь по строкам с несколькими клиентами, где ключ все
+    клиенты строкой, а значение все клиенты раздельно в списке
     """
-    replace_holdings = {}
+    clients = list(set(df[NAME_HOLDING].to_list()))
+    mult_clients = [i for i in clients if '), ' in str(i)]
+    mult_clients_dict = {}
     for mult_client in mult_clients:
         mult_client_list = mult_client.split('), ')
+        mult_client_list_pure = []
 
         for client in mult_client_list:
             if client != mult_client_list[len(mult_client_list) - 1]:
-                replace_holdings[client + ')'] = mult_client
+                mult_client_list_pure.append(client + ')')
             else:
-                replace_holdings[client] = mult_client
+                mult_client_list_pure.append(client)
+        mult_clients_dict[mult_client] = mult_client_list_pure
+    return mult_clients_dict
 
-    df = df.replace({NAME_HOLDING: replace_holdings})
-    df = df.drop(columns=[LINK_HOLDING], axis=1)
-    df.insert(0, LINK_HOLDING, df[WHS] + df[NAME_HOLDING] + df[EAN].map(str))
+
+def merge_by_mult_clients(df, df_merge, mult_clients, static_col, numeric_col):
+    df_pure = df[~df[NAME_HOLDING].isin(mult_clients)].copy()
+    df_pure = df_pure.merge(
+        df_merge[static_col + numeric_col], on=static_col, how='left'
+    )
     numeric_col_dict = {}
 
     for col in numeric_col:
         numeric_col_dict[col] = 'sum'
 
-    df = df.groupby(static_col).agg(numeric_col_dict).reset_index()
-    return df
+    for client in mult_clients:
+        df_mult = df[df[NAME_HOLDING] == client].copy()
+        df_merge_copy = df_merge[df_merge[NAME_HOLDING].isin(
+            mult_clients[client]
+        )].copy()
+        df_merge_copy = df_merge_copy.groupby([LINK]).agg(
+            numeric_col_dict
+        ).reset_index()
+        df_mult = df_mult.merge(
+            df_merge_copy[[LINK] + numeric_col], on=LINK, how='left'
+        )
+        df_pure = pd.concat([df_pure, df_mult], ignore_index=True)
+
+    return df_pure
 
 
 def add_sales_and_rsv(df):
@@ -185,17 +205,19 @@ def add_sales_and_rsv(df):
     static_col = [LINK, LINK_HOLDING, WHS, EAN, NAME_HOLDING]
     num_col_sales = [col_sales['pntm_sale'], col_sales['last_sale']]
     num_col_rsv = [SOFT_HARD_RSV]
-    clients = list(set(df[NAME_HOLDING].to_list()))
-    mult_clients = [i for i in clients if '), ' in str(i)]
+    mult_clients = get_mult_clients_dict(df)
 
     if mult_clients:
-        sales = group_mult_clients(
-            sales, mult_clients, static_col, num_col_sales)
-        rsv = group_mult_clients(
-            rsv, mult_clients, static_col, num_col_rsv)
+        df = merge_by_mult_clients(
+            df, sales, mult_clients, static_col, num_col_sales)
+        df = merge_by_mult_clients(
+            df, rsv, mult_clients, static_col, num_col_rsv)
+    else:
+        df = df.merge(
+            sales[static_col + num_col_sales], on=static_col, how='left'
+        )
+        df = df.merge(rsv[static_col + num_col_rsv], on=static_col, how='left')
 
-    df = df.merge(sales[static_col + num_col_sales], on=static_col, how='left')
-    df = df.merge(rsv[static_col + num_col_rsv], on=static_col, how='left')
     idx = df[df[FACTOR_PERIOD] == CURRENT].index
     df.loc[idx, SALES_FACTOR_PERIOD] = df.loc[idx, col_sales['last_sale']]
     idx = df[df[FACTOR_PERIOD] == PAST].index
