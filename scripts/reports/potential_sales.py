@@ -16,8 +16,8 @@ from settings import WHS, NAME_HOLDING, EAN, PRODUCT, LEVEL_3, FREE_REST
 from settings import USER, PLAN_NFE, SALES_FACTOR_PERIOD, MSU, DATE_CREATION
 from settings import RSV_FACTOR_PERIOD, TABLE_SALES_HOLDINGS, TABLE_RESERVE
 from settings import SOFT_HARD_RSV, NAME_TRAD, ALL_CLIENTS, TABLE_DIRECTORY
-from settings import ELB_PRICE, TABLE_REMAINS, TRANZIT, REPORT_ELBRUS_FACTORS
-from settings import ACTIVE_STATUS, INACTIVE_PURPOSE
+from settings import ELB_PRICE, TABLE_REMAINS, TRANZIT_CURRENT, ACTIVE_STATUS
+from settings import REPORT_ELBRUS_FACTORS, INACTIVE_PURPOSE
 from hidden_settings import WHS_POTENCTIAL_SALES, elbrus
 
 
@@ -115,11 +115,11 @@ def merge_directory(df):
 
 
 def merge_remains(df):
-    remains = get_data(TABLE_REMAINS)[[LINK, FREE_REST, TRANZIT]]
+    remains = get_data(TABLE_REMAINS)[[LINK, FREE_REST, TRANZIT_CURRENT]]
     df = df.merge(remains, on=LINK, how='left')
-    df.loc[df[TRANZIT].isnull(), TRANZIT] = 0
+    df.loc[df[TRANZIT_CURRENT].isnull(), TRANZIT_CURRENT] = 0
     df.loc[df[FREE_REST].isnull(), FREE_REST] = 0
-    df[RESULT_REST] = df[FREE_REST] + df[TRANZIT]
+    df[RESULT_REST] = df[FREE_REST] + df[TRANZIT_CURRENT]
     return df
 
 
@@ -178,7 +178,7 @@ def distribute_remainder(df):
         columns={PLAN_MINUS_FACT: TOTAL_PLAN_MINUS_FACT}
     )
     df = df.merge(dif_df, on=LINK, how='left')
-    df.loc[df[TRANZIT].isnull(), TOTAL_PLAN_MINUS_FACT] = 0
+    df.loc[df[TRANZIT_CURRENT].isnull(), TOTAL_PLAN_MINUS_FACT] = 0
     df[DIST_RESULT_REST] = np.minimum(
         df[RESULT_REST],
         df[TOTAL_PLAN_MINUS_FACT]
