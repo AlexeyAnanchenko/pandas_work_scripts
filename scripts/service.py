@@ -132,3 +132,24 @@ def get_data(file):
 def print_complete(file):
     """Функция выводит сообщение об отработке скрипта"""
     print('Скрипт {} выполнен!'.format(basename(file)))
+
+
+def get_mult_clients_dict(df, col):
+    """
+    Возвращает словарь по строкам с несколькими клиентами, где ключ все
+    клиенты одной строкой, а значение все клиенты раздельно в списке
+    """
+    clients = list(set(df[col].to_list()))
+    mult_clients = [i for i in clients if '), ' in str(i)]
+    mult_clients_dict = {}
+    for mult_client in mult_clients:
+        mult_client_list = mult_client.split('), ')
+        mult_client_list_pure = []
+
+        for client in mult_client_list:
+            if client != mult_client_list[len(mult_client_list) - 1]:
+                mult_client_list_pure.append(client + ')')
+            else:
+                mult_client_list_pure.append(client)
+        mult_clients_dict[mult_client] = mult_client_list_pure
+    return mult_clients_dict

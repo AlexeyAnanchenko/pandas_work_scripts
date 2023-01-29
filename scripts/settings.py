@@ -96,6 +96,7 @@ TABLE_REGISTRY_FACTORS = 'Реестр по факторам.xlsx'
 
 REPORT_POTENTIAL_SALES = 'Потенциальные продажи.xlsx'
 REPORT_ELBRUS_FACTORS = 'Факторы Эльбрус.xlsx'
+REPORT_BASE_FACTORS = 'Факторы База.xlsx'
 
 DATE_COL = [
     DATE_RSV, DATE_CREATION, DATE_START, DATE_EXPIRATION, DATE_REGISTRY

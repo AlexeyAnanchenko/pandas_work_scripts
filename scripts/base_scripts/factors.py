@@ -11,6 +11,7 @@ from dateutil import relativedelta
 
 from hidden_settings import WAREHOUSE_FACTORS, prefix
 from service import save_to_excel, print_complete, get_data
+from service import get_mult_clients_dict
 from settings import SOURCE_DIR, RESULT_DIR, TABLE_FACTORS, WHS, FACTOR
 from settings import FACTOR_NUM, REF_FACTOR, DATE_EXPIRATION, FACTOR_PERIOD
 from settings import FACTOR_STATUS, DATE_CREATION, DATE_START, NAME_HOLDING
@@ -151,27 +152,6 @@ def reindex_rename(df):
     return result_df
 
 
-def get_mult_clients_dict(df):
-    """
-    Возвращает словарь по строкам с несколькими клиентами, где ключ все
-    клиенты строкой, а значение все клиенты раздельно в списке
-    """
-    clients = list(set(df[NAME_HOLDING].to_list()))
-    mult_clients = [i for i in clients if '), ' in str(i)]
-    mult_clients_dict = {}
-    for mult_client in mult_clients:
-        mult_client_list = mult_client.split('), ')
-        mult_client_list_pure = []
-
-        for client in mult_client_list:
-            if client != mult_client_list[len(mult_client_list) - 1]:
-                mult_client_list_pure.append(client + ')')
-            else:
-                mult_client_list_pure.append(client)
-        mult_clients_dict[mult_client] = mult_client_list_pure
-    return mult_clients_dict
-
-
 def merge_by_mult_clients(df, df_merge, mult_clients, static_col, numeric_col):
     """Подтягивает продажи и резервы, если df содержит мульти-клиентов"""
     df_pure = df[~df[NAME_HOLDING].isin(mult_clients)].copy()
@@ -206,7 +186,7 @@ def add_sales_and_rsv(df):
     static_col = [LINK, LINK_HOLDING, WHS, EAN, NAME_HOLDING]
     num_col_sales = [col_sales['pntm_sale'], col_sales['last_sale']]
     num_col_rsv = [SOFT_HARD_RSV]
-    mult_clients = get_mult_clients_dict(df)
+    mult_clients = get_mult_clients_dict(df, NAME_HOLDING)
 
     if mult_clients:
         df = merge_by_mult_clients(
