@@ -164,7 +164,7 @@ def merge_remains(df):
 
 
 def process_distribution(df, col_dis, result_col):
-    """Процесс распределения остатка и транзита по заказчикам"""
+    """Процесс распределения количества по строкам"""
     result_df = pd.DataFrame(columns=[LINK_DATE, result_col])
     start_df = df.copy()
 
@@ -197,6 +197,7 @@ def process_distribution(df, col_dis, result_col):
 
 
 def add_distribute(df, dist_col, result_col):
+    """Добавляет колонку с распределением по заказчикам"""
     mid_df = df[
         (df[PLAN_MINUS_FACT] != 0)
         & (df[dist_col] != 0)
@@ -220,7 +221,6 @@ def distribute_remainder(df):
         columns={PLAN_MINUS_FACT: TOTAL_PLAN_MINUS_FACT}
     )
     df = df.merge(dif_df, on=LINK, how='left')
-    df.loc[df[TRANZIT_CURRENT].isnull(), TOTAL_PLAN_MINUS_FACT] = 0
     df[DIST_RESULT_REST] = np.minimum(
         df[RESULT_REST],
         df[TOTAL_PLAN_MINUS_FACT]
