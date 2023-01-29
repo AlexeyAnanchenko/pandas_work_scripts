@@ -173,6 +173,7 @@ def get_mult_clients_dict(df):
 
 
 def merge_by_mult_clients(df, df_merge, mult_clients, static_col, numeric_col):
+    """Подтягивает продажи и резервы, если df содержит мульти-клиентов"""
     df_pure = df[~df[NAME_HOLDING].isin(mult_clients)].copy()
     df_pure = df_pure.merge(
         df_merge[static_col + numeric_col], on=static_col, how='left'
@@ -278,13 +279,22 @@ def add_total_sales_rsv(df):
     return df
 
 
+def fill_empty_cells(df):
+    """Заполняет пустые ячейки нулями"""
+    df_col = df.columns.tolist()
+    numeric_col = df_col[df_col.index(PLAN_NFE):]
+    for col in numeric_col:
+        df = utils.void_to(df, col, 0)
+    return df
+
+
 def main():
     update_factors_nfe(SOURCE_FILE)
     update_factors_nfe_promo(SOURCE_FILE_PROMO)
     update_factors_pbi(SOURCE_FILE_PB)
     factors = add_pbi_and_purpose(add_num_factors(filtered_factors()))
     factors = add_sales_and_rsv(reindex_rename(split_by_month(factors)))
-    factors = add_total_sales_rsv(factors)
+    factors = fill_empty_cells(add_total_sales_rsv(factors))
     save_to_excel(RESULT_DIR + TABLE_FACTORS, factors)
     print_complete(__file__)
 

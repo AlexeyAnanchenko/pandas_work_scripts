@@ -33,6 +33,7 @@ NO_DATA_VALUE = 'Нет данных'
 
 
 def get_category_msu():
+    """Формирует справочник с msu и категориями"""
     excel = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
     df_full = excel.parse(skiprows=SKIPROWS)[[
         ACTIVE_GCAS, EAN_LOC, PRODUCT_NAME, DETAIL_SUBBREND,
@@ -75,6 +76,7 @@ def get_category_msu():
 
 
 def added_matrix(dataframe):
+    """Добавляет матрицы Эльбруса в справочник"""
     matrix_df = pd.ExcelFile(SOURCE_DIR + SOURCE_MATRIX).parse()
     matrix__df_LY = pd.ExcelFile(SOURCE_DIR + SOURCE_ELB).parse()
     matrix_df[MATRIX] = 'Да'
@@ -91,13 +93,29 @@ def added_matrix(dataframe):
 
 
 def added_price(dataframe):
+    """Добавляет цены в справочник"""
     price = get_data(TABLE_PRICE)[[EAN, BASE_PRICE, ELB_PRICE]]
     dataframe = dataframe.merge(price, on=EAN, how='left')
     return dataframe
 
 
 def delete_level(df):
+    """Удаляет уровни, которые пока не нужны в справочнике"""
     df = df.drop(labels=[LEVEL_0, LEVEL_1, LEVEL_2], axis=1)
+    return df
+
+
+def fill_empty_cells(df):
+    """Заполняет пустые ячейки нулями"""
+    numeric_col = [SU, MSU, BASE_PRICE, ELB_PRICE]
+
+    for col in numeric_col:
+        df = utils.void_to(df, col, 0)
+
+    matrix_col = [MATRIX, MATRIX_LY]
+    for col in matrix_col:
+        df = utils.void_to(df, col, 'Нет')
+
     return df
 
 
