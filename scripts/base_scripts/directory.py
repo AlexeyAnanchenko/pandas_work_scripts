@@ -121,7 +121,7 @@ def fill_empty_cells(df):
 
 def main():
     directory = added_price(added_matrix(get_category_msu()))
-    directory = delete_level(directory)
+    directory = fill_empty_cells(delete_level(directory))
     save_to_excel(RESULT_DIR + TABLE_DIRECTORY, directory)
     print_complete(__file__)
 
