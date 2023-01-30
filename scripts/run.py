@@ -10,13 +10,13 @@ start_time = time.time()
 scripts = [
     'archive',
     'assortment',
+    'sales',
     'price',
     'directory',
     'holdings',
     'purchases',
     'remains',
     'reserve',
-    'sales',
     'factors',
     'registry_factors'
 ]

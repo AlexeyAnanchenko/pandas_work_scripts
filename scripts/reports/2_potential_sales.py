@@ -19,7 +19,8 @@ from settings import RSV_FACTOR_PERIOD, TABLE_SALES_HOLDINGS, TABLE_RESERVE
 from settings import SOFT_HARD_RSV, NAME_TRAD, ALL_CLIENTS, TABLE_DIRECTORY
 from settings import ELB_PRICE, TABLE_REMAINS, TRANZIT_CURRENT, ACTIVE_STATUS
 from settings import REPORT_ELBRUS_FACTORS, INACTIVE_PURPOSE, BASE_PRICE
-from settings import REPORT_BASE_FACTORS
+from settings import REPORT_BASE_FACTORS, TABLE_REGISTRY_FACTORS, DATE_REGISTRY
+from settings import QUANT_REGISTRY, FACTOR_NUM
 from hidden_settings import WHS_POTENCTIAL_SALES, elbrus
 
 
@@ -38,6 +39,7 @@ TRANZIT_CUSTOMER = 'Транзит под заказчика, шт'
 MAX_REQUIREMENTS = 'Максимальная потребность с учётом стока, шт'
 TO_ORDER = 'К дозаказу, шт'
 TERRITORY = 'Территория'
+PLAN_MINUS_FACT_ROW = 'План - Факт построчно, шт'
 
 
 def get_factors():
@@ -147,9 +149,7 @@ def merge_directory(df):
         WHS, NAME_HOLDING, EAN, PRODUCT, LEVEL_3, USER, MSU, ELB_PRICE,
         BASE_PRICE, PLAN_NFE, SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD,
         MAX_DEMAND, PLAN_MINUS_FACT
-    ]].sort_values(
-        by=[DATE_CREATION, DATE_START, FACTOR, WHS, NAME_HOLDING],
-        ascending=[True, True, False, True, True])
+    ]]
     return df
 
 
@@ -163,54 +163,86 @@ def merge_remains(df):
     return df
 
 
-def process_distribution(df, col_dis, result_col):
+def process_distribution(df, col_dis, result_col, uniq_col, link_dis):
     """Процесс распределения количества по строкам"""
     result_df = pd.DataFrame(columns=[LINK_DATE, result_col])
     start_df = df.copy()
 
     flag = True
+    count = 0
     while flag:
-        mid_df = start_df.copy().drop_duplicates(subset=LINK)
+        mid_df = start_df.copy().drop_duplicates(subset=link_dis)
         mid_df[result_col] = np.minimum(
-            mid_df[PLAN_MINUS_FACT],
+            mid_df[uniq_col],
             mid_df[col_dis]
         )
         add_col = 'new'
         mid_df[add_col] = np.maximum(
-            mid_df[col_dis] - mid_df[PLAN_MINUS_FACT], 0
+            mid_df[col_dis] - mid_df[uniq_col], 0
         )
         mid_df = mid_df.drop(labels=[col_dis], axis=1)
         mid_df[col_dis] = mid_df[add_col]
         mid_df = mid_df.drop(labels=[add_col], axis=1)
         start_df = start_df.drop(labels=[col_dis], axis=1)
-        start_df = start_df.merge(mid_df[[LINK, col_dis]], on=LINK, how='left')
+        start_df = start_df.merge(
+            mid_df[[link_dis, col_dis]], on=link_dis, how='left'
+        )
         result_df = pd.concat(
             [result_df, mid_df[[LINK_DATE, result_col]]],
             ignore_index=True
         )
         row_drop = mid_df[LINK_DATE].to_list()
         start_df = start_df[~start_df.isin(row_drop).any(axis=1)]
+        count += 1
         if start_df.shape[0] == 0:
             flag = False
 
     return df.merge(result_df, on=LINK_DATE, how='left')
 
 
+def get_registry_factors(df):
+    """Функци возвращает реестр по факторам с распределённым 'План - Факт'"""
+    df_reg = get_data(TABLE_REGISTRY_FACTORS)
+    df_reg = df_reg[df_reg[FACTOR_PERIOD] == CURRENT]
+    df_reg.insert(
+        0, LINK_HOLDING,
+        df_reg[WHS] + df_reg[NAME_HOLDING] + df_reg[EAN].map(str)
+    )
+    df_reg = df_reg.merge(
+        df[[LINK_HOLDING, PLAN_MINUS_FACT]], on=LINK_HOLDING, how='left'
+    )
+    df_reg.loc[df_reg[PLAN_MINUS_FACT].isnull(), PLAN_MINUS_FACT] = 0
+    df_reg.insert(
+        0, LINK_DATE, df_reg[LINK_HOLDING] + df_reg[DATE_REGISTRY].map(str)
+    )
+    df_reg = process_distribution(
+        df_reg, PLAN_MINUS_FACT, PLAN_MINUS_FACT_ROW,
+        QUANT_REGISTRY, LINK_HOLDING
+    )
+    df_reg = df_reg.drop(labels=[PLAN_MINUS_FACT], axis=1)
+    df_reg = df_reg.sort_values(
+        by=[DATE_REGISTRY, DATE_START, FACTOR_NUM],
+        ascending=[True, True, True])
+    return df_reg
+
+
 def add_distribute(df, dist_col, result_col):
     """Добавляет колонку с распределением по заказчикам"""
     mid_df = df[
-        (df[PLAN_MINUS_FACT] != 0)
+        (df[PLAN_MINUS_FACT_ROW] != 0)
         & (df[dist_col] != 0)
         & (df[TOTAL_PLAN_MINUS_FACT] > df[dist_col])
-    ][[LINK_DATE, LINK, PLAN_MINUS_FACT, dist_col]]
-    mid_df = process_distribution(mid_df, dist_col, result_col)
+    ][[LINK_DATE, LINK, PLAN_MINUS_FACT_ROW, dist_col]]
+    mid_df = process_distribution(
+        mid_df, dist_col, result_col, PLAN_MINUS_FACT_ROW, LINK
+    )
     df = df.merge(
         mid_df[[LINK_DATE, result_col]],
         on=LINK_DATE, how='left'
     )
     idx = df[df[result_col].isnull()].index
     df.loc[idx, result_col] = np.minimum(
-        df.loc[idx, PLAN_MINUS_FACT], df.loc[idx, dist_col]
+        df.loc[idx, PLAN_MINUS_FACT_ROW], df.loc[idx, dist_col]
     )
     return df
 
@@ -226,12 +258,21 @@ def distribute_remainder(df):
         df[TOTAL_PLAN_MINUS_FACT]
     )
     df[DIST_FREE_REST] = np.minimum(df[FREE_REST], df[TOTAL_PLAN_MINUS_FACT])
-    df.insert(
-        0, LINK_DATE,
-        df[LINK_HOLDING] + df[DATE_CREATION].map(str) + df[DATE_START].map(str)
+    df_reg = get_registry_factors(df)
+    df_reg = df_reg.merge(
+        df[[
+            LINK, DIST_RESULT_REST, DIST_FREE_REST, TOTAL_PLAN_MINUS_FACT
+        ]].drop_duplicates(subset=LINK),
+        on=LINK, how='left'
     )
-    df = add_distribute(df, DIST_RESULT_REST, FULL_REST_CUSTOMER)
-    df = add_distribute(df, DIST_FREE_REST, FREE_REST_CUSTOMER)
+    df_reg = add_distribute(df_reg, DIST_RESULT_REST, FULL_REST_CUSTOMER)
+    df_reg = add_distribute(df_reg, DIST_FREE_REST, FREE_REST_CUSTOMER)
+    df_reg = df_reg.groupby([LINK_HOLDING]).agg(
+        {FULL_REST_CUSTOMER: 'sum', FREE_REST_CUSTOMER: 'sum'}
+    ).reset_index()
+    df = df.merge(df_reg, on=LINK_HOLDING, how='left')
+    df.loc[df[FULL_REST_CUSTOMER].isnull(), FULL_REST_CUSTOMER] = 0
+    df.loc[df[FREE_REST_CUSTOMER].isnull(), FREE_REST_CUSTOMER] = 0
     df[TRANZIT_CUSTOMER] = df[FULL_REST_CUSTOMER] - df[FREE_REST_CUSTOMER]
     df[MAX_REQUIREMENTS] = (df[SALES_FACTOR_PERIOD]
                             + df[RSV_FACTOR_PERIOD] + df[FULL_REST_CUSTOMER])
@@ -245,8 +286,7 @@ def get_elbrus_factors(df):
     elb_df = df[df[TERRITORY].isin([elbrus])]
     elb_df = elb_df.drop(
         labels=[
-            LINK_DATE, TERRITORY, TOTAL_PLAN_MINUS_FACT, DIST_RESULT_REST,
-            DIST_FREE_REST
+            TERRITORY, TOTAL_PLAN_MINUS_FACT, DIST_RESULT_REST, DIST_FREE_REST
         ],
         axis=1
     )
@@ -257,8 +297,7 @@ def get_base_factors(df):
     base_df = df[df[TERRITORY] != elbrus]
     base_df = base_df.drop(
         labels=[
-            LINK_DATE, TERRITORY, TOTAL_PLAN_MINUS_FACT, DIST_RESULT_REST,
-            DIST_FREE_REST
+            TERRITORY, TOTAL_PLAN_MINUS_FACT, DIST_RESULT_REST, DIST_FREE_REST
         ],
         axis=1
     )
@@ -270,15 +309,15 @@ def get_base_factors(df):
 def main():
     df = merge_remains(merge_directory(merge_sales_rsv(get_factors())))
     df = distribute_remainder(df)
-    save_to_excel(REPORT_DIR + REPORT_POTENTIAL_SALES, df)
+    # save_to_excel(REPORT_DIR + '2v-' + REPORT_POTENTIAL_SALES, df)
     save_to_excel(
-        REPORT_DIR + REPORT_ELBRUS_FACTORS,
+        REPORT_DIR + '2v' + REPORT_ELBRUS_FACTORS,
         get_elbrus_factors(df)
     )
-    save_to_excel(
-        REPORT_DIR + REPORT_BASE_FACTORS,
-        get_base_factors(df)
-    )
+    # save_to_excel(
+    #     REPORT_DIR + REPORT_BASE_FACTORS,
+    #     get_base_factors(df)
+    # )
     print_complete(__file__)
 
 
