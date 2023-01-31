@@ -70,14 +70,15 @@ def fix_changes(df_rgs):
     df_var = df_var.drop(labels=[PLAN_NFE, VARIANCE], axis=1)
     df_rgs = pd.concat([df_rgs, df_var], ignore_index=True)
 
-    change_col = [
-        FACTOR_PERIOD, DATE_CREATION, DATE_START, DATE_EXPIRATION, PLAN_IN_NFE
+    replace_col = [
+        FACTOR_PERIOD, DATE_CREATION, DATE_START,
+        DATE_EXPIRATION, PLAN_IN_NFE, NAME_HOLDING
     ]
-    df_rgs = df_rgs.drop(labels=change_col, axis=1)
+    df_rgs = df_rgs.drop(labels=replace_col, axis=1)
     df_fct = df_fct.drop(labels=[PLAN_IN_NFE], axis=1)
     df_fct = df_fct.rename(columns={PLAN_NFE: PLAN_IN_NFE})
-    change_col.append(LINK_FACTOR_NUM)
-    df_rgs = df_rgs.merge(df_fct[change_col], on=LINK_FACTOR_NUM, how='left')
+    replace_col.append(LINK_FACTOR_NUM)
+    df_rgs = df_rgs.merge(df_fct[replace_col], on=LINK_FACTOR_NUM, how='left')
     df_rgs.dropna(subset=[FACTOR_PERIOD], inplace=True)
     return df_rgs
 
