@@ -93,6 +93,8 @@ TABLE_SALES = 'Продажи по складам.xlsx'
 TABLE_RESERVE = 'Резервы.xlsx'
 TABLE_FACTORS = 'Факторы.xlsx'
 TABLE_REGISTRY_FACTORS = 'Реестр по факторам.xlsx'
+TABLE_RESERVE_CURRENT = 'Резервы текущего месяца.xlsx'
+TABLE_RESERVE_FUTURE = 'Резервы следующего месяца.xlsx'
 
 REPORT_POTENTIAL_SALES = 'Потенциальные продажи.xlsx'
 REPORT_ELBRUS_FACTORS = 'Факторы Эльбрус.xlsx'

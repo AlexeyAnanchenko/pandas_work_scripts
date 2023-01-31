@@ -5,14 +5,17 @@
 import utils
 utils.path_append()
 
+import datetime
 import pandas as pd
+
 
 from hidden_settings import WAREHOUSE_RESERVE
 from service import get_filtered_df, save_to_excel, print_complete
 from settings import CODES, HOLDING, NAME_HOLDING, LINK_HOLDING, LINK, WHS, EAN
-from settings import SOFT_RSV, HARD_RSV, SOFT_HARD_RSV, QUOTA, PRODUCT
+from settings import SOFT_RSV, HARD_RSV, SOFT_HARD_RSV, QUOTA, PRODUCT, CURRENT
 from settings import QUOTA_BY_AVAILABLE, AVAILABLE_REST, TOTAL_RSV, DATE_RSV
 from settings import TABLE_RESERVE, SOURCE_DIR, RESULT_DIR, TABLE_HOLDINGS
+from settings import FUTURE, TABLE_RESERVE_CURRENT, TABLE_RESERVE_FUTURE
 from update_data import update_reserve
 
 
@@ -32,8 +35,7 @@ EXPECTED_DATE = 'Дата ожидаемой доставки'
 RESERVE_FOR = 'Дата резерва По'
 
 
-def main():
-    update_reserve(SOURCE_FILE)
+def get_reserve():
     excel = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
     df = get_filtered_df(
         excel, WAREHOUSE_RESERVE, WHS_LOC, skiprows=EMPTY_ROWS
@@ -49,6 +51,18 @@ def main():
     df.loc[df[AVAILABLE] < 0, AVAILABLE] = 0
     idx_date = df.loc[df[EXPECTED_DATE].isnull()].index
     df.loc[idx_date, EXPECTED_DATE] = df.loc[idx_date, RESERVE_FOR]
+    return df
+
+
+def table_processing(df, period=None):
+    today = datetime.date.today()
+    next_month = today.month + 1 if today.month < 12 else 1
+    next_month_fday = pd.to_datetime(datetime.date(today.year, next_month, 1))
+    if period == CURRENT:
+        df = df[df[EXPECTED_DATE] < next_month_fday]
+    elif period == FUTURE:
+        df = df[df[EXPECTED_DATE] > next_month_fday]
+
     group_df = df.groupby([
         WHS_LOC, HOLDING, NAME_HOLDING, EAN_LOC, PRODUCT_NAME
     ]).agg({
@@ -96,7 +110,18 @@ def main():
         AVAILABLE: AVAILABLE_REST,
         EXPECTED_DATE: DATE_RSV
     })
-    save_to_excel(RESULT_DIR + TABLE_RESERVE, group_df.round())
+    return group_df.round()
+
+
+def main():
+    update_reserve(SOURCE_FILE)
+    df = get_reserve()
+    df_current = table_processing(df, CURRENT)
+    save_to_excel(RESULT_DIR + TABLE_RESERVE_CURRENT, df_current)
+    df_future = table_processing(df, FUTURE)
+    save_to_excel(RESULT_DIR + TABLE_RESERVE_FUTURE, df_future)
+    df = table_processing(df)
+    save_to_excel(RESULT_DIR + TABLE_RESERVE, df)
     print_complete(__file__)
 
 
