@@ -13,7 +13,7 @@ ARCHIVE_DIR = BASE_DIR + '\\Архив\\'
 
 NUM_MONTHS = 3
 TARGET_STOCK = 1
-FACTOR_START = '01.12.2022'
+FACTOR_START = '01.01.2023'
 
 EAN = 'EAN штуки'
 PRODUCT = 'Наименование товара'
