@@ -6,6 +6,7 @@ utils.path_append()
 import os
 import re
 import pandas as pd
+import datetime as dt
 
 from settings import RESULT_DIR, TABLE_REGISTRY_FACTORS, TABLE_FACTORS
 from settings import LINK, FACTOR_NUM, FACTOR_PERIOD, CURRENT, FUTURE
@@ -30,7 +31,9 @@ RESULT_COL = 'Расчётная колонка, шт'
 
 def get_archive():
     list_dir = os.listdir(ARCHIVE_DIR)
+    list_dir = [dt.datetime.strptime(i, '%d.%m.%Y').date() for i in list_dir]
     list_dir.sort()
+    list_dir = [dt.date.strftime(i, '%d.%m.%Y') for i in list_dir]
     folder_path = ARCHIVE_DIR + list_dir.pop() + '\\'
     list_dir = os.listdir(folder_path)
     archive_file = None
