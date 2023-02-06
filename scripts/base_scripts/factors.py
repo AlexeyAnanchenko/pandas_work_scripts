@@ -268,13 +268,22 @@ def fill_empty_cells(df):
     return df
 
 
+def link_replace(df):
+    """Заменяет сцепку по холдингу"""
+    df.drop(LINK_HOLDING, axis=1, inplace=True)
+    df.insert(
+        1, LINK_HOLDING, df[WHS] + df[NAME_HOLDING] + df[EAN].map(str)
+    )
+    return df
+
+
 def main():
     update_factors_nfe(SOURCE_FILE)
     update_factors_nfe_promo(SOURCE_FILE_PROMO)
     update_factors_pbi(SOURCE_FILE_PB)
     factors = add_pbi_and_purpose(add_num_factors(filtered_factors()))
     factors = add_sales_and_rsv(reindex_rename(split_by_month(factors)))
-    factors = fill_empty_cells(add_total_sales_rsv(factors))
+    factors = link_replace(fill_empty_cells(add_total_sales_rsv(factors)))
     save_to_excel(RESULT_DIR + TABLE_FACTORS, factors)
     print_complete(__file__)
 
