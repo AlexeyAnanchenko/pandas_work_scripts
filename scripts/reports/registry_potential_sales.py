@@ -309,15 +309,17 @@ def get_base_factors(df):
 def main():
     df = merge_remains(merge_directory(merge_sales_rsv(get_factors())))
     df = distribute_remainder(df)
-    # save_to_excel(REPORT_DIR + '2v-' + REPORT_POTENTIAL_SALES, df)
     save_to_excel(
-        REPORT_DIR + '2v' + REPORT_ELBRUS_FACTORS,
+        REPORT_DIR + REPORT_POTENTIAL_SALES.replace('.', ' по реестру.'), df
+    )
+    save_to_excel(
+        REPORT_DIR + REPORT_ELBRUS_FACTORS.replace('.', ' по реестру.'),
         get_elbrus_factors(df)
     )
-    # save_to_excel(
-    #     REPORT_DIR + REPORT_BASE_FACTORS,
-    #     get_base_factors(df)
-    # )
+    save_to_excel(
+        REPORT_DIR + REPORT_BASE_FACTORS.replace('.', ' по реестру.'),
+        get_base_factors(df)
+    )
     print_complete(__file__)
 
 
