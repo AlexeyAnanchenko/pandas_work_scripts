@@ -17,11 +17,12 @@ from settings import FACTOR_NUM, REF_FACTOR, DATE_EXPIRATION, FACTOR_PERIOD
 from settings import FACTOR_STATUS, DATE_CREATION, DATE_START, NAME_HOLDING
 from settings import EAN, PRODUCT, LEVEL_3, DESCRIPTION, USER, PLAN_NFE
 from settings import FACT_NFE, ADJUSTMENT_PBI, SALES_PBI, RESERVES_PBI
-from settings import CUTS_PBI, LINK, LINK_HOLDING, PURPOSE_PROMO
+from settings import CUTS_PBI, LINK, LINK_HOLDING, PURPOSE_PROMO, TABLE_SALES
 from settings import ALL_CLIENTS, SOFT_HARD_RSV, SALES_FACTOR_PERIOD, NAME_TRAD
-from settings import AVG_FACTOR_PERIOD, RSV_FACTOR_PERIOD
-from settings import TABLE_SALES_HOLDINGS, TABLE_RESERVE, TABLE_SALES
-from settings import PAST, CURRENT, FUTURE
+from settings import AVG_FACTOR_PERIOD, RSV_FACTOR_PERIOD, PAST, CURRENT
+from settings import FUTURE, TABLE_SALES_HOLDINGS, TABLE_RESERVE
+from settings import AVG_FACTOR_PERIOD_WHS, SOFT_HARD_RSV_CURRENT
+from settings import RSV_FACTOR_PERIOD_CURRENT
 from update_data import update_factors_nfe, update_factors_pbi
 from update_data import update_factors_nfe_promo
 
@@ -184,8 +185,12 @@ def add_sales_and_rsv(df):
     sales, col_sales = get_data(TABLE_SALES_HOLDINGS)
     rsv = get_data(TABLE_RESERVE)
     static_col = [LINK, LINK_HOLDING, WHS, EAN, NAME_HOLDING]
-    num_col_sales = [col_sales['pntm_sale'], col_sales['last_sale']]
-    num_col_rsv = [SOFT_HARD_RSV]
+    num_col_sales = [
+        col_sales['pntm_sale'],
+        col_sales['last_sale'],
+        col_sales['avg_cut_sale']
+    ]
+    num_col_rsv = [SOFT_HARD_RSV, SOFT_HARD_RSV_CURRENT]
     mult_clients = get_mult_clients_dict(df, NAME_HOLDING)
 
     if mult_clients:
@@ -205,10 +210,13 @@ def add_sales_and_rsv(df):
     df.loc[idx, SALES_FACTOR_PERIOD] = df.loc[idx, col_sales['pntm_sale']]
     idx = df[df[FACTOR_PERIOD] == FUTURE].index
     df.loc[idx, SALES_FACTOR_PERIOD] = 0
+    df[AVG_FACTOR_PERIOD] = df[col_sales['avg_cut_sale']]
     df[RSV_FACTOR_PERIOD] = df[SOFT_HARD_RSV]
-    df.drop(col_sales['last_sale'], axis=1, inplace=True)
-    df.drop(col_sales['pntm_sale'], axis=1, inplace=True)
-    df.drop(SOFT_HARD_RSV, axis=1, inplace=True)
+    df[RSV_FACTOR_PERIOD_CURRENT] = df[SOFT_HARD_RSV_CURRENT]
+
+    for col in num_col_sales + num_col_rsv:
+        df.drop(col, axis=1, inplace=True)
+
     return df
 
 
@@ -220,7 +228,10 @@ def add_total_sales_rsv(df):
     """
     sales, col_sales = get_data(TABLE_SALES)
     rsv = get_data(TABLE_RESERVE)
-    rsv = rsv.groupby([LINK]).agg({SOFT_HARD_RSV: 'sum'}).reset_index()
+    rsv = rsv.groupby([LINK]).agg({
+        SOFT_HARD_RSV: 'sum',
+        SOFT_HARD_RSV_CURRENT: 'sum'
+    }).reset_index()
     TRAD_HOLDINGS.append(ALL_CLIENTS)
     df = df.merge(
         sales[[
@@ -247,11 +258,14 @@ def add_total_sales_rsv(df):
 
     idx = df[df[NAME_HOLDING].isin(TRAD_HOLDINGS)].index
     df.loc[idx, RSV_FACTOR_PERIOD] = df.loc[idx, SOFT_HARD_RSV]
-    df[AVG_FACTOR_PERIOD] = df[col_sales['avg_cut_sale']]
+    df.loc[idx, RSV_FACTOR_PERIOD_CURRENT] = df.loc[idx, SOFT_HARD_RSV_CURRENT]
+    df.loc[idx, AVG_FACTOR_PERIOD] = df.loc[idx, col_sales['avg_cut_sale']]
+    df[AVG_FACTOR_PERIOD_WHS] = df[col_sales['avg_cut_sale']]
     df.drop(col_sales['last_sale'], axis=1, inplace=True)
     df.drop(col_sales['pntm_sale'], axis=1, inplace=True)
     df.drop(col_sales['avg_cut_sale'], axis=1, inplace=True)
     df.drop(SOFT_HARD_RSV, axis=1, inplace=True)
+    df.drop(SOFT_HARD_RSV_CURRENT, axis=1, inplace=True)
 
     TRAD_HOLDINGS.remove(ALL_CLIENTS)
     idx = df[df[NAME_HOLDING].isin(TRAD_HOLDINGS)].index

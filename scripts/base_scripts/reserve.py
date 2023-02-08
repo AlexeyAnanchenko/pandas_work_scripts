@@ -10,12 +10,13 @@ import pandas as pd
 
 
 from hidden_settings import WAREHOUSE_RESERVE
-from service import get_filtered_df, save_to_excel, print_complete
+from service import get_filtered_df, save_to_excel, print_complete, get_data
 from settings import CODES, HOLDING, NAME_HOLDING, LINK_HOLDING, LINK, WHS, EAN
 from settings import SOFT_RSV, HARD_RSV, SOFT_HARD_RSV, QUOTA, PRODUCT, CURRENT
 from settings import QUOTA_BY_AVAILABLE, AVAILABLE_REST, TOTAL_RSV, DATE_RSV
 from settings import TABLE_RESERVE, SOURCE_DIR, RESULT_DIR, TABLE_HOLDINGS
 from settings import FUTURE, TABLE_RESERVE_CURRENT, TABLE_RESERVE_FUTURE
+from settings import SOFT_HARD_RSV_CURRENT, SOFT_HARD_RSV_FUTURE
 from update_data import update_reserve
 
 
@@ -113,6 +114,20 @@ def table_processing(df, period=None):
     return group_df.round()
 
 
+def merge_period_rsv(df):
+    rsv_current = get_data(TABLE_RESERVE_CURRENT).rename(columns={
+        SOFT_HARD_RSV: SOFT_HARD_RSV_CURRENT
+    })[[LINK_HOLDING, SOFT_HARD_RSV_CURRENT]]
+    rsv_future = get_data(TABLE_RESERVE_FUTURE).rename(columns={
+        SOFT_HARD_RSV: SOFT_HARD_RSV_FUTURE
+    })[[LINK_HOLDING, SOFT_HARD_RSV_FUTURE]]
+    df = df.merge(rsv_current, on=LINK_HOLDING, how='left')
+    df = df.merge(rsv_future, on=LINK_HOLDING, how='left')
+    df = utils.void_to(df, SOFT_HARD_RSV_CURRENT, 0)
+    df = utils.void_to(df, SOFT_HARD_RSV_FUTURE, 0)
+    return df
+
+
 def main():
     update_reserve(SOURCE_FILE)
     df = get_reserve()
@@ -120,7 +135,7 @@ def main():
     save_to_excel(RESULT_DIR + TABLE_RESERVE_CURRENT, df_current)
     df_future = table_processing(df, FUTURE)
     save_to_excel(RESULT_DIR + TABLE_RESERVE_FUTURE, df_future)
-    df = table_processing(df)
+    df = merge_period_rsv(table_processing(df))
     save_to_excel(RESULT_DIR + TABLE_RESERVE, df)
     print_complete(__file__)
 

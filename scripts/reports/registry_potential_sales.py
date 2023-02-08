@@ -20,7 +20,8 @@ from settings import SOFT_HARD_RSV, NAME_TRAD, ALL_CLIENTS, TABLE_DIRECTORY
 from settings import ELB_PRICE, TABLE_REMAINS, TRANZIT_CURRENT, ACTIVE_STATUS
 from settings import REPORT_ELBRUS_FACTORS, INACTIVE_PURPOSE, BASE_PRICE
 from settings import REPORT_BASE_FACTORS, TABLE_REGISTRY_FACTORS, DATE_REGISTRY
-from settings import QUANT_REGISTRY, FACTOR_NUM
+from settings import QUANT_REGISTRY, FACTOR_NUM, RSV_FACTOR_PERIOD_CURRENT
+from settings import SOFT_HARD_RSV_CURRENT
 from hidden_settings import WHS_POTENCTIAL_SALES, elbrus
 
 
@@ -53,7 +54,7 @@ def get_factors():
     df = df[[
         LINK, LINK_HOLDING, FACTOR, DATE_START, DATE_CREATION,
         DATE_EXPIRATION, WHS, NAME_HOLDING, EAN, USER, PLAN_NFE,
-        SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD
+        SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD, RSV_FACTOR_PERIOD_CURRENT
     ]]
     return df
 
@@ -65,6 +66,7 @@ def correction_by_milt_clients(df):
     df.loc[idx, PLAN_NFE] = df.loc[idx, PLAN_MINUS_FACT]
     df.loc[idx, SALES_FACTOR_PERIOD] = 0
     df.loc[idx, RSV_FACTOR_PERIOD] = 0
+    df.loc[idx, RSV_FACTOR_PERIOD_CURRENT] = 0
 
     mult_clients = get_mult_clients_dict(df, NAME_HOLDING)
     for clients, values in mult_clients.items():
@@ -85,7 +87,8 @@ def correction_by_milt_clients(df):
             PLAN_NFE: 'sum',
             SALES_FACTOR_PERIOD: 'sum',
             RSV_FACTOR_PERIOD: 'sum',
-            PLAN_MINUS_FACT: 'sum'
+            RSV_FACTOR_PERIOD_CURRENT: 'sum',
+            PLAN_MINUS_FACT: 'sum',
         }
         df_mult = df_mult.groupby(static_col).agg(agg_col).reset_index()
         df_mult.insert(
@@ -103,7 +106,8 @@ def merge_sales_rsv(df):
     merge_col = [LINK, LINK_HOLDING, WHS, NAME_HOLDING, EAN]
     data_list = [
         [sales, col['last_sale'], SALES_FACTOR_PERIOD],
-        [rsv, SOFT_HARD_RSV, RSV_FACTOR_PERIOD]
+        [rsv, SOFT_HARD_RSV, RSV_FACTOR_PERIOD],
+        [rsv, SOFT_HARD_RSV_CURRENT, RSV_FACTOR_PERIOD_CURRENT]
     ]
 
     for data in data_list:
@@ -119,7 +123,10 @@ def merge_sales_rsv(df):
         df.loc[idx, result_col] = df.loc[idx, added_col]
         df.drop(added_col, axis=1, inplace=True)
 
-    col_null = [PLAN_NFE, SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD]
+    col_null = [
+        PLAN_NFE, SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD,
+        RSV_FACTOR_PERIOD_CURRENT
+    ]
     for col in col_null:
         df.loc[df[col].isnull(), col] = 0
 
@@ -148,7 +155,7 @@ def merge_directory(df):
         LINK, LINK_HOLDING, FACTOR, DATE_CREATION, DATE_START, DATE_EXPIRATION,
         WHS, NAME_HOLDING, EAN, PRODUCT, LEVEL_3, USER, MSU, ELB_PRICE,
         BASE_PRICE, PLAN_NFE, SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD,
-        MAX_DEMAND, PLAN_MINUS_FACT
+        RSV_FACTOR_PERIOD_CURRENT, MAX_DEMAND, PLAN_MINUS_FACT
     ]]
     return df
 
