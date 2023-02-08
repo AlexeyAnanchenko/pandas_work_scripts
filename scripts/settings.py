@@ -104,6 +104,11 @@ TABLE_RESERVE_FUTURE = 'Резервы следующего месяца.xlsx'
 REPORT_POTENTIAL_SALES = '\\Потенциальные продажи\\Потенциальные продажи.xlsx'
 REPORT_ELBRUS_FACTORS = '\\Потенциальные продажи\\Факторы Эльбрус.xlsx'
 REPORT_BASE_FACTORS = '\\Потенциальные продажи\\Факторы База.xlsx'
+FUTURE_REPORT_PS = ('\\Будущие потенциальные продажи\\'
+                    + 'Потенциальные продажи.xlsx')
+FUTURE_ELB_PS = '\\Будущие потенциальные продажи\\Факторы Эльбрус.xlsx'
+FUTURE_BASE_PS = '\\Будущие потенциальные продажи\\Факторы База.xlsx'
+
 
 DATE_COL = [
     DATE_RSV, DATE_CREATION, DATE_START, DATE_EXPIRATION, DATE_REGISTRY
