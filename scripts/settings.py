@@ -9,6 +9,7 @@ BASE_DIR = dirname(dirname(abspath(__file__)))
 SOURCE_DIR = BASE_DIR + '\\Исходники\\'
 RESULT_DIR = BASE_DIR + '\\Результаты\\'
 REPORT_DIR = RESULT_DIR + '\\Отчёты\\'
+REPORT_DIR_FINAL = RESULT_DIR + '\\Отчёты финальные\\'
 ARCHIVE_DIR = BASE_DIR + '\\Архив\\'
 
 NUM_MONTHS = 3
@@ -86,6 +87,7 @@ QUANT_REGISTRY = 'Зарегистрированное количество на
 SOFT_HARD_RSV_CURRENT = 'Мягкие + жёсткие резервы текущего периода, шт'
 SOFT_HARD_RSV_FUTURE = 'Мягкие + жёсткие резервы будущего периода, шт'
 LINES = 'Линейки'
+RSV_FACTOR_PERIOD_FUTURE = 'Резервы клиента(-ов) будущего месяца'
 
 
 TABLE_ASSORTMENT = 'Ассортимент.xlsx'
@@ -99,17 +101,22 @@ TABLE_SALES = 'Продажи по складам.xlsx'
 TABLE_RESERVE = 'Резервы.xlsx'
 TABLE_FACTORS = 'Факторы.xlsx'
 TABLE_REGISTRY_FACTORS = 'Реестр по факторам.xlsx'
-TABLE_RESERVE_CURRENT = 'Резервы текущего месяца.xlsx'
-TABLE_RESERVE_FUTURE = 'Резервы следующего месяца.xlsx'
-TABLE_LINES = 'Линейки.xlsx'
 
-REPORT_POTENTIAL_SALES = '\\Потенциальные продажи\\Потенциальные продажи.xlsx'
-REPORT_ELBRUS_FACTORS = '\\Потенциальные продажи\\Факторы Эльбрус.xlsx'
-REPORT_BASE_FACTORS = '\\Потенциальные продажи\\Факторы База.xlsx'
-FUTURE_REPORT_PS = ('\\Будущие потенциальные продажи\\'
-                    + 'Потенциальные продажи.xlsx')
-FUTURE_ELB_PS = '\\Будущие потенциальные продажи\\Факторы Эльбрус.xlsx'
-FUTURE_BASE_PS = '\\Будущие потенциальные продажи\\Факторы База.xlsx'
+ACCESSORY_DIR = '\\Вспомогательные данные\\'
+TABLE_RESERVE_CURRENT = ACCESSORY_DIR + 'Резервы текущего месяца.xlsx'
+TABLE_RESERVE_FUTURE = ACCESSORY_DIR + 'Резервы следующего месяца.xlsx'
+TABLE_LINES = ACCESSORY_DIR + 'Линейки.xlsx'
+TABLE_EXCLUDE = ACCESSORY_DIR + 'Исключения проверки.xlsx'
+
+PS_DIR = '\\Потенциальные продажи\\'
+PS_DIR_FUTURE = '\\Будущие потенциальные продажи\\'
+REPORT_POTENTIAL_SALES = PS_DIR + 'Потенциальные продажи.xlsx'
+REPORT_ELBRUS_FACTORS = PS_DIR + 'Факторы Эльбрус.xlsx'
+REPORT_BASE_FACTORS = PS_DIR + 'Факторы База.xlsx'
+FUTURE_REPORT_PS = PS_DIR_FUTURE + 'Потенциальные продажи.xlsx'
+FUTURE_ELB_PS = PS_DIR_FUTURE + 'Факторы Эльбрус.xlsx'
+FUTURE_BASE_PS = PS_DIR_FUTURE + 'Факторы База.xlsx'
+REPORT_CHECK_FACTORS = 'Проверка факторов.xlsx'
 
 
 DATE_COL = [
