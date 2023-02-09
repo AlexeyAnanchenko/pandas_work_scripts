@@ -9,7 +9,8 @@ start_time = time.time()
 
 scripts = [
     'potential_sales',
-    'registry_potential_sales'
+    'registry_potential_sales',
+    'future_potential_sales'
 ]
 
 for script in scripts:

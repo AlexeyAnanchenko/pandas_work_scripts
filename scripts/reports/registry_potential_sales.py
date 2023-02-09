@@ -21,7 +21,7 @@ from settings import ELB_PRICE, TABLE_REMAINS, TRANZIT_CURRENT, ACTIVE_STATUS
 from settings import REPORT_ELBRUS_FACTORS, INACTIVE_PURPOSE, BASE_PRICE
 from settings import REPORT_BASE_FACTORS, TABLE_REGISTRY_FACTORS, DATE_REGISTRY
 from settings import QUANT_REGISTRY, FACTOR_NUM, RSV_FACTOR_PERIOD_CURRENT
-from settings import SOFT_HARD_RSV_CURRENT
+from settings import SOFT_HARD_RSV_CURRENT, TABLE_LINES, LINES
 from hidden_settings import WHS_POTENCTIAL_SALES, elbrus
 
 
@@ -289,6 +289,13 @@ def distribute_remainder(df):
     return df
 
 
+def add_lines(df):
+    df_lines = get_data(TABLE_LINES)
+    df = df.merge(df_lines, on=EAN, how='left')
+    df = utils.void_to(df, LINES, 'БЕЗ ЛИНЕЙКИ')
+    return df
+
+
 def get_elbrus_factors(df):
     elb_df = df[df[TERRITORY].isin([elbrus])]
     elb_df = elb_df.drop(
@@ -297,6 +304,7 @@ def get_elbrus_factors(df):
         ],
         axis=1
     )
+    elb_df = add_lines(elb_df)
     return elb_df
 
 

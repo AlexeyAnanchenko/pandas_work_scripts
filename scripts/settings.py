@@ -85,6 +85,7 @@ DATE_REGISTRY = 'Дата регистрации объёма'
 QUANT_REGISTRY = 'Зарегистрированное количество на дату, шт'
 SOFT_HARD_RSV_CURRENT = 'Мягкие + жёсткие резервы текущего периода, шт'
 SOFT_HARD_RSV_FUTURE = 'Мягкие + жёсткие резервы будущего периода, шт'
+LINES = 'Линейки'
 
 
 TABLE_ASSORTMENT = 'Ассортимент.xlsx'
@@ -100,6 +101,7 @@ TABLE_FACTORS = 'Факторы.xlsx'
 TABLE_REGISTRY_FACTORS = 'Реестр по факторам.xlsx'
 TABLE_RESERVE_CURRENT = 'Резервы текущего месяца.xlsx'
 TABLE_RESERVE_FUTURE = 'Резервы следующего месяца.xlsx'
+TABLE_LINES = 'Линейки.xlsx'
 
 REPORT_POTENTIAL_SALES = '\\Потенциальные продажи\\Потенциальные продажи.xlsx'
 REPORT_ELBRUS_FACTORS = '\\Потенциальные продажи\\Факторы Эльбрус.xlsx'
