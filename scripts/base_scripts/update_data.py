@@ -17,10 +17,10 @@ from hidden_settings import url_factors_nfe_promo, USER_NFE, PASSWORD_NFE
 
 options = Options()
 options.add_argument('–disable-blink-features=BlockCredentialedSubresources')
-options.add_argument('headless')
-options.add_argument('log-level=1')
+# options.add_argument('headless')
+options.add_argument('log-level=3')
 options.add_experimental_option("prefs", {
-    "download.default_directory": SOURCE_DIR
+    "download.default_directory": SOURCE_DIR,
 })
 driver = webdriver.Chrome(options=options)
 
