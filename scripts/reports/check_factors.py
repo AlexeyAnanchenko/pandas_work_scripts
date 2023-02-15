@@ -19,6 +19,9 @@ LINK_HOLDING_PERIOD = 'Сцепка Период-Склад-Холдинг-ШК'
 LINK_FACTOR = 'Сцепка Номер фактора-Склад-Штрихкод'
 CHECK_FACT = 'ПРОВЕРКА ФАКТА ТЕКУЩЕГО ПЕРИОДА'
 CHECK_DUPL = 'ПРОВЕРКА НАЛИЧИЯ ДУБЛИКАТОВ'
+CANCEL_STATUS = 'Отменен(а)'
+
+df_exclude = get_data(TABLE_EXCLUDE)
 
 
 def get_factors():
@@ -27,6 +30,7 @@ def get_factors():
     df = df[
         (df[FACTOR_PERIOD].isin([CURRENT, FUTURE]))
         & (df[PURPOSE_PROMO] != INACTIVE_PURPOSE)
+        & (df[FACTOR_STATUS] != CANCEL_STATUS)
     ]
     df[RSV_FACTOR_PERIOD_FUTURE] = (df[RSV_FACTOR_PERIOD]
                                     - df[RSV_FACTOR_PERIOD_CURRENT])
@@ -37,7 +41,7 @@ def get_factors():
 
 
 def check_fact(df):
-    df_exclude = get_data(TABLE_EXCLUDE)
+    """Проверяем факт продаж по заявке"""
     df.loc[
         (df[SALES_PBI] + df[RESERVES_PBI] < (df[SALES_FACTOR_PERIOD]
                                              + df[RSV_FACTOR_PERIOD_CURRENT]))
@@ -60,8 +64,13 @@ def check_fact(df):
 
 
 def check_duplicates(df):
-    duplicated_rows = df[LINK_HOLDING_PERIOD].duplicated()
-    df.loc[(df[FACTOR_STATUS].isin(ACTIVE_STATUS)) & (duplicated_rows), CHECK_DUPL] = 'Дубликат!'
+    duplicate_df = df[
+        ~df[LINK_FACTOR].isin(df_exclude[CHECK_DUPL].to_list())
+    ].copy()
+    duplicate_df = duplicate_df[duplicate_df.duplicated(
+        [LINK_HOLDING_PERIOD], keep='first'
+    )][LINK_HOLDING_PERIOD].to_list()
+    df.loc[df[LINK_HOLDING_PERIOD].isin(duplicate_df), CHECK_DUPL] = 'Дубликат'
     df = df.drop(labels=[LINK_HOLDING_PERIOD], axis=1)
     return df
 
