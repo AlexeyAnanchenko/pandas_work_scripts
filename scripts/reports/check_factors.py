@@ -64,6 +64,7 @@ def check_fact(df):
 
 
 def check_duplicates(df):
+    """Проверяем дубликаты по периоду"""
     duplicate_df = df[
         ~df[LINK_FACTOR].isin(df_exclude[CHECK_DUPL].to_list())
     ].copy()
