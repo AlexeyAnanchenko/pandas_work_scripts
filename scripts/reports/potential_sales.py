@@ -21,7 +21,7 @@ from settings import ELB_PRICE, TABLE_REMAINS, TRANZIT_CURRENT, ACTIVE_STATUS
 from settings import REPORT_ELBRUS_FACTORS, INACTIVE_PURPOSE, BASE_PRICE
 from settings import REPORT_BASE_FACTORS, SOFT_HARD_RSV_CURRENT, LINES
 from settings import RSV_FACTOR_PERIOD_CURRENT, TABLE_LINES
-from hidden_settings import WHS_POTENCTIAL_SALES, elbrus
+from hidden_settings import WHS_ELBRUS, elbrus
 
 
 FACTOR_SALES = 'Продажи'
@@ -246,7 +246,7 @@ def distribute_remainder(df):
                             + df[RSV_FACTOR_PERIOD] + df[FULL_REST_CUSTOMER])
     df[TO_ORDER] = df[PLAN_MINUS_FACT] - df[FULL_REST_CUSTOMER]
     df.insert(3, TERRITORY, df[WHS])
-    df = df.replace({TERRITORY: WHS_POTENCTIAL_SALES})
+    df = df.replace({TERRITORY: WHS_ELBRUS})
     return df
 
 
