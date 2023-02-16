@@ -17,7 +17,8 @@ from settings import FACTOR_STATUS, ACTIVE_STATUS, SALES_PBI, RESERVES_PBI
 from settings import TABLE_ASSORTMENT, TABLE_DIRECTORY, EAN, MATRIX, MATRIX_LY
 from settings import ELB_PRICE, BASE_PRICE, PLAN_NFE, ALL_CLIENTS, FULL_REST
 from settings import AVG_FACTOR_PERIOD, TABLE_REMAINS, FREE_REST, TRANZIT
-from settings import OVERSTOCK, AVG_FACTOR_PERIOD_WHS
+from settings import OVERSTOCK, AVG_FACTOR_PERIOD_WHS, SOFT_HARD_RSV, QUOTA
+from settings import TABLE_SALES
 
 
 LINK_HOLDING_PERIOD = 'Сцепка Период-Склад-Холдинг-ШК'
@@ -37,6 +38,7 @@ AVARAGE_PRICE = 'Средние продажи, руб.'
 RISK = 'Риски в мес.'
 PLAN_NFE_TOTAL = 'Общий план в NFE на Склад-ШК'
 RISK_TOTAL = 'Риски по общему плану, в мес.'
+REST_TRANZIT = 'Общие остатки + Транзит, шт'
 
 df_exclude = get_data(TABLE_EXCLUDE)
 
@@ -89,7 +91,6 @@ def check_duplicates(df):
         [LINK_HOLDING_PERIOD], keep='first'
     )][LINK_HOLDING_PERIOD].to_list()
     df.loc[df[LINK_HOLDING_PERIOD].isin(duplicate_df), CHECK_DUPL] = 'Дубликат'
-    df = df.drop(labels=[LINK_HOLDING_PERIOD], axis=1)
     return df
 
 
@@ -123,29 +124,45 @@ def merge_assort_and_dir(df):
 
 
 def merge_remains(df):
-    columns = [LINK, FULL_REST, FREE_REST, TRANZIT, OVERSTOCK]
+    """Подтягиваем остатки и резервы"""
+    columns = [
+        LINK, FULL_REST, SOFT_HARD_RSV, QUOTA, FREE_REST, TRANZIT, OVERSTOCK
+    ]
     remainds = get_data(TABLE_REMAINS)[columns]
     df = df.merge(remainds, on=LINK, how='left')
     columns.remove(LINK)
     for col in columns:
         df = utils.void_to(df, col, 0)
+    df[REST_TRANZIT] = df[FULL_REST] + df[TRANZIT]
     return df
 
 
 def risk_calculation(df):
+    """Считаем риски для склада"""
     df[RISK] = (df[PLAN_NFE] / df[AVG_FACTOR_PERIOD_WHS]).round(1)
     df.loc[df[AVG_FACTOR_PERIOD_WHS] == 0, RISK] = 9999
-    df_group = df.groupby([LINK]).agg({PLAN_NFE: 'sum'}).reset_index()
+    df_group = df.groupby([LINK_HOLDING_PERIOD]).agg(
+        {PLAN_NFE: 'sum'}
+    ).reset_index()
     df_group = df_group.rename(columns={PLAN_NFE: PLAN_NFE_TOTAL})
-    df = df.merge(df_group, on=LINK, how='left')
+    df = df.merge(df_group, on=LINK_HOLDING_PERIOD, how='left')
     df[RISK_TOTAL] = (df[PLAN_NFE_TOTAL] / df[AVG_FACTOR_PERIOD_WHS]).round(1)
     df.loc[df[AVG_FACTOR_PERIOD_WHS] == 0, RISK_TOTAL] = 9999
+    df = df.drop(labels=[LINK_HOLDING_PERIOD], axis=1)
+    return df
+
+
+def merge_sales(df):
+    """Подтягиваем тотал продажи по складу"""
+    df_sales, col_sales = get_data(TABLE_SALES)
+    df_sales = df_sales[[LINK, col_sales['last_cut'], col_sales['last_sale']]]
+    df = df.merge(df_sales, on=LINK, how='left')
     return df
 
 
 def main():
     df = merge_assort_and_dir(check_duplicates(check_fact(get_factors())))
-    df = risk_calculation(merge_remains(df))
+    df = merge_sales(risk_calculation(merge_remains(df)))
     save_to_excel(REPORT_DIR_FINAL + REPORT_CHECK_FACTORS, df)
     print_complete(__file__)
 
