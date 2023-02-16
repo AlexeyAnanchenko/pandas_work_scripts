@@ -112,7 +112,7 @@ def sales_by_client():
         new_name = AVARAGE + name_col
         group_df[new_name] = (group_df[name_col]
                               / divide_for_avarage
-                              * avarage_days_in_month)
+                              * avarage_days_in_month).round(1)
         avarage_col.append(new_name)
 
     group_df.drop(sum_all_columns, axis=1, inplace=True)
