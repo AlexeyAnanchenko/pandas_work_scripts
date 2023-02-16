@@ -15,8 +15,9 @@ from settings import LINK_HOLDING, RSV_FACTOR_PERIOD_FUTURE, CUTS_PBI, MSU
 from settings import ADJUSTMENT_PBI, FACT_NFE, NAME_TRAD, TABLE_EXCLUDE
 from settings import FACTOR_STATUS, ACTIVE_STATUS, SALES_PBI, RESERVES_PBI
 from settings import TABLE_ASSORTMENT, TABLE_DIRECTORY, EAN, MATRIX, MATRIX_LY
-from settings import ELB_PRICE, BASE_PRICE, PLAN_NFE, ALL_CLIENTS
-from settings import AVG_FACTOR_PERIOD
+from settings import ELB_PRICE, BASE_PRICE, PLAN_NFE, ALL_CLIENTS, FULL_REST
+from settings import AVG_FACTOR_PERIOD, TABLE_REMAINS, FREE_REST, TRANZIT
+from settings import OVERSTOCK, AVG_FACTOR_PERIOD_WHS
 
 
 LINK_HOLDING_PERIOD = 'Сцепка Период-Склад-Холдинг-ШК'
@@ -33,6 +34,9 @@ PLAN_MSU = 'План, msu'
 PLAN_PRICE = 'План, руб.'
 AVARAGE_MSU = 'Средние продажи, msu'
 AVARAGE_PRICE = 'Средние продажи, руб.'
+RISK = 'Риски в мес.'
+PLAN_NFE_TOTAL = 'Общий план в NFE на Склад-ШК'
+RISK_TOTAL = 'Риски по общему плану, в мес.'
 
 df_exclude = get_data(TABLE_EXCLUDE)
 
@@ -110,16 +114,38 @@ def merge_assort_and_dir(df):
     idx = df[~df[WHS].isin(WHS_ELBRUS.keys())].index
     df.loc[idx, PRICE_LOC] = df.loc[idx, BASE_PRICE]
 
-    df[PLAN_MSU] = df[PLAN_NFE] * df[MSU]
-    df[PLAN_PRICE] = df[PLAN_NFE] * df[PRICE_LOC]
-    df[AVARAGE_MSU] = df[AVG_FACTOR_PERIOD] * df[MSU]
-    df[AVARAGE_PRICE] = df[AVG_FACTOR_PERIOD] * df[PRICE_LOC]
+    df[PLAN_MSU] = (df[PLAN_NFE] * df[MSU]).round(4)
+    df[PLAN_PRICE] = (df[PLAN_NFE] * df[PRICE_LOC]).round(2)
+    df[AVARAGE_MSU] = (df[AVG_FACTOR_PERIOD] * df[MSU]).round(4)
+    df[AVARAGE_PRICE] = (df[AVG_FACTOR_PERIOD] * df[PRICE_LOC]).round(2)
     df = df.drop(labels=columns + [PRICE_LOC], axis=1)
+    return df
+
+
+def merge_remains(df):
+    columns = [LINK, FULL_REST, FREE_REST, TRANZIT, OVERSTOCK]
+    remainds = get_data(TABLE_REMAINS)[columns]
+    df = df.merge(remainds, on=LINK, how='left')
+    columns.remove(LINK)
+    for col in columns:
+        df = utils.void_to(df, col, 0)
+    return df
+
+
+def risk_calculation(df):
+    df[RISK] = (df[PLAN_NFE] / df[AVG_FACTOR_PERIOD_WHS]).round(1)
+    df.loc[df[AVG_FACTOR_PERIOD_WHS] == 0, RISK] = 9999
+    df_group = df.groupby([LINK]).agg({PLAN_NFE: 'sum'}).reset_index()
+    df_group = df_group.rename(columns={PLAN_NFE: PLAN_NFE_TOTAL})
+    df = df.merge(df_group, on=LINK, how='left')
+    df[RISK_TOTAL] = (df[PLAN_NFE_TOTAL] / df[AVG_FACTOR_PERIOD_WHS]).round(1)
+    df.loc[df[AVG_FACTOR_PERIOD_WHS] == 0, RISK_TOTAL] = 9999
     return df
 
 
 def main():
     df = merge_assort_and_dir(check_duplicates(check_fact(get_factors())))
+    df = risk_calculation(merge_remains(df))
     save_to_excel(REPORT_DIR_FINAL + REPORT_CHECK_FACTORS, df)
     print_complete(__file__)
 
