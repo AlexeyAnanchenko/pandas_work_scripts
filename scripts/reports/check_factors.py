@@ -107,10 +107,11 @@ def check_duplicates(df):
 
 
 def merge_assort_and_dir(df):
-    """Подтягиваем ассортимент и и данные их справочника по ШК"""
+    """Подтягиваем ассортимент и данные из справочника по ШК"""
     assort = get_data(TABLE_ASSORTMENT)[[LINK]]
     assort[ACTIVE_LOC] = YES
     df = df.merge(assort, on=LINK, how='left')
+    save_to_excel(REPORT_DIR + 'ФАЙЛ.xlsx', df)
 
     columns = [MATRIX, MATRIX_LY, MSU, ELB_PRICE, BASE_PRICE]
     direct = get_data(TABLE_DIRECTORY)[[EAN] + columns]
@@ -120,7 +121,10 @@ def merge_assort_and_dir(df):
         (df[NAME_HOLDING] == L_YUG) & (df[MATRIX_LY] == NO), ACTIVE_LOC
     ] = NO
     df.loc[
-        (df[NAME_HOLDING] != L_YUG) & (df[MATRIX] == NO), ACTIVE_LOC
+        (df[NAME_HOLDING] != L_YUG)
+        & (df[MATRIX] == NO)
+        & (df[WHS].isin(WHS_ELBRUS.keys())),
+        ACTIVE_LOC
     ] = NO
     idx = df[df[WHS].isin(WHS_ELBRUS.keys())].index
     df.loc[idx, PRICE_LOC] = df.loc[idx, ELB_PRICE]
