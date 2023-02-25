@@ -23,6 +23,7 @@ from settings import AVG_FACTOR_PERIOD, TABLE_REMAINS, FREE_REST, TRANZIT
 from settings import OVERSTOCK, AVG_FACTOR_PERIOD_WHS, SOFT_HARD_RSV, QUOTA
 from settings import TABLE_SALES, DATE_EXPIRATION, DATE_START, REF_FACTOR
 from settings import DESCRIPTION, USER, FACTOR, DATE_CREATION, LEVEL_3
+from settings import CANCEL_STATUS
 
 
 LINK_HOLDING_PERIOD = 'Сцепка Период-Склад-Холдинг-ШК'
@@ -30,7 +31,6 @@ LINK_FACTOR = 'Сцепка Номер фактора-Склад-Штрихко�
 LINK_PERIOD = 'Сцепка Склад-ШК-Период'
 CHECK_FACT = 'ПРОВЕРКА ФАКТА ТЕКУЩЕГО ПЕРИОДА'
 CHECK_DUPL = 'ПРОВЕРКА НАЛИЧИЯ ДУБЛИКАТОВ'
-CANCEL_STATUS = 'Отменен(а)'
 ACTIVE_LOC = 'Активный ассортимент для локации'
 PRICE_LOC = 'Цена для локации (GIV/NIV), руб.'
 L_YUG = 'Лоджистик-Юг ELBR (5553395)'
@@ -206,9 +206,7 @@ def calc_new_forecast(df):
     df.loc[idx, NEW_PLAN] = df.loc[idx, PLAN_NFE]
     idx = df[df[REMAINING_DAYS] == 0].index
     df.loc[idx, NEW_PLAN] = df.loc[idx, FACT_NFE]
-    df[NEW_ADJUSTMENT] = np.maximum(
-        df[NEW_PLAN], df[ADJUSTMENT_PBI], df[PLAN_NFE]
-    )
+    df[NEW_ADJUSTMENT] = df[[PLAN_NFE, ADJUSTMENT_PBI, NEW_PLAN]].max(axis=1)
 
     df[NEW_RISK] = (df[NEW_PLAN] / df[AVG_FACTOR_PERIOD_WHS]).round(1)
     df.loc[df[AVG_FACTOR_PERIOD_WHS] == 0, NEW_RISK] = 9999
@@ -219,9 +217,9 @@ def calc_new_forecast(df):
     df.loc[idx, NEW_RISK_PLAN] = (df[NEW_PLAN] / df[DAYS_IN_FACTOR]
                                   * (df[DAYS_PASSED]
                                      + add_purchase_days)).round(0)
-    df[NEW_RISK_ADJUST] = np.maximum(
-        df[NEW_RISK_PLAN], df[ADJUSTMENT_PBI], df[PLAN_NFE]
-    )
+    df[NEW_RISK_ADJUST] = df[[
+        PLAN_NFE, ADJUSTMENT_PBI, NEW_RISK_PLAN
+    ]].max(axis=1)
     return df
 
 
