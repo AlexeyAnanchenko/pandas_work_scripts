@@ -23,8 +23,8 @@ from settings import AVG_FACTOR_PERIOD, RSV_FACTOR_PERIOD, PAST, CURRENT
 from settings import FUTURE, TABLE_SALES_HOLDINGS, TABLE_RESERVE
 from settings import AVG_FACTOR_PERIOD_WHS, SOFT_HARD_RSV_CURRENT
 from settings import RSV_FACTOR_PERIOD_CURRENT
-from update_data import update_factors_nfe, update_factors_pbi
-from update_data import update_factors_nfe_promo
+# from update_data import update_factors_nfe, update_factors_pbi
+# from update_data import update_factors_nfe_promo
 
 
 SOURCE_FILE = 'NovoForecastServer_РезультатыПоиска.xlsx'
@@ -55,6 +55,7 @@ DATE_EXPIRATION_LOC = 'Дата окончания действия фактор
 DESCRIPTION_LOC = 'Описание'
 NUMBER_PROMO = 'Номер'
 PURPOSE = 'Цель'
+SALES_CURRENT_FOR_PAST = 'Продажи текущего месяца для прошедших факторов, шт'
 TRAD_HOLDINGS = [
     'Васильева Татьяна Викторовна ИП (8108456)',
     'Воронина Елена Сергеевна ИП (8179862)',
@@ -208,6 +209,7 @@ def add_sales_and_rsv(df):
     df.loc[idx, SALES_FACTOR_PERIOD] = df.loc[idx, col_sales['last_sale']]
     idx = df[df[FACTOR_PERIOD] == PAST].index
     df.loc[idx, SALES_FACTOR_PERIOD] = df.loc[idx, col_sales['pntm_sale']]
+    df.loc[idx, SALES_CURRENT_FOR_PAST] = df.loc[idx, col_sales['last_sale']]
     idx = df[df[FACTOR_PERIOD] == FUTURE].index
     df.loc[idx, SALES_FACTOR_PERIOD] = 0
     df[AVG_FACTOR_PERIOD] = df[col_sales['avg_cut_sale']]
@@ -292,9 +294,9 @@ def link_replace(df):
 
 
 def main():
-    update_factors_nfe(SOURCE_FILE)
-    update_factors_nfe_promo(SOURCE_FILE_PROMO)
-    update_factors_pbi(SOURCE_FILE_PB)
+    # update_factors_nfe(SOURCE_FILE)
+    # update_factors_nfe_promo(SOURCE_FILE_PROMO)
+    # update_factors_pbi(SOURCE_FILE_PB)
     factors = add_pbi_and_purpose(add_num_factors(filtered_factors()))
     factors = add_sales_and_rsv(reindex_rename(split_by_month(factors)))
     factors = link_replace(fill_empty_cells(add_total_sales_rsv(factors)))
