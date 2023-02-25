@@ -50,6 +50,8 @@ DAYS_PASSED = 'Прошлой дней в факторе'
 NEW_PLAN = 'Новый план, шт'
 NEW_RISK = 'Новые риски в мес.'
 NEW_RISK_PLAN = 'Новый план с учётом рисков, в шт'
+NEW_ADJUSTMENT = 'Новая корректировка прогноза, шт'
+NEW_RISK_ADJUST = 'Новая корректировка прогноза с учётом рисков, шт'
 
 df_exclude = get_data(TABLE_EXCLUDE)
 
@@ -67,7 +69,7 @@ def get_factors():
     df.insert(0, LINK_FACTOR, df[FACTOR_NUM].map(str) + df[LINK])
     df.insert(0, LINK_HOLDING_PERIOD, df[FACTOR_PERIOD] + df[LINK_HOLDING])
     df.insert(0, LINK_PERIOD, df[FACTOR_PERIOD] + df[LINK])
-    df = df.drop(labels=[LINK_HOLDING, PURPOSE_PROMO, ADJUSTMENT_PBI], axis=1)
+    df = df.drop(labels=[LINK_HOLDING, PURPOSE_PROMO], axis=1)
     return df
 
 
@@ -111,7 +113,6 @@ def merge_assort_and_dir(df):
     assort = get_data(TABLE_ASSORTMENT)[[LINK]]
     assort[ACTIVE_LOC] = YES
     df = df.merge(assort, on=LINK, how='left')
-    save_to_excel(REPORT_DIR + 'ФАЙЛ.xlsx', df)
 
     columns = [MATRIX, MATRIX_LY, MSU, ELB_PRICE, BASE_PRICE]
     direct = get_data(TABLE_DIRECTORY)[[EAN] + columns]
@@ -205,6 +206,9 @@ def calc_new_forecast(df):
     df.loc[idx, NEW_PLAN] = df.loc[idx, PLAN_NFE]
     idx = df[df[REMAINING_DAYS] == 0].index
     df.loc[idx, NEW_PLAN] = df.loc[idx, FACT_NFE]
+    df[NEW_ADJUSTMENT] = np.maximum(
+        df[NEW_PLAN], df[ADJUSTMENT_PBI], df[PLAN_NFE]
+    )
 
     df[NEW_RISK] = (df[NEW_PLAN] / df[AVG_FACTOR_PERIOD_WHS]).round(1)
     df.loc[df[AVG_FACTOR_PERIOD_WHS] == 0, NEW_RISK] = 9999
@@ -215,23 +219,27 @@ def calc_new_forecast(df):
     df.loc[idx, NEW_RISK_PLAN] = (df[NEW_PLAN] / df[DAYS_IN_FACTOR]
                                   * (df[DAYS_PASSED]
                                      + add_purchase_days)).round(0)
+    df[NEW_RISK_ADJUST] = np.maximum(
+        df[NEW_RISK_PLAN], df[ADJUSTMENT_PBI], df[PLAN_NFE]
+    )
     return df
 
 
 def reindex_and_sort(df):
     df_sales, col_sales = get_data(TABLE_SALES)
     df = df[[
-        REF_FACTOR, DESCRIPTION, USER, FACTOR, FACTOR_PERIOD, FACTOR_NUM,
-        FACTOR_STATUS, DATE_START, DATE_EXPIRATION, DATE_CREATION, WHS,
-        NAME_HOLDING, EAN, LEVEL_3, PRODUCT, CHECK_FACT, CHECK_DUPL,
-        ACTIVE_LOC, PLAN_MSU, PLAN_PRICE, PLAN_NFE, SALES_PBI, RESERVES_PBI,
-        CUTS_PBI, FACT_NFE, SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD_CURRENT,
-        RSV_FACTOR_PERIOD_FUTURE, RSV_FACTOR_PERIOD, AVARAGE_MSU,
-        AVARAGE_PRICE, AVG_FACTOR_PERIOD, AVG_FACTOR_PERIOD_WHS, RISK,
-        PLAN_NFE_TOTAL, RISK_TOTAL, col_sales['last_cut'],
+        LINK_FACTOR, REF_FACTOR, DESCRIPTION, USER, FACTOR, FACTOR_PERIOD,
+        FACTOR_NUM, FACTOR_STATUS, DATE_START, DATE_EXPIRATION, DATE_CREATION,
+        WHS, NAME_HOLDING, EAN, LEVEL_3, PRODUCT, CHECK_FACT, CHECK_DUPL,
+        ACTIVE_LOC, PLAN_MSU, PLAN_PRICE, ADJUSTMENT_PBI, PLAN_NFE, SALES_PBI,
+        RESERVES_PBI, CUTS_PBI, FACT_NFE, SALES_FACTOR_PERIOD,
+        RSV_FACTOR_PERIOD_CURRENT, RSV_FACTOR_PERIOD_FUTURE, RSV_FACTOR_PERIOD,
+        AVARAGE_MSU, AVARAGE_PRICE, AVG_FACTOR_PERIOD, AVG_FACTOR_PERIOD_WHS,
+        RISK, PLAN_NFE_TOTAL, RISK_TOTAL, col_sales['last_cut'],
         col_sales['last_sale'], SOFT_HARD_RSV, QUOTA, FULL_REST, REST_TRANZIT,
         FREE_REST, OVERSTOCK, TRANZIT, DAYS_IN_FACTOR, DAYS_PASSED,
-        REMAINING_DAYS, NEW_PLAN, NEW_RISK, NEW_RISK_PLAN
+        REMAINING_DAYS, NEW_PLAN, NEW_ADJUSTMENT, NEW_RISK, NEW_RISK_PLAN,
+        NEW_RISK_ADJUST
     ]].sort_values(
         by=[DATE_CREATION, FACTOR_NUM, RISK], ascending=[False, False, False]
     )
