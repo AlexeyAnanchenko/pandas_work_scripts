@@ -79,7 +79,10 @@ def add_transit_directory(df):
             WHS_LOC: WHS
         })
         tz_df[LINK] = tz_df[WHS] + tz_df[EAN].map(str)
-        tz_df[MONTH] = tz_df[DATE_TRANZIT].dt.strftime('%B')
+
+        tz_df[MONTH] = tz_df[DATE_TRANZIT].map(
+            pd.to_datetime
+        ).dt.strftime('%B')
         tz_df = tz_df.pivot_table(
             values=TRANZIT, index=static_col,
             columns=[MONTH], aggfunc=np.sum
@@ -95,6 +98,8 @@ def add_transit_directory(df):
         tz_df = tz_df.rename(columns={
             current_month: TRANZIT_CURRENT, next_month: TRANZIT_NEXT
         })
+        tz_df = utils.void_to(tz_df, TRANZIT_CURRENT, 0)
+        tz_df = utils.void_to(tz_df, TRANZIT_NEXT, 0)
         tz_df[TRANZIT] = tz_df[TRANZIT_CURRENT] + tz_df[TRANZIT_NEXT]
         df = df.merge(tz_df, on=static_col, how='outer')
     else:
