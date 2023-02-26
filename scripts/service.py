@@ -72,10 +72,12 @@ def get_col_purch(df):
 
     columns = list(df.columns)
     last_month = columns[-1]
+    penultimate_month = columns[-2]
     first_month = columns[-NUM_MONTHS]
     col_dict = {
         'first': first_month,
         'last': last_month,
+        'pntm': penultimate_month,
         'all': columns
     }
     return col_dict

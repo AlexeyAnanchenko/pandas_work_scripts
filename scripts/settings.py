@@ -73,6 +73,7 @@ NAME_TRAD = '<ТРАДИЦИЯ>'
 SALES_FACTOR_PERIOD = 'Продажи клиента(-ов) по периоду фактора'
 RSV_FACTOR_PERIOD = 'Резервы клиента(-ов)'
 RSV_FACTOR_PERIOD_CURRENT = 'Резервы клиента(-ов) текущего месяца'
+RSV_FACTOR_PERIOD_TOTAL = 'Резервы клиента(-ов) с квотой'
 AVG_FACTOR_PERIOD = 'Средние продажи + урезания за 3 месяца по клиенту(-ам)'
 AVG_FACTOR_PERIOD_WHS = 'Средние продажи + урезания за 3 месяца по складу'
 PAST = 'Прошедший'
@@ -88,6 +89,8 @@ SOFT_HARD_RSV_CURRENT = 'Мягкие + жёсткие резервы текущ
 SOFT_HARD_RSV_FUTURE = 'Мягкие + жёсткие резервы будущего периода, шт'
 LINES = 'Линейки'
 RSV_FACTOR_PERIOD_FUTURE = 'Резервы клиента(-ов) будущего месяца'
+CANCEL_STATUS = 'Отменен(а)'
+SALES_CURRENT_FOR_PAST = 'Продажи текущего месяца для прошедших факторов, шт'
 
 
 TABLE_ASSORTMENT = 'Ассортимент.xlsx'
@@ -117,6 +120,9 @@ FUTURE_REPORT_PS = PS_DIR_FUTURE + 'Потенциальные продажи.xl
 FUTURE_ELB_PS = PS_DIR_FUTURE + 'Факторы Эльбрус.xlsx'
 FUTURE_BASE_PS = PS_DIR_FUTURE + 'Факторы База.xlsx'
 REPORT_CHECK_FACTORS = 'Проверка факторов.xlsx'
+REPORT_NOT_SOLD_PAST = 'Не продано с прошлого месяца.xlsx'
+REPORT_NOT_SOLD_CURRENT = 'Не продано с текущего месяца.xlsx'
+
 
 
 DATE_COL = [
