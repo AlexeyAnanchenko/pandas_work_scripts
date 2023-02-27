@@ -24,8 +24,8 @@ from settings import FUTURE, TABLE_SALES_HOLDINGS, TABLE_RESERVE, TOTAL_RSV
 from settings import AVG_FACTOR_PERIOD_WHS, SOFT_HARD_RSV_CURRENT
 from settings import RSV_FACTOR_PERIOD_CURRENT, SALES_CURRENT_FOR_PAST
 from settings import RSV_FACTOR_PERIOD_TOTAL
-# from update_data import update_factors_nfe, update_factors_pbi
-# from update_data import update_factors_nfe_promo
+from update_data import update_factors_nfe, update_factors_pbi
+from update_data import update_factors_nfe_promo
 
 
 SOURCE_FILE = 'NovoForecastServer_РезультатыПоиска.xlsx'
@@ -299,9 +299,9 @@ def link_replace(df):
 
 
 def main():
-    # update_factors_nfe(SOURCE_FILE)
-    # update_factors_nfe_promo(SOURCE_FILE_PROMO)
-    # update_factors_pbi(SOURCE_FILE_PB)
+    update_factors_nfe(SOURCE_FILE)
+    update_factors_nfe_promo(SOURCE_FILE_PROMO)
+    update_factors_pbi(SOURCE_FILE_PB)
     factors = add_pbi_and_purpose(add_num_factors(filtered_factors()))
     factors = add_sales_and_rsv(reindex_rename(split_by_month(factors)))
     factors = link_replace(fill_empty_cells(add_total_sales_rsv(factors)))
