@@ -11,7 +11,8 @@ scripts = [
     'potential_sales',
     'registry_potential_sales',
     'future_potential_sales',
-    'check_factors'
+    'check_factors',
+    'not_sold'
 ]
 
 for script in scripts:
