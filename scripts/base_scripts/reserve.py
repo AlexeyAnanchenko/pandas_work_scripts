@@ -62,7 +62,7 @@ def table_processing(df, period=None):
     if period == CURRENT:
         df = df[df[EXPECTED_DATE] < next_month_fday]
     elif period == FUTURE:
-        df = df[df[EXPECTED_DATE] > next_month_fday]
+        df = df[df[EXPECTED_DATE] >= next_month_fday]
 
     group_df = df.groupby([
         WHS_LOC, HOLDING, NAME_HOLDING, EAN_LOC, PRODUCT_NAME
