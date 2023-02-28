@@ -31,7 +31,7 @@ from update_data import update_factors_nfe_promo
 SOURCE_FILE = 'NovoForecastServer_РезультатыПоиска.xlsx'
 SOURCE_FILE_PB = 'Статистика факторов PG.xlsx'
 SOURCE_FILE_PROMO = 'Акции.xlsx'
-WORKING_FACTORS = ['Акция', 'Предзаказ']
+WORKING_FACTORS = ['Акция', 'Предзаказ', 'Тендер']
 TOWN = 'Город'
 TYPE_FACTOR = 'Тип'
 ORDER_LOC = 'Сумма Заказ'
