@@ -14,7 +14,6 @@ ARCHIVE_DIR = BASE_DIR + '\\Архив\\'
 
 NUM_MONTHS = 3
 TARGET_STOCK = 1
-FACTOR_START = '01.01.2023'
 
 EAN = 'EAN штуки'
 PRODUCT = 'Наименование товара'
@@ -110,6 +109,8 @@ TABLE_RESERVE_CURRENT = ACCESSORY_DIR + 'Резервы текущего мес�
 TABLE_RESERVE_FUTURE = ACCESSORY_DIR + 'Резервы следующего месяца.xlsx'
 TABLE_LINES = ACCESSORY_DIR + 'Линейки.xlsx'
 TABLE_EXCLUDE = ACCESSORY_DIR + 'Исключения проверки.xlsx'
+TABLE_FULL_SALES_CLIENTS = ACCESSORY_DIR + 'Полные продажи по клиентам.xlsx'
+TABLE_FULL_SALES = ACCESSORY_DIR + 'Полные продажи по складам.xlsx'
 
 PS_DIR = '\\Потенциальные продажи\\'
 PS_DIR_FUTURE = '\\Будущие потенциальные продажи\\'
@@ -122,8 +123,6 @@ FUTURE_BASE_PS = PS_DIR_FUTURE + 'Факторы База.xlsx'
 REPORT_CHECK_FACTORS = 'Проверка факторов.xlsx'
 REPORT_NOT_SOLD_PAST = 'Не продано с прошлого месяца.xlsx'
 REPORT_NOT_SOLD_CURRENT = 'Не продано с текущего месяца.xlsx'
-
-
 
 DATE_COL = [
     DATE_RSV, DATE_CREATION, DATE_START, DATE_EXPIRATION, DATE_REGISTRY
