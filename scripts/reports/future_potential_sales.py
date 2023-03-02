@@ -2,6 +2,7 @@
 Формирует отчёт по максимальным потенциальным продажам текущего месяца
 
 """
+import warnings
 import numpy as np
 import pandas as pd
 
@@ -41,6 +42,7 @@ TERRITORY = 'Территория'
 RSV_FACTOR_PERIOD_FUTURE = 'Резервы клиента(-ов) будущего месяца'
 
 # ACTIVE_STATUS = ACTIVE_STATUS.append('Не согласован(а)')
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def get_factors():
