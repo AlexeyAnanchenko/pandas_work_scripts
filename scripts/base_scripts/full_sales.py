@@ -65,10 +65,11 @@ def get_sales(list_clients):
         (df_sales[WHS] + df_sales[NAME_HOLDING]
          + df_sales[EAN].map(int).map(str))
     )
-    df_sales_whs.insert(
-        0, LINK,
-        df_sales_whs[WHS] + df_sales_whs[EAN].map(int).map(str)
-    )
+    for df in [df_sales, df_sales_whs]:
+        df.insert(
+            0, LINK,
+            df[WHS] + df[EAN].map(int).map(str)
+        )
 
     for col in sales_col:
         df_sales = utils.void_to(df_sales, col, 0)
