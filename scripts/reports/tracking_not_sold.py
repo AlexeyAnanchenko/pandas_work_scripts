@@ -21,6 +21,7 @@ from settings import TABLE_SALES, TABLE_DIRECTORY, MSU, BASE_PRICE
 from settings import REPORT_NOT_SOLD_CURRENT
 from settings import SOURCE_DIR, REPORT_TRACKING_NOT_SOLD, TABLE_RESERVE
 from settings import TABLE_FULL_SALES_CLIENTS, TABLE_FULL_SALES, TOTAL_RSV
+from settings import ALL_CLIENTS, NAME_TRAD, TABLE_REMAINS
 
 
 SOURCE_FILE_FACTORS = 'Факторы Реестр.xlsx'
@@ -79,8 +80,26 @@ def get_factors():
     return df
 
 
-def process_merge_col(df_factors, df_merge, col_merge):
+def process_merge_col(df_factors, df_merge, col_merge, df_merge_whs):
     """Процесс добавления данных по клиентам"""
+    df_all_clients = df_factors[
+        df_factors[NAME_HOLDING].isin([ALL_CLIENTS, NAME_TRAD])
+    ].copy()
+    if df_all_clients.empty:
+        df_all_clients = df_factors.copy()
+        df_all_clients[col_merge] = 0
+        df_all_clients = df_all_clients.drop(
+            df_all_clients.index[:len(df_all_clients)]
+        )
+    else:
+        df_all_clients = df_all_clients.merge(
+            df_merge_whs[[LINK, col_merge]],
+            on=LINK, how='left'
+        )
+
+    df_factors = df_factors[
+        ~df_factors[NAME_HOLDING].isin([ALL_CLIENTS, NAME_TRAD])
+    ]
     dict_mult_cl = get_mult_clients_dict(df_factors, NAME_HOLDING)
     if dict_mult_cl:
         df_factors_pure = df_factors[
@@ -109,13 +128,15 @@ def process_merge_col(df_factors, df_merge, col_merge):
             )
 
         df_factors = pd.concat(
-            [df_factors_clean, df_factors_pure], ignore_index=True
+            [df_all_clients, df_factors_clean, df_factors_pure],
+            ignore_index=True
         )
         return df_factors
 
     df_factors = df_factors.merge(
         df_merge[[LINK_HOLDING, col_merge]], on=LINK_HOLDING, how='left'
     )
+    df_factors = pd.concat([df_all_clients, df_factors], ignore_index=True)
     return df_factors
 
 
@@ -137,7 +158,10 @@ def process_merge_sales(df, table, new_col, whs=False):
                 str(num_month + 1): new_col
             })
         else:
-            df_iter = process_merge_col(df_iter, df_sales, str(num_month))
+            df_iter = process_merge_col(
+                df_iter, df_sales, str(num_month),
+                get_data(TABLE_FULL_SALES)
+            )
             df_iter = df_iter.rename(columns={
                 str(num_month): new_col
             })
@@ -153,13 +177,19 @@ def merge_sales(df):
     df = process_merge_sales(
         df, TABLE_FULL_SALES, SALES_WHS_START_FROM_MONTH, whs=True
     )
+    for col in [SALES_START_FROM_MONTH, SALES_WHS_START_FROM_MONTH]:
+        df = utils.void_to(df, col, 0)
     return df
 
 
 def merge_reserve(df):
     """Добавляем резервы по клиентам"""
     df_rsv = get_data(TABLE_RESERVE)
-    df = process_merge_col(df, df_rsv, TOTAL_RSV)
+    df_rsv_group = df_rsv.copy().groupby([LINK]).agg({
+        TOTAL_RSV: 'sum'
+    }).reset_index()
+    df = process_merge_col(df, df_rsv, TOTAL_RSV, df_rsv_group)
+    df = utils.void_to(df, TOTAL_RSV, 0)
     return df
 
 
