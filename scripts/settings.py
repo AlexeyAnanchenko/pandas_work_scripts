@@ -123,6 +123,7 @@ FUTURE_BASE_PS = PS_DIR_FUTURE + 'Факторы База.xlsx'
 REPORT_CHECK_FACTORS = 'Проверка факторов.xlsx'
 REPORT_NOT_SOLD_PAST = 'Не продано с прошлого месяца.xlsx'
 REPORT_NOT_SOLD_CURRENT = 'Не продано с текущего месяца.xlsx'
+REPORT_TRACKING_NOT_SOLD = 'Трекинг продаж по факторам.xlsx'
 
 DATE_COL = [
     DATE_RSV, DATE_CREATION, DATE_START, DATE_EXPIRATION, DATE_REGISTRY
