@@ -12,7 +12,8 @@ scripts = [
     'registry_potential_sales',
     'future_potential_sales',
     'check_factors',
-    'not_sold'
+    'not_sold',
+    'tracking_not_sold.py'
 ]
 
 for script in scripts:
