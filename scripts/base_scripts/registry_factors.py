@@ -13,7 +13,9 @@ from settings import LINK, FACTOR_NUM, FACTOR_PERIOD, CURRENT, FUTURE
 from settings import FACTOR_STATUS, ACTIVE_STATUS, PURPOSE_PROMO, EAN
 from settings import DATE_START, DATE_CREATION, DATE_EXPIRATION, WHS
 from settings import INACTIVE_PURPOSE, NAME_HOLDING, PLAN_NFE, PRODUCT
-from settings import DATE_REGISTRY, QUANT_REGISTRY, ARCHIVE_DIR
+from settings import DATE_REGISTRY, QUANT_REGISTRY, ARCHIVE_DIR, HOLDING
+from settings import TABLE_HOLDINGS
+from hidden_settings import OPT_CLIENTS
 from service import get_data, save_to_excel, print_complete
 
 LINK_FACTOR_NUM = 'Сцепка Номер фактора-Склад-ШК'
@@ -22,7 +24,7 @@ VARIANCE = 'Различие, шт'
 LINK_DATE = 'Сцепка с датой регистриации'
 COL_REPORT = [
     LINK_FACTOR_NUM, LINK, FACTOR_PERIOD, FACTOR_NUM, DATE_CREATION,
-    DATE_START, DATE_EXPIRATION, WHS, NAME_HOLDING, EAN, PRODUCT,
+    DATE_START, DATE_EXPIRATION, WHS, NAME_HOLDING, HOLDING, EAN, PRODUCT,
     PLAN_IN_NFE, DATE_REGISTRY, QUANT_REGISTRY
 ]
 SUBSTRACT = 'Отнять, шт'
@@ -45,6 +47,10 @@ def get_archive():
 
 
 def fix_changes(df_rgs):
+    # Удаляем код холдинга
+    if HOLDING in df_rgs.columns:
+        df_rgs = df_rgs.drop(labels=[HOLDING], axis=1)
+
     df_fct = get_data(TABLE_FACTORS)
     df_fct = df_fct[
         (df_fct[FACTOR_PERIOD].isin([CURRENT, FUTURE]))
@@ -132,6 +138,19 @@ def subtracting_factors(df):
     idx = df.loc[df[RESULT_COL].notna()].index
     df.loc[idx, QUANT_REGISTRY] = df.loc[idx, RESULT_COL]
     df = df[df[QUANT_REGISTRY] > 0]
+    return df
+
+
+def merge_holdings(df):
+    holdings = get_data(TABLE_HOLDINGS)[[NAME_HOLDING, HOLDING]]
+    df = df.merge(holdings.drop_duplicates(), on=NAME_HOLDING, how='left')
+    clients = list(set(df[NAME_HOLDING].tolist()))
+
+    for client in clients:
+        if OPT_CLIENTS in client:
+            df.loc[df[NAME_HOLDING] == client, HOLDING] = 'ОПТ'
+
+    df = utils.void_to(df, HOLDING, '---')
     return df[COL_REPORT]
 
 
@@ -153,7 +172,8 @@ def sort_and_test(df):
 
 
 def main():
-    df = sort_and_test(subtracting_factors(fix_changes(get_archive())))
+    df = merge_holdings(subtracting_factors(fix_changes(get_archive())))
+    df = sort_and_test(df)
     save_to_excel(RESULT_DIR + TABLE_REGISTRY_FACTORS, df)
     print_complete(__file__)
 
