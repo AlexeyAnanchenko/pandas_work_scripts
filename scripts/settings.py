@@ -90,6 +90,9 @@ LINES = 'Линейки'
 RSV_FACTOR_PERIOD_FUTURE = 'Резервы клиента(-ов) будущего месяца'
 CANCEL_STATUS = 'Отменен(а)'
 SALES_CURRENT_FOR_PAST = 'Продажи текущего месяца для прошедших факторов, шт'
+SALES_BY_DATE = 'Продажи, шт'
+CUTS_BY_DATE = 'Урезания, шт'
+DATE_SALES = 'Дата продажи или урезания'
 
 
 TABLE_ASSORTMENT = 'Ассортимент.xlsx'
@@ -111,6 +114,7 @@ TABLE_LINES = ACCESSORY_DIR + 'Линейки.xlsx'
 TABLE_EXCLUDE = ACCESSORY_DIR + 'Исключения проверки.xlsx'
 TABLE_FULL_SALES_CLIENTS = ACCESSORY_DIR + 'Полные продажи по клиентам.xlsx'
 TABLE_FULL_SALES = ACCESSORY_DIR + 'Полные продажи по складам.xlsx'
+TABLE_SALES_BY_DATE = ACCESSORY_DIR + 'Продажи по датам.xlsx'
 
 PS_DIR = '\\Потенциальные продажи\\'
 PS_DIR_FUTURE = '\\Будущие потенциальные продажи\\'
@@ -126,7 +130,8 @@ REPORT_NOT_SOLD_CURRENT = 'Не продано с текущего месяца.
 REPORT_TRACKING_NOT_SOLD = 'Трекинг продаж по факторам.xlsx'
 
 DATE_COL = [
-    DATE_RSV, DATE_CREATION, DATE_START, DATE_EXPIRATION, DATE_REGISTRY
+    DATE_RSV, DATE_CREATION, DATE_START, DATE_EXPIRATION, DATE_REGISTRY,
+    DATE_SALES
 ]
 
 ACTIVE_STATUS = [
