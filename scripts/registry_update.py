@@ -1,4 +1,4 @@
-"""Последовательный запуск отчётов проекта"""
+"""Обновление реестра факторов"""
 
 import subprocess
 import time
@@ -8,19 +8,8 @@ from service import BASE_DIR
 start_time = time.time()
 
 scripts = [
-    'archive',
-    'assortment',
-    'sales',
-    # 'price',
-    'directory',
-    'holdings',
-    'purchases',
-    # 'remains',
-    # 'reserve',
     'factors',
-    'registry_factors',
-    'full_sales',
-    'sales_by_date'
+    'registry_factors'
 ]
 
 for script in scripts:

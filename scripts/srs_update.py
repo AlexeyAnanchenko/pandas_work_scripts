@@ -8,19 +8,9 @@ from service import BASE_DIR
 start_time = time.time()
 
 scripts = [
-    'archive',
-    'assortment',
-    'sales',
-    # 'price',
-    'directory',
-    'holdings',
-    'purchases',
-    # 'remains',
-    # 'reserve',
-    'factors',
-    'registry_factors',
-    'full_sales',
-    'sales_by_date'
+    'price',
+    'remains',
+    'reserve'
 ]
 
 for script in scripts:
