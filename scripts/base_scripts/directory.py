@@ -14,7 +14,7 @@ from hidden_settings import CATEGORY_SUBSECTOR, CATEGORY_SUBBREND
 from settings import PRODUCT, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_0
 from settings import SOURCE_DIR, RESULT_DIR, TABLE_DIRECTORY, TABLE_PRICE
 from settings import MATRIX, MATRIX_LY, BASE_PRICE, ELB_PRICE, SU, MSU, EAN
-from settings import BOXES_IN_PALLET, PICIES_IN_PALLET, PICIES_IN_BOX
+from settings import PIC_IN_BOX, PIC_IN_LAYER, PIC_IN_PALLET, MIN_ORDER
 
 
 SOURCE_FILE = 'Справочник/Справочник.xlsx'
@@ -33,15 +33,23 @@ SU_LOC = 'SU фактор штуки'
 NO_DATA_VALUE = 'Нет данных'
 BOXES_IN_PALLET_LOC = 'Количество коробок в паллете'
 PICIES_IN_BOX_LOC = 'Количество штук в коробке'
+BOXES_IN_LAYER_LOC = 'Количество коробок в ряду'
+MIN_ORDER_LOC = ('Минимальная единица заказа для премии за '
+                 'логистическую эффективность')
+MIN_ORDER_DICT = {
+    'CS': PIC_IN_BOX,
+    'L': PIC_IN_LAYER,
+    'P': PIC_IN_PALLET
+}
 
 
 def get_category_msu():
     """Формирует справочник с msu и категориями"""
     excel = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
     df_full = excel.parse(skiprows=SKIPROWS)[[
-        ACTIVE_GCAS, EAN_LOC, PRODUCT_NAME, DETAIL_SUBBREND,
-        SUBBREND, BREND, SUBSECTOR, SU_LOC, PICIES_IN_BOX_LOC,
-        BOXES_IN_PALLET_LOC
+        ACTIVE_GCAS, EAN_LOC, PRODUCT_NAME, DETAIL_SUBBREND, SUBBREND,
+        BREND, SUBSECTOR, SU_LOC, MIN_ORDER_LOC, PICIES_IN_BOX_LOC,
+        BOXES_IN_LAYER_LOC, BOXES_IN_PALLET_LOC
     ]].sort_index(ascending=False)
     df_full = df_full.sort_values(by=[ACTIVE_GCAS], kind='mergesort').drop(
         ACTIVE_GCAS, axis=1
@@ -65,9 +73,15 @@ def get_category_msu():
             if bool(re.search('[а-яА-Я]', val)):
                 df.loc[df[col] == val, col] = NO_DATA_VALUE
 
-    df = utils.void_to(df, PICIES_IN_BOX_LOC, 0)
-    df = utils.void_to(df, BOXES_IN_PALLET_LOC, 0)
-    df[PICIES_IN_PALLET] = df[PICIES_IN_BOX_LOC] * df[BOXES_IN_PALLET_LOC]
+    cols = [
+        PICIES_IN_BOX_LOC, BOXES_IN_PALLET_LOC,
+        BOXES_IN_LAYER_LOC, MIN_ORDER_LOC
+    ]
+    for col in cols:
+        df = utils.void_to(df, col, 0)
+
+    df[PIC_IN_LAYER] = df[PICIES_IN_BOX_LOC] * df[BOXES_IN_LAYER_LOC]
+    df[PIC_IN_PALLET] = df[PICIES_IN_BOX_LOC] * df[BOXES_IN_PALLET_LOC]
     df[MSU] = df[SU_LOC] / MEGA
     df = df.rename(columns={
         DETAIL_SUBBREND: LEVEL_0,
@@ -77,9 +91,14 @@ def get_category_msu():
         SU_LOC: SU,
         PRODUCT_NAME: PRODUCT,
         EAN_LOC: EAN,
-        PICIES_IN_BOX_LOC: PICIES_IN_BOX,
-        BOXES_IN_PALLET_LOC: BOXES_IN_PALLET
+        PICIES_IN_BOX_LOC: PIC_IN_BOX,
+        MIN_ORDER_LOC: MIN_ORDER
     })
+    df = df.drop(columns=[BOXES_IN_LAYER_LOC, BOXES_IN_PALLET_LOC], axis=1)
+
+    for val, col in MIN_ORDER_DICT.items():
+        idx = df[df[MIN_ORDER] == val].index
+        df.loc[idx, MIN_ORDER] = df.loc[idx, col]
 
     return df
 
