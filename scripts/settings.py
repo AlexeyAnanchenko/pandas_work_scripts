@@ -93,6 +93,11 @@ SALES_CURRENT_FOR_PAST = 'Продажи текущего месяца для п
 SALES_BY_DATE = 'Продажи, шт'
 CUTS_BY_DATE = 'Урезания, шт'
 DATE_SALES = 'Дата продажи или урезания'
+EXCLUDE_STRING = 'Строка исключена из продаж/урезаний'
+EX_LINK_DATE = 'Исключение по Сцепке Дата-Склад-Клиент-Штрихкод'
+EX_NAME_HOLDING = 'Исключение Клиента'
+EX_LINK = 'Исключение по Сцепке Склад-EAN'
+EX_EAN = 'Исключение по EAN'
 
 
 TABLE_ASSORTMENT = 'Ассортимент.xlsx'
@@ -114,7 +119,11 @@ TABLE_LINES = ACCESSORY_DIR + 'Линейки.xlsx'
 TABLE_EXCLUDE = ACCESSORY_DIR + 'Исключения проверки.xlsx'
 TABLE_FULL_SALES_CLIENTS = ACCESSORY_DIR + 'Полные продажи по клиентам.xlsx'
 TABLE_FULL_SALES = ACCESSORY_DIR + 'Полные продажи по складам.xlsx'
-TABLE_SALES_BY_DATE = ACCESSORY_DIR + 'Продажи по датам.xlsx'
+
+
+ORDER_FORM_DIR = '\\Отчёты\\Бланк заказа\\'
+TABLE_SALES_BY_DATE = ORDER_FORM_DIR + 'Продажи по датам.xlsx'
+TABLE_EXCEPTIONS = ORDER_FORM_DIR + 'Исключения продаж.xlsx'
 
 PS_DIR = '\\Потенциальные продажи\\'
 PS_DIR_FUTURE = '\\Будущие потенциальные продажи\\'

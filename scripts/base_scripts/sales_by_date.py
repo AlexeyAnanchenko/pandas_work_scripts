@@ -8,9 +8,11 @@ utils.path_append()
 import pandas as pd
 
 from hidden_settings import WAREHOUSES_SALES
-from service import get_filtered_df, save_to_excel, print_complete
-from settings import SOURCE_DIR, SALES_BY_DATE, CUTS_BY_DATE, DATE_SALES
+from service import get_filtered_df, save_to_excel, print_complete, get_data
+from settings import SOURCE_DIR, SALES_BY_DATE, CUTS_BY_DATE, DATE_SALES, LINK
 from settings import RESULT_DIR, WHS, EAN, NAME_HOLDING, TABLE_SALES_BY_DATE
+from settings import TABLE_EXCEPTIONS, EX_LINK_DATE, EX_NAME_HOLDING, EX_LINK
+from settings import EX_EAN, EXCLUDE_STRING, TABLE_DIRECTORY, PRODUCT
 
 
 SOURCE_FILE = 'Продажи по дням.xlsx'
@@ -73,6 +75,10 @@ def col_to_datetime(df):
     df[DATE_SALES] = pd.to_datetime(df[DATE_LOC], format='%d %m %Y')
     df = df.drop(columns=[DATE_LOC], axis=1)
     df.insert(
+        0, LINK,
+        df[WHS] + df[EAN].map(str)
+    )
+    df.insert(
         0, LINK_DATE,
         df[DATE_SALES].map(str) + df[WHS] + df[NAME_HOLDING] + df[EAN].map(str)
     )
@@ -80,8 +86,34 @@ def col_to_datetime(df):
     return df
 
 
+def add_exceptions(df):
+    df[EXCLUDE_STRING] = ''
+    df_except = get_data(TABLE_EXCEPTIONS)
+    col_dict = {
+        LINK_DATE: EX_LINK_DATE,
+        NAME_HOLDING: EX_NAME_HOLDING,
+        LINK: EX_LINK,
+        EAN: EX_EAN
+    }
+    for col, ex_col in col_dict.items():
+        ex_list = list(set(df_except[ex_col].to_list()))
+        idx = df[df[col].isin(ex_list)].index
+        df.loc[idx, EXCLUDE_STRING] = 'ДА'
+    return df
+
+
+def merge_directory(df):
+    df_dir = get_data(TABLE_DIRECTORY)[[EAN, PRODUCT]]
+    df = df.merge(df_dir, on=EAN, how='left')
+    df = df[[
+        WHS, NAME_HOLDING, EAN, PRODUCT, SALES_BY_DATE, CUTS_BY_DATE,
+        DATE_SALES, EXCLUDE_STRING, LINK_DATE, LINK
+    ]]
+    return df
+
+
 def main():
-    df = col_to_datetime(get_source())
+    df = merge_directory(add_exceptions(col_to_datetime(get_source())))
     save_to_excel(RESULT_DIR + TABLE_SALES_BY_DATE, df)
     print_complete(__file__)
 
