@@ -8,8 +8,10 @@ from os.path import abspath, dirname
 BASE_DIR = dirname(dirname(abspath(__file__)))
 SOURCE_DIR = BASE_DIR + '\\Исходники\\'
 RESULT_DIR = BASE_DIR + '\\Результаты\\'
-REPORT_DIR = RESULT_DIR + '\\Отчёты\\'
-REPORT_DIR_FINAL = RESULT_DIR + '\\Отчёты финальные\\'
+REPORTS = '\\Отчёты\\'
+REPORTS_FINAL = '\\Отчёты финальные\\'
+REPORT_DIR = RESULT_DIR + REPORTS
+REPORT_DIR_FINAL = RESULT_DIR + REPORTS_FINAL
 ARCHIVE_DIR = BASE_DIR + '\\Архив\\'
 
 NUM_MONTHS = 3
@@ -122,10 +124,11 @@ TABLE_EXCLUDE = ACCESSORY_DIR + 'Исключения проверки.xlsx'
 TABLE_FULL_SALES_CLIENTS = ACCESSORY_DIR + 'Полные продажи по клиентам.xlsx'
 TABLE_FULL_SALES = ACCESSORY_DIR + 'Полные продажи по складам.xlsx'
 
-
-ORDER_FORM_DIR = '\\Отчёты\\Бланк заказа\\'
+ORDER_FORM = '\\Бланк заказа\\'
+ORDER_FORM_DIR = REPORTS + ORDER_FORM
 TABLE_SALES_BY_DATE = ORDER_FORM_DIR + 'Продажи по датам.xlsx'
 TABLE_EXCEPTIONS = ORDER_FORM_DIR + 'Исключения продаж.xlsx'
+REPORT_ORDER_FORM = ORDER_FORM + 'Бланк заказа.xlsx'
 
 PS_DIR = '\\Потенциальные продажи\\'
 PS_DIR_FUTURE = '\\Будущие потенциальные продажи\\'
