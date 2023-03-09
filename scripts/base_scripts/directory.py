@@ -14,6 +14,7 @@ from hidden_settings import CATEGORY_SUBSECTOR, CATEGORY_SUBBREND
 from settings import PRODUCT, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_0
 from settings import SOURCE_DIR, RESULT_DIR, TABLE_DIRECTORY, TABLE_PRICE
 from settings import MATRIX, MATRIX_LY, BASE_PRICE, ELB_PRICE, SU, MSU, EAN
+from settings import BOXES_IN_PALLET, PICIES_IN_PALLET, PICIES_IN_BOX
 
 
 SOURCE_FILE = 'Справочник/Справочник.xlsx'
@@ -30,6 +31,8 @@ BREND = 'Бренд (англ)'  # 2 уровень
 SUBSECTOR = 'СубСектор (англ)'  # 3 уровень
 SU_LOC = 'SU фактор штуки'
 NO_DATA_VALUE = 'Нет данных'
+BOXES_IN_PALLET_LOC = 'Количество коробок в паллете'
+PICIES_IN_BOX_LOC = 'Количество штук в коробке'
 
 
 def get_category_msu():
@@ -37,7 +40,8 @@ def get_category_msu():
     excel = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
     df_full = excel.parse(skiprows=SKIPROWS)[[
         ACTIVE_GCAS, EAN_LOC, PRODUCT_NAME, DETAIL_SUBBREND,
-        SUBBREND, BREND, SUBSECTOR, SU_LOC
+        SUBBREND, BREND, SUBSECTOR, SU_LOC, PICIES_IN_BOX_LOC,
+        BOXES_IN_PALLET_LOC
     ]].sort_index(ascending=False)
     df_full = df_full.sort_values(by=[ACTIVE_GCAS], kind='mergesort').drop(
         ACTIVE_GCAS, axis=1
@@ -61,6 +65,9 @@ def get_category_msu():
             if bool(re.search('[а-яА-Я]', val)):
                 df.loc[df[col] == val, col] = NO_DATA_VALUE
 
+    df = utils.void_to(df, PICIES_IN_BOX_LOC, 0)
+    df = utils.void_to(df, BOXES_IN_PALLET_LOC, 0)
+    df[PICIES_IN_PALLET] = df[PICIES_IN_BOX_LOC] * df[BOXES_IN_PALLET_LOC]
     df[MSU] = df[SU_LOC] / MEGA
     df = df.rename(columns={
         DETAIL_SUBBREND: LEVEL_0,
@@ -69,7 +76,9 @@ def get_category_msu():
         SUBSECTOR: LEVEL_3,
         SU_LOC: SU,
         PRODUCT_NAME: PRODUCT,
-        EAN_LOC: EAN
+        EAN_LOC: EAN,
+        PICIES_IN_BOX_LOC: PICIES_IN_BOX,
+        BOXES_IN_PALLET_LOC: BOXES_IN_PALLET
     })
 
     return df
