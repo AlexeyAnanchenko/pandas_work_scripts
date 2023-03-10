@@ -5,6 +5,7 @@
 import utils
 utils.path_append()
 
+import os
 import datetime
 import pandas as pd
 
@@ -18,7 +19,6 @@ from settings import TABLE_RESERVE, SOURCE_DIR, RESULT_DIR, TABLE_HOLDINGS
 from settings import FUTURE, TABLE_RESERVE_CURRENT, TABLE_RESERVE_FUTURE
 from settings import SOFT_HARD_RSV_CURRENT, SOFT_HARD_RSV_FUTURE, EXPECTED_DATE
 from settings import TABLE_RSV_BY_DATE
-from update_data import update_reserve
 
 
 SOURCE_FILE = '1275 - Резервы и резервы-квоты по холдингам.xlsx'
@@ -155,7 +155,9 @@ def merge_period_rsv(df):
 
 
 def main():
-    update_reserve(SOURCE_FILE)
+    if os.environ.get('SRS_DOWNLOAD') is None:
+        from update_data import update_reserve
+        update_reserve(SOURCE_FILE)
     df = get_reserve()
     df_by_date = reserve_by_date(df)
     save_to_excel(RESULT_DIR + TABLE_RSV_BY_DATE, df_by_date)

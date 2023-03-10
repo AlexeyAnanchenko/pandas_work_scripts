@@ -8,6 +8,7 @@ from service import BASE_DIR
 start_time = time.time()
 
 scripts = [
+    'archive',
     'price',
     'remains',
     'reserve'

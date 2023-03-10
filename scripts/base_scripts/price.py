@@ -5,13 +5,13 @@
 import utils
 utils.path_append()
 
+import os
 import pandas as pd
 
 from service import save_to_excel, print_complete
 from hidden_settings import WAREHOUSE_PRICE
 from settings import TABLE_PRICE, SOURCE_DIR, RESULT_DIR
 from settings import EAN, PRODUCT, BASE_PRICE, ELB_PRICE
-from update_data import update_price
 
 DIR_PRICE = 'Прайс\\'
 SOURCE_FILE_PRICE = 'ALIDI NORD.xlsx'
@@ -34,7 +34,10 @@ SKIPROWS_ELB = 10
 
 def main():
     # Формируем GIV
-    update_price(SOURCE_FILE_SRS, SOURCE_DIR + DIR_PRICE)
+    if os.environ.get('SRS_DOWNLOAD') is None:
+        from update_data import update_price
+        update_price(SOURCE_FILE_SRS, SOURCE_DIR + DIR_PRICE)
+
     price = pd.ExcelFile(SOURCE_DIR + DIR_PRICE + SOURCE_FILE_PRICE)
     price_df = price.parse(skiprows=SKIPROWS)[[
         PRODUCT_NAME, EAN_LOC, PRICE

@@ -18,7 +18,6 @@ from settings import TABLE_REMAINS, TABLE_SALES, SOURCE_DIR, RESULT_DIR
 from settings import TABLE_DIRECTORY, MSU, FULL_REST_MSU, OVERSTOCK_MSU
 from settings import TRANZIT_CURRENT, TRANZIT_NEXT, QUOTA_WITHOUT_REST
 from settings import QUOTA_WITH_REST, SOFT_RSV, HARD_RSV
-from update_data import update_remains
 
 
 SOURCE_FILE = '1082 - Доступность товара по складам (PG).xlsx'
@@ -151,7 +150,9 @@ def conversion_msu(df):
 
 
 def main():
-    update_remains(SOURCE_FILE)
+    if os.environ.get('SRS_DOWNLOAD') is None:
+        from update_data import update_remains
+        update_remains(SOURCE_FILE)
     result_df = add_transit_directory(create_remains())
     result_df = conversion_msu(added_overstock(result_df))
     save_to_excel(RESULT_DIR + TABLE_REMAINS, result_df)
