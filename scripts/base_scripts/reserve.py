@@ -16,7 +16,8 @@ from settings import SOFT_RSV, HARD_RSV, SOFT_HARD_RSV, QUOTA, PRODUCT, CURRENT
 from settings import QUOTA_BY_AVAILABLE, AVAILABLE_REST, TOTAL_RSV, DATE_RSV
 from settings import TABLE_RESERVE, SOURCE_DIR, RESULT_DIR, TABLE_HOLDINGS
 from settings import FUTURE, TABLE_RESERVE_CURRENT, TABLE_RESERVE_FUTURE
-from settings import SOFT_HARD_RSV_CURRENT, SOFT_HARD_RSV_FUTURE
+from settings import SOFT_HARD_RSV_CURRENT, SOFT_HARD_RSV_FUTURE, EXPECTED_DATE
+from settings import TABLE_RSV_BY_DATE
 from update_data import update_reserve
 
 
@@ -32,7 +33,7 @@ HARD_RSV_LOC = 'Жесткий резерв'
 QUOTA_RSV = 'Резерв квота остаток'
 BY_LINK = '_всего, по ШК-Склад'
 AVAILABLE = 'Доступность на складе'
-EXPECTED_DATE = 'Дата ожидаемой доставки'
+EXPECTED_DATE_LOC = 'Дата ожидаемой доставки'
 RESERVE_FOR = 'Дата резерва По'
 
 
@@ -50,12 +51,37 @@ def get_reserve():
     df.loc[idx, HOLDING] = df.loc[idx, CODES]
     df.loc[idx, NAME_HOLDING] = df.loc[idx, RSV_HOLDING]
     df.loc[df[AVAILABLE] < 0, AVAILABLE] = 0
-    idx_date = df.loc[df[EXPECTED_DATE].isnull()].index
-    df.loc[idx_date, EXPECTED_DATE] = df.loc[idx_date, RESERVE_FOR]
+    return df
+
+
+def reserve_by_date(df):
+    df = df[[
+        WHS_LOC, HOLDING, NAME_HOLDING, EAN_LOC, PRODUCT_NAME,
+        EXPECTED_DATE_LOC, SOFT_RSV_LOC, HARD_RSV_LOC, QUOTA_RSV, AVAILABLE
+    ]].copy()
+    df.insert(0, LINK, df[WHS_LOC] + df[EAN_LOC].map(str))
+    df.insert(
+        0, LINK_HOLDING,
+        df[WHS_LOC] + df[NAME_HOLDING] + df[EAN_LOC].map(str)
+    )
+    df[SOFT_HARD_RSV] = df[SOFT_RSV_LOC] + df[HARD_RSV_LOC]
+
+    df = df.rename(columns={
+        WHS_LOC: WHS,
+        EAN_LOC: EAN,
+        PRODUCT_NAME: PRODUCT,
+        SOFT_RSV_LOC: SOFT_RSV,
+        HARD_RSV_LOC: HARD_RSV,
+        QUOTA_RSV: QUOTA,
+        AVAILABLE: AVAILABLE_REST,
+        EXPECTED_DATE_LOC: EXPECTED_DATE
+    })
     return df
 
 
 def table_processing(df, period=None):
+    idx_date = df.loc[df[EXPECTED_DATE].isnull()].index
+    df.loc[idx_date, EXPECTED_DATE] = df.loc[idx_date, RESERVE_FOR]
     today = datetime.date.today()
     next_month = today.month + 1 if today.month < 12 else 1
     next_month_fday = pd.to_datetime(datetime.date(today.year, next_month, 1))
@@ -131,6 +157,8 @@ def merge_period_rsv(df):
 def main():
     update_reserve(SOURCE_FILE)
     df = get_reserve()
+    df_by_date = reserve_by_date(df)
+    save_to_excel(RESULT_DIR + TABLE_RSV_BY_DATE, df_by_date)
     df_current = table_processing(df, CURRENT)
     save_to_excel(RESULT_DIR + TABLE_RESERVE_CURRENT, df_current)
     df_future = table_processing(df, FUTURE)
