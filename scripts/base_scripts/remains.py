@@ -16,7 +16,8 @@ from settings import LINK, WHS, EAN, PRODUCT, TARGET_STOCK, OVERSTOCK, TRANZIT
 from settings import FULL_REST, AVAILABLE_REST, SOFT_HARD_RSV, FREE_REST, QUOTA
 from settings import TABLE_REMAINS, TABLE_SALES, SOURCE_DIR, RESULT_DIR
 from settings import TABLE_DIRECTORY, MSU, FULL_REST_MSU, OVERSTOCK_MSU
-from settings import TRANZIT_CURRENT, TRANZIT_NEXT
+from settings import TRANZIT_CURRENT, TRANZIT_NEXT, QUOTA_WITHOUT_REST
+from settings import QUOTA_WITH_REST, SOFT_RSV, HARD_RSV
 from update_data import update_remains
 
 
@@ -24,6 +25,7 @@ SOURCE_FILE = '1082 - Доступность товара по складам (P
 FULL_REST_LOC = 'Полное наличие  (уч.ЕИ) '
 AVAILABLE_REST_LOC = 'Доступно (уч.ЕИ) '
 RESERVE = 'Резерв (уч.ЕИ) '
+HARD_RSV_LOC = 'Жесткий резерв (уч. ЕИ )'
 QUOTA_LOC = 'Остаток невыбранного резерва (уч.ЕИ)'
 FREE_REST_LOC = 'Свободный остаток (уч.ЕИ)'
 WHS_LOC = 'Склад'
@@ -38,26 +40,32 @@ SUBSTRING = 'Транзит'
 def create_remains():
     xl = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
     filter_df = get_filtered_df(xl, WAREHOUSE_REMAIN, WHS_LOC)
+    filter_df[SOFT_RSV] = filter_df[RESERVE] - filter_df[HARD_RSV_LOC]
     filter_df = filter_df.rename(columns={
         WHS_LOC: WHS,
         EAN_LOC: EAN,
         NAME: PRODUCT,
         FULL_REST_LOC: FULL_REST,
         RESERVE: SOFT_HARD_RSV,
+        HARD_RSV_LOC: HARD_RSV,
         AVAILABLE_REST_LOC: AVAILABLE_REST,
         QUOTA_LOC: QUOTA,
         FREE_REST_LOC: FREE_REST
     })
     yug_df = filter_df.groupby([WHS, EAN]).agg({
         FULL_REST: 'sum',
+        SOFT_RSV: 'sum',
+        HARD_RSV: 'sum',
         SOFT_HARD_RSV: 'sum',
         AVAILABLE_REST: 'sum',
         QUOTA: 'max'
     }).reset_index()
     yug_df.insert(0, LINK, yug_df[WHS] + yug_df[EAN].map(str))
+    yug_df.loc[yug_df[AVAILABLE_REST] < 0, AVAILABLE_REST] = 0
+    yug_df[QUOTA_WITH_REST] = yug_df[[AVAILABLE_REST, QUOTA]].min(axis=1)
+    yug_df[QUOTA_WITHOUT_REST] = yug_df[QUOTA] - yug_df[QUOTA_WITH_REST]
     yug_df[FREE_REST] = yug_df[AVAILABLE_REST] - yug_df[QUOTA]
     yug_df.loc[yug_df[FREE_REST] < 0, FREE_REST] = 0
-    yug_df.loc[yug_df[AVAILABLE_REST] < 0, AVAILABLE_REST] = 0
     return yug_df
 
 
@@ -110,17 +118,14 @@ def add_transit_directory(df):
     direct = get_data(TABLE_DIRECTORY)[[EAN, PRODUCT]]
     df = df.merge(direct, on=EAN, how='left')
     dig_col = [
-        FULL_REST, SOFT_HARD_RSV, AVAILABLE_REST, QUOTA, FREE_REST,
-        TRANZIT_CURRENT, TRANZIT_NEXT, TRANZIT
+        FULL_REST, HARD_RSV, SOFT_RSV, SOFT_HARD_RSV, AVAILABLE_REST, QUOTA,
+        QUOTA_WITH_REST, QUOTA_WITHOUT_REST, FREE_REST, TRANZIT_CURRENT,
+        TRANZIT_NEXT, TRANZIT
     ]
     static_col.append(PRODUCT)
     df = df.reindex(columns=static_col + dig_col)
     for col in dig_col:
         df.loc[df[col].isnull(), col] = 0
-    df.drop(
-        labels=list(df[(df[FULL_REST] == 0) & (df[TRANZIT] == 0)].index),
-        axis=0, inplace=True
-    )
     return df
 
 
