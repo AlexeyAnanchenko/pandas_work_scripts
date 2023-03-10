@@ -80,15 +80,15 @@ def reserve_by_date(df):
 
 
 def table_processing(df, period=None):
-    idx_date = df.loc[df[EXPECTED_DATE].isnull()].index
-    df.loc[idx_date, EXPECTED_DATE] = df.loc[idx_date, RESERVE_FOR]
+    idx_date = df.loc[df[EXPECTED_DATE_LOC].isnull()].index
+    df.loc[idx_date, EXPECTED_DATE_LOC] = df.loc[idx_date, RESERVE_FOR]
     today = datetime.date.today()
     next_month = today.month + 1 if today.month < 12 else 1
     next_month_fday = pd.to_datetime(datetime.date(today.year, next_month, 1))
     if period == CURRENT:
-        df = df[df[EXPECTED_DATE] < next_month_fday]
+        df = df[df[EXPECTED_DATE_LOC] < next_month_fday]
     elif period == FUTURE:
-        df = df[df[EXPECTED_DATE] >= next_month_fday]
+        df = df[df[EXPECTED_DATE_LOC] >= next_month_fday]
 
     group_df = df.groupby([
         WHS_LOC, HOLDING, NAME_HOLDING, EAN_LOC, PRODUCT_NAME
@@ -97,7 +97,7 @@ def table_processing(df, period=None):
         HARD_RSV_LOC: 'sum',
         QUOTA_RSV: 'sum',
         AVAILABLE: 'max',
-        EXPECTED_DATE: 'max'
+        EXPECTED_DATE_LOC: 'max'
     }).reset_index()
     group_df.insert(0, LINK, group_df[WHS_LOC] + group_df[EAN_LOC].map(str))
     group_df.insert(
@@ -135,7 +135,7 @@ def table_processing(df, period=None):
         HARD_RSV_LOC: HARD_RSV,
         QUOTA_RSV: QUOTA,
         AVAILABLE: AVAILABLE_REST,
-        EXPECTED_DATE: DATE_RSV
+        EXPECTED_DATE_LOC: DATE_RSV
     })
     return group_df.round()
 
