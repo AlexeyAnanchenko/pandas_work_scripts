@@ -105,6 +105,9 @@ PIC_IN_LAYER = 'Количество штук в слое'
 PIC_IN_PALLET = 'Количество штук в паллете'
 MIN_ORDER = 'Минимальная единица заказа'
 CRITICAL_EAN = 'Штриккод в критикал листе'
+QUOTA_WITH_REST = 'Квота обеспеченная товаром, шт'
+QUOTA_WITHOUT_REST = 'Квота не обеспеченная товаром, шт'
+EXPECTED_DATE = 'Дата резерва (ожидаемой доставки)'
 
 TABLE_ASSORTMENT = 'Ассортимент.xlsx'
 TABLE_DIRECTORY = 'Справочник_ШК.xlsx'
@@ -131,6 +134,7 @@ ORDER_FORM_DIR = REPORTS + ORDER_FORM
 TABLE_SALES_BY_DATE = ORDER_FORM_DIR + 'Продажи по датам.xlsx'
 TABLE_EXCEPTIONS = ORDER_FORM_DIR + 'Исключения продаж.xlsx'
 REPORT_ORDER_FORM = ORDER_FORM + 'Бланк заказа.xlsx'
+TABLE_RSV_BY_DATE = ORDER_FORM_DIR + 'Резервы по датам.xlsx'
 
 PS_DIR = '\\Потенциальные продажи\\'
 PS_DIR_FUTURE = '\\Будущие потенциальные продажи\\'
@@ -147,7 +151,7 @@ REPORT_TRACKING_NOT_SOLD = 'Трекинг продаж по факторам.xl
 
 DATE_COL = [
     DATE_RSV, DATE_CREATION, DATE_START, DATE_EXPIRATION, DATE_REGISTRY,
-    DATE_SALES
+    DATE_SALES, EXPECTED_DATE
 ]
 
 ACTIVE_STATUS = [
