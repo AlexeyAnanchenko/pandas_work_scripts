@@ -23,9 +23,8 @@ from settings import AVG_FACTOR_PERIOD, RSV_FACTOR_PERIOD, PAST, CURRENT
 from settings import FUTURE, TABLE_SALES_HOLDINGS, TABLE_RESERVE, TOTAL_RSV
 from settings import AVG_FACTOR_PERIOD_WHS, SOFT_HARD_RSV_CURRENT
 from settings import RSV_FACTOR_PERIOD_CURRENT, SALES_CURRENT_FOR_PAST
-from settings import RSV_FACTOR_PERIOD_TOTAL
-from update_data import update_factors_nfe, update_factors_pbi
-from update_data import update_factors_nfe_promo
+from settings import RSV_FACTOR_PERIOD_TOTAL, TABLE_SALES_BY_DATE
+from settings import SALES_BY_DATE, CUTS_BY_DATE, DATE_SALES
 
 
 SOURCE_FILE = 'NovoForecastServer_РезультатыПоиска.xlsx'
@@ -61,6 +60,8 @@ TRAD_HOLDINGS = [
     'Воронина Елена Сергеевна ИП (8179862)',
     'Петровская Татьяна Анатольевна ИП (8143465)'
 ]
+INDEXES = 'Текущие индексы строк'
+LINK_UNIQUE = 'Уникальная сцепка'
 
 
 def filtered_factors(file=SOURCE_FILE, column=FACTOR, skip=0):
@@ -298,13 +299,62 @@ def link_replace(df):
     return df
 
 
+def add_sales_by_date(df):
+    """Добавляет данные по продажам и урезаниям учитывая даты заявок"""
+    df[INDEXES] = df.index
+    df[LINK_UNIQUE] = (df[DATE_START].map(str)
+                       + df[DATE_EXPIRATION].map(str)
+                       + df[NAME_HOLDING]
+                       + df[WHS])
+    list_link = list(set(df[LINK_UNIQUE].tolist()))
+    df_sales = get_data(TABLE_SALES_BY_DATE)
+    df[SALES_BY_DATE] = 0
+    df[CUTS_BY_DATE] = 0
+    df_pure = df.copy().drop(df.index, axis=0)
+
+    for link in list_link:
+        df_mid = df[df[LINK_UNIQUE] == link].copy()
+        df_mid = df_mid.drop([SALES_BY_DATE, CUTS_BY_DATE], axis=1)
+        begin = df_mid[DATE_START].iloc[0]
+        end = df_mid[DATE_EXPIRATION].iloc[0]
+        whs = df_mid[WHS].iloc[0]
+        holding = df_mid[NAME_HOLDING].iloc[0]
+        df_sales_mid = df_sales.copy()
+
+        if '), ' in str(holding):
+            holding = get_mult_clients_dict(df_mid, NAME_HOLDING)[holding]
+        elif holding in [NAME_TRAD, ALL_CLIENTS]:
+            df_sales_mid.loc[df_sales_mid.index, NAME_HOLDING] = holding
+            holding = [holding]
+        else:
+            holding = [holding]
+
+        df_sales_mid = df_sales_mid[
+            (df_sales_mid[DATE_SALES] >= begin)
+            & (df_sales_mid[DATE_SALES] <= end)
+            & (df_sales_mid[NAME_HOLDING].isin(holding))
+            & (df_sales_mid[WHS] == whs)
+        ].copy().groupby([EAN])[[
+            SALES_BY_DATE, CUTS_BY_DATE
+        ]].sum().reset_index()
+        df_mid = df_mid.merge(df_sales_mid, on=EAN, how='left')
+        df_pure = pd.concat([df_pure, df_mid], ignore_index=True)
+        df = df[df[LINK_UNIQUE] != link]
+
+    df_pure = df_pure.sort_values(by=[INDEXES], ascending=[True])
+    return df_pure
+
+
 def main():
+    from update_data import update_factors_nfe, update_factors_pbi
+    from update_data import update_factors_nfe_promo
     update_factors_nfe(SOURCE_FILE)
     update_factors_nfe_promo(SOURCE_FILE_PROMO)
     update_factors_pbi(SOURCE_FILE_PB)
     factors = add_pbi_and_purpose(add_num_factors(filtered_factors()))
     factors = add_sales_and_rsv(reindex_rename(split_by_month(factors)))
     factors = link_replace(fill_empty_cells(add_total_sales_rsv(factors)))
+    factors = add_sales_by_date(factors)
     save_to_excel(RESULT_DIR + TABLE_FACTORS, factors)
     print_complete(__file__)
 
