@@ -5,6 +5,7 @@
 import utils
 utils.path_append()
 
+import numpy as np
 import pandas as pd
 from datetime import date, timedelta
 
@@ -16,10 +17,14 @@ from settings import PIC_IN_BOX, PIC_IN_LAYER, PIC_IN_PALLET, MATRIX
 from settings import MATRIX_LY, MIN_ORDER, TABLE_REMAINS, FULL_REST, LINK
 from settings import SOFT_RSV, QUOTA_WITH_REST, QUOTA_WITHOUT_REST
 from settings import FREE_REST, TRANZIT, OVERSTOCK, HARD_RSV, EXPECTED_DATE
-from settings import TABLE_RSV_BY_DATE
+from settings import TABLE_RSV_BY_DATE, EXCLUDE_STRING, QUOTA
 
 
-SOFT_RSV_FAR = 'Мягкие резервы, шт (свыше 7 дней по лог. плечу)'
+LOG_LEVERAGE = 7
+SOFT_RSV_FAR = f'Мягкие резервы, шт (свыше {LOG_LEVERAGE} дней по лог. плечу)'
+
+today = date.today()
+log_days = pd.to_datetime(today + timedelta(days=LOG_LEVERAGE + 1))
 
 
 def get_assortment():
@@ -70,22 +75,75 @@ def merge_remains(df):
         df = utils.void_to(df, col, 0)
 
     df_rsv = get_data(TABLE_RSV_BY_DATE)[[LINK, SOFT_RSV, EXPECTED_DATE]]
-    today = date.today()
-    result = pd.to_datetime(today + timedelta(days=8))
-    df_rsv = df_rsv[df_rsv[EXPECTED_DATE] >= result].groupby([LINK]).agg({
+    df_rsv = df_rsv[df_rsv[EXPECTED_DATE] >= log_days].groupby([LINK]).agg({
         SOFT_RSV: 'sum'
     }).reset_index().rename(columns={SOFT_RSV: SOFT_RSV_FAR})
     df = df.merge(df_rsv, on=LINK, how='left')
+    df = utils.void_to(df, SOFT_RSV_FAR, 0)
+    return df
+
+
+def correct_by_exclude_rsv(df):
+    df_rsv = get_data(TABLE_RSV_BY_DATE)
+    soft_rsv_ex = 'Мягкий резерв для исключения'
+    soft_rsv_ex_log = 'Мягкий резерв для исключения свыше 7 дней'
+    soft_rsv_item = 'Мягкий резерв временный'
+    soft_rsv_item_log = 'Мягкий резерв временный свыше 7 дней'
+    quota_without_rest_item = 'Квота с товаром временная'
+    quota_full_new = 'Квота без товара временная'
+
+    df_rsv_total = df_rsv[df_rsv[EXCLUDE_STRING] == 'ДА'].groupby([LINK])[[
+        SOFT_RSV, QUOTA
+    ]].sum().reset_index().rename(columns={SOFT_RSV: soft_rsv_ex})
+
+    if df_rsv_total.empty:
+        return df
+
+    df = df.merge(df_rsv_total, on=LINK, how='left')
+
+    df_rsv = df_rsv[
+        (df_rsv[EXCLUDE_STRING] == 'ДА') & (df_rsv[EXPECTED_DATE] >= log_days)
+    ].groupby([LINK])[[SOFT_RSV]].sum().reset_index().rename(
+        columns={SOFT_RSV: soft_rsv_ex_log}
+    )
+    df = df.merge(df_rsv, on=LINK, how='left')
+
+    df[soft_rsv_item] = np.maximum(df[SOFT_RSV] - df[soft_rsv_ex], 0)
+    df[soft_rsv_item_log] = np.maximum(
+        df[SOFT_RSV_FAR] - df[soft_rsv_ex_log], 0
+    )
+    df[quota_without_rest_item] = df[QUOTA_WITHOUT_REST] - df[QUOTA]
+    df[quota_full_new] = np.maximum(
+        df[quota_without_rest_item] + df[QUOTA_WITH_REST], 0
+    )
+
+    idx = df[df[soft_rsv_ex] > 0].index
+    df.loc[idx, SOFT_RSV] = df.loc[idx, soft_rsv_item]
+    idx = df[df[soft_rsv_ex_log] > 0].index
+    df.loc[idx, SOFT_RSV_FAR] = df.loc[idx, soft_rsv_item_log]
+    idx = df[(df[QUOTA] > 0) & (df[quota_without_rest_item] >= 0)].index
+    df.loc[idx, QUOTA_WITHOUT_REST] = df.loc[idx, quota_without_rest_item]
+    idx = df[(df[QUOTA] > 0) & (df[quota_without_rest_item] < 0)].index
+    df.loc[idx, QUOTA_WITHOUT_REST] = 0
+    df.loc[idx, QUOTA_WITH_REST] = df.loc[idx, quota_full_new]
+    idx = df[df[FULL_REST] >= 0].index
+    df.loc[idx, FREE_REST] = np.maximum(
+        df[FULL_REST] - df[HARD_RSV] - df[SOFT_RSV] - df[QUOTA_WITH_REST], 0
+    )
+    df = df.drop(columns=[
+        QUOTA, soft_rsv_ex, soft_rsv_ex_log, soft_rsv_item,
+        soft_rsv_item_log, quota_without_rest_item, quota_full_new
+    ], axis=1)
     return df
 
 
 def merge_forecast(df):
-    
     return df
 
 
 def main():
-    df = merge_forecast(merge_remains(get_assortment()))
+    df = correct_by_exclude_rsv(merge_remains(get_assortment()))
+    df = merge_forecast(df)
     save_to_excel(REPORT_DIR + REPORT_ORDER_FORM, df)
     print_complete(__file__)
 
