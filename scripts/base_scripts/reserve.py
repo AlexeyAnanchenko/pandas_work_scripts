@@ -71,11 +71,9 @@ def reserve_by_date(df):
 
     df[EXCLUDE_STRING] = ''
     df_except = get_data(TABLE_EXCEPTIONS)
-
-    for col, ex_col in {LINK_DATE: EX_RSV}.items():
-        ex_list = list(set(df_except[ex_col].to_list()))
-        idx = df[df[col].isin(ex_list)].index
-        df.loc[idx, EXCLUDE_STRING] = 'ДА'
+    ex_list = list(set(df_except[EX_RSV].to_list()))
+    idx = df[df[LINK_DATE].isin(ex_list)].index
+    df.loc[idx, EXCLUDE_STRING] = 'ДА'
 
     df = df[static_col + num_col + [EXCLUDE_STRING, LINK_DATE, LINK]]
     df = df.rename(columns={
