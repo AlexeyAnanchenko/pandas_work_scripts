@@ -18,7 +18,8 @@ from settings import QUOTA_BY_AVAILABLE, AVAILABLE_REST, TOTAL_RSV, DATE_RSV
 from settings import TABLE_RESERVE, SOURCE_DIR, RESULT_DIR, TABLE_HOLDINGS
 from settings import FUTURE, TABLE_RESERVE_CURRENT, TABLE_RESERVE_FUTURE
 from settings import SOFT_HARD_RSV_CURRENT, SOFT_HARD_RSV_FUTURE, EXPECTED_DATE
-from settings import TABLE_RSV_BY_DATE
+from settings import TABLE_RSV_BY_DATE, EXCLUDE_STRING, TABLE_EXCEPTIONS
+from settings import EX_RSV
 
 
 SOURCE_FILE = '1275 - Резервы и резервы-квоты по холдингам.xlsx'
@@ -35,6 +36,7 @@ BY_LINK = '_всего, по ШК-Склад'
 AVAILABLE = 'Доступность на складе'
 EXPECTED_DATE_LOC = 'Дата ожидаемой доставки'
 RESERVE_FOR = 'Дата резерва По'
+LINK_DATE = 'Сцепка Дата-Склад-Наименование холдинга-ШК'
 
 
 def get_reserve():
@@ -55,17 +57,27 @@ def get_reserve():
 
 
 def reserve_by_date(df):
-    df = df[[
-        WHS_LOC, HOLDING, NAME_HOLDING, EAN_LOC, PRODUCT_NAME,
-        EXPECTED_DATE_LOC, SOFT_RSV_LOC, HARD_RSV_LOC, QUOTA_RSV, AVAILABLE
-    ]].copy()
-    df.insert(0, LINK, df[WHS_LOC] + df[EAN_LOC].map(str))
-    df.insert(
-        0, LINK_HOLDING,
-        df[WHS_LOC] + df[NAME_HOLDING] + df[EAN_LOC].map(str)
-    )
-    df[SOFT_HARD_RSV] = df[SOFT_RSV_LOC] + df[HARD_RSV_LOC]
+    static_col = [
+        WHS_LOC, NAME_HOLDING, EAN_LOC,
+        PRODUCT_NAME, EXPECTED_DATE_LOC
+    ]
+    num_col = [SOFT_RSV_LOC, HARD_RSV_LOC, QUOTA_RSV]
+    df = df[static_col + num_col].copy().groupby(
+        static_col, dropna=False
+    )[num_col].sum().reset_index()
+    df[LINK_DATE] = (df[EXPECTED_DATE_LOC].map(str) + df[WHS_LOC]
+                     + df[NAME_HOLDING] + df[EAN_LOC].map(str))
+    df[LINK] = df[WHS_LOC] + df[EAN_LOC].map(str)
 
+    df[EXCLUDE_STRING] = ''
+    df_except = get_data(TABLE_EXCEPTIONS)
+
+    for col, ex_col in {LINK_DATE: EX_RSV}.items():
+        ex_list = list(set(df_except[ex_col].to_list()))
+        idx = df[df[col].isin(ex_list)].index
+        df.loc[idx, EXCLUDE_STRING] = 'ДА'
+
+    df = df[static_col + num_col + [EXCLUDE_STRING, LINK_DATE, LINK]]
     df = df.rename(columns={
         WHS_LOC: WHS,
         EAN_LOC: EAN,
@@ -73,7 +85,6 @@ def reserve_by_date(df):
         SOFT_RSV_LOC: SOFT_RSV,
         HARD_RSV_LOC: HARD_RSV,
         QUOTA_RSV: QUOTA,
-        AVAILABLE: AVAILABLE_REST,
         EXPECTED_DATE_LOC: EXPECTED_DATE
     })
     return df
