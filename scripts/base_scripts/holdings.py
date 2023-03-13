@@ -9,7 +9,7 @@ utils.path_append()
 import pandas as pd
 
 from service import save_to_excel, print_complete
-from settings import CODES, HOLDING, NAME_HOLDING
+from settings import CODES, HOLDING, NAME_HOLDING, PG_PROGRAMM
 from settings import SOURCE_DIR, RESULT_DIR, TABLE_HOLDINGS
 
 
@@ -19,13 +19,15 @@ PAYMENT = 'Плательщик'
 HOLDING_LOC = 'Холдинг'
 M_HOLDING = 'Основной холдинг'
 NAME_M_HOLDING = 'Наименование основного холдинга'
+PG_PROGRAMM_LOC = 'PG программа'
+SUM = 'Итог'
 
 
-def main():
+def generate_holdings():
     excel = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
     df_full = excel.parse('Точка доставки-Холдинг')
     df_full = df_full.rename(columns={
-        NAME_M_HOLDING: NAME_HOLDING, M_HOLDING: HOLDING
+        NAME_M_HOLDING: NAME_HOLDING, M_HOLDING: HOLDING,
     })
     holding_holding = df_full[[HOLDING, NAME_HOLDING]]
     holding_holding.insert(0, M_HOLDING, df_full[HOLDING])
@@ -55,10 +57,29 @@ def main():
         result_data[column] = cleared_values
     result_data[NAME_HOLDING] = df[NAME_HOLDING].to_list()
     df_result = pd.DataFrame(result_data)
-    save_to_excel(
-        RESULT_DIR + TABLE_HOLDINGS,
-        df_result[df_result[CODES] != 'Удалить строку']
-    )
+    df_result = df_result[df_result[CODES] != 'Удалить строку']
+    return df_result
+
+
+def merge_pg_programm(df):
+    excel = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
+    df_full = excel.parse('Точка доставки-Холдинг')
+    df_full = df_full[[NAME_M_HOLDING, PG_PROGRAMM, SUM]].rename(columns={
+        NAME_M_HOLDING: NAME_HOLDING, PG_PROGRAMM_LOC: PG_PROGRAMM
+    })
+    df_full = df_full.groupby([NAME_HOLDING, PG_PROGRAMM]).agg({
+        SUM: 'sum'
+    }).reset_index().sort_values(by=[SUM], ascending=[False]).drop_duplicates(
+        subset=[NAME_HOLDING]
+    ).drop(columns=[SUM], axis=1)
+    df = df.merge(df_full, on=NAME_HOLDING, how='left')
+    df = utils.void_to(df, PG_PROGRAMM, 'НЕТ ДАННЫХ')
+    return df
+
+
+def main():
+    df = merge_pg_programm(generate_holdings())
+    save_to_excel(RESULT_DIR + TABLE_HOLDINGS, df)
     print_complete(__file__)
 
 
