@@ -7,7 +7,7 @@ utils.path_append()
 
 import numpy as np
 import pandas as pd
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 
 from hidden_settings import WHS_ELBRUS
 from service import save_to_excel, get_data, print_complete
@@ -15,22 +15,41 @@ from settings import TABLE_ASSORTMENT, REPORT_ORDER_FORM, REPORT_DIR
 from settings import WHS, EAN, TABLE_DIRECTORY, PRODUCT, LEVEL_3, MSU
 from settings import PIC_IN_BOX, PIC_IN_LAYER, PIC_IN_PALLET, MATRIX
 from settings import MATRIX_LY, MIN_ORDER, TABLE_REMAINS, FULL_REST, LINK
-from settings import SOFT_RSV, QUOTA_WITH_REST, QUOTA_WITHOUT_REST
+from settings import SOFT_RSV, QUOTA_WITH_REST, QUOTA_WITHOUT_REST, WORD_YES
 from settings import FREE_REST, TRANZIT, OVERSTOCK, HARD_RSV, EXPECTED_DATE
 from settings import TABLE_RSV_BY_DATE, EXCLUDE_STRING, QUOTA, TABLE_FACTORS
 from settings import FACTOR_STATUS, FACTOR, REF_FACTOR, FACTOR_NUM, DATE_START
 from settings import ACTIVE_STATUS, PURPOSE_PROMO, INACTIVE_PURPOSE, PLAN_NFE
 from settings import DATE_EXPIRATION, DATE_CREATION, DESCRIPTION, USER
-from settings import SALES_BY_DATE, CUTS_BY_DATE, NAME_HOLDING
-from settings import TABLE_ORDER_FACTORS
+from settings import SALES_BY_DATE, CUTS_BY_DATE, NAME_HOLDING, TABLE_MHL
+from settings import TABLE_ORDER_FACTORS, TABLE_SALES_BY_DATE, DATE_SALES
 
 
 LOG_LEVERAGE = 7
 SOFT_RSV_FAR = f'Мягкие резервы, шт (свыше {LOG_LEVERAGE} дней по лог. плечу)'
 DEMAIND_BY_FACTOR = 'Потребность по заявке, шт'
+EAN_MHL = 'EAN'
+CLASSIF_N = 'классификация'
+MHL = 'MHL'
+LIST_A = 'Лист А'
+MHL_VALUE = 'MHL'
+LIST_A_VALUE = 'Лист А'
+SALES_WEEK = 'Продажи '
+CUTS_WEEK = 'Урезания '
+WEEKS = 8
 
 today = date.today()
 log_days = pd.to_datetime(today + timedelta(days=LOG_LEVERAGE + 1))
+
+list_sales_week = []
+list_cuts_week = []
+dict_week = {
+    SALES_WEEK: list_sales_week,
+    CUTS_WEEK: list_cuts_week
+}
+for name, list_cols in dict_week.items():
+    for week in range(1, WEEKS + 1):
+        list_cols.append(name + f'-{week}' + ' неделя')
 
 
 def get_assortment():
@@ -67,6 +86,21 @@ def get_assortment():
     ].index
     df = df.drop(index=idx)
     df = df.drop(columns=[MATRIX, MATRIX_LY], axis=1)
+    return df
+
+
+def add_mhl_list_a(df):
+    df_mhl = get_data(TABLE_MHL)[[EAN_MHL, CLASSIF_N]].rename(columns={
+        EAN_MHL: EAN
+    })
+    df_mhl_copy = df_mhl[df_mhl[CLASSIF_N] == MHL_VALUE].copy()
+    df = df.merge(df_mhl_copy, on=EAN, how='left').rename(columns={
+        CLASSIF_N: MHL
+    })
+    df_mhl = df_mhl[df_mhl[CLASSIF_N] == LIST_A_VALUE]
+    df = df.merge(df_mhl, on=EAN, how='left').rename(columns={
+        CLASSIF_N: LIST_A
+    })
     return df
 
 
@@ -168,9 +202,32 @@ def merge_forecast(df):
     return df
 
 
+def merge_sales_history(df):
+    df_sales = get_data(TABLE_SALES_BY_DATE)[[
+        LINK, EXCLUDE_STRING, SALES_BY_DATE, CUTS_BY_DATE, DATE_SALES
+    ]]
+    df_sales = df_sales[df_sales[EXCLUDE_STRING] != WORD_YES]
+    begin_day = datetime.today().date() - timedelta(days=1)
+    for week in range(WEEKS):
+        start_day = pd.to_datetime(str(begin_day))
+        end_day = pd.to_datetime(start_day - timedelta(days=6))
+        df_merge = df_sales[
+            (df_sales[DATE_SALES] <= start_day)
+            & (df_sales[DATE_SALES] >= end_day)
+        ].copy().groupby([LINK])[[CUTS_BY_DATE]].sum().reset_index()
+        df_merge = df_merge.rename(
+            columns={CUTS_BY_DATE: list_sales_week[week]}
+        )
+        df = df.merge(df_merge, on=LINK, how='left')
+        df = utils.void_to(df, list_sales_week[week], 0)
+
+        begin_day = begin_day - timedelta(days=7)
+    return df
+
+
 def main():
-    df = correct_by_exclude_rsv(merge_remains(get_assortment()))
-    df = merge_forecast(df)
+    df = merge_remains(add_mhl_list_a(get_assortment()))
+    df = merge_sales_history(merge_forecast(correct_by_exclude_rsv((df))))
     save_to_excel(REPORT_DIR + REPORT_ORDER_FORM, df)
     print_complete(__file__)
 
