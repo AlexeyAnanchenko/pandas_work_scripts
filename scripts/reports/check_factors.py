@@ -142,6 +142,7 @@ def merge_assort_and_dir(df):
 
 def merge_remains(df):
     """Подтягиваем остатки и резервы"""
+    df = df.drop(columns=[QUOTA], axis=1)
     columns = [
         LINK, FULL_REST, SOFT_HARD_RSV, QUOTA, FREE_REST, TRANZIT, OVERSTOCK
     ]
