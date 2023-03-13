@@ -13,7 +13,7 @@ from settings import SOURCE_DIR, SALES_BY_DATE, CUTS_BY_DATE, DATE_SALES, LINK
 from settings import RESULT_DIR, WHS, EAN, NAME_HOLDING, TABLE_SALES_BY_DATE
 from settings import TABLE_EXCEPTIONS, EX_LINK_DATE, EX_NAME_HOLDING, EX_LINK
 from settings import EX_EAN, EXCLUDE_STRING, TABLE_DIRECTORY, PRODUCT
-from settings import TABLE_HOLDINGS, PG_PROGRAMM
+from settings import TABLE_HOLDINGS, PG_PROGRAMM, WORD_YES
 
 
 SOURCE_FILE = 'Продажи по дням.xlsx'
@@ -99,7 +99,7 @@ def add_exceptions(df):
     for col, ex_col in col_dict.items():
         ex_list = list(set(df_except[ex_col].to_list()))
         idx = df[df[col].isin(ex_list)].index
-        df.loc[idx, EXCLUDE_STRING] = 'ДА'
+        df.loc[idx, EXCLUDE_STRING] = WORD_YES
     return df
 
 

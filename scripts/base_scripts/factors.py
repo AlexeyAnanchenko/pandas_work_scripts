@@ -16,15 +16,16 @@ from settings import SOURCE_DIR, RESULT_DIR, TABLE_FACTORS, WHS, FACTOR
 from settings import FACTOR_NUM, REF_FACTOR, DATE_EXPIRATION, FACTOR_PERIOD
 from settings import FACTOR_STATUS, DATE_CREATION, DATE_START, NAME_HOLDING
 from settings import EAN, PRODUCT, LEVEL_3, DESCRIPTION, USER, PLAN_NFE
-from settings import FACT_NFE, ADJUSTMENT_PBI, SALES_PBI, RESERVES_PBI
+from settings import FACT_NFE, ADJUSTMENT_PBI, SALES_PBI, RESERVES_PBI, QUOTA
 from settings import CUTS_PBI, LINK, LINK_HOLDING, PURPOSE_PROMO, TABLE_SALES
 from settings import ALL_CLIENTS, SOFT_HARD_RSV, SALES_FACTOR_PERIOD, NAME_TRAD
 from settings import AVG_FACTOR_PERIOD, RSV_FACTOR_PERIOD, PAST, CURRENT
 from settings import FUTURE, TABLE_SALES_HOLDINGS, TABLE_RESERVE, TOTAL_RSV
-from settings import AVG_FACTOR_PERIOD_WHS, SOFT_HARD_RSV_CURRENT
+from settings import AVG_FACTOR_PERIOD_WHS, SOFT_HARD_RSV_CURRENT, SOFT_RSV
 from settings import RSV_FACTOR_PERIOD_CURRENT, SALES_CURRENT_FOR_PAST
-from settings import RSV_FACTOR_PERIOD_TOTAL, TABLE_SALES_BY_DATE
-from settings import SALES_BY_DATE, CUTS_BY_DATE, DATE_SALES
+from settings import RSV_FACTOR_PERIOD_TOTAL, TABLE_SALES_BY_DATE, HARD_RSV
+from settings import SALES_BY_DATE, CUTS_BY_DATE, DATE_SALES, PG_PROGRAMM
+from settings import EXPECTED_DATE, TABLE_RSV_BY_DATE, EXCLUDE_STRING, WORD_YES
 
 
 SOURCE_FILE = 'NovoForecastServer_РезультатыПоиска.xlsx'
@@ -62,6 +63,7 @@ TRAD_HOLDINGS = [
 ]
 INDEXES = 'Текущие индексы строк'
 LINK_UNIQUE = 'Уникальная сцепка'
+CHANNEL_TRAD = 'Канал продаж'
 
 
 def filtered_factors(file=SOURCE_FILE, column=FACTOR, skip=0):
@@ -299,50 +301,78 @@ def link_replace(df):
     return df
 
 
-def add_sales_by_date(df):
-    """Добавляет данные по продажам и урезаниям учитывая даты заявок"""
+def proccess_by_date(df, df_merge, cols_add, date_col):
+    """Процесс добавления данных по датам"""
     df[INDEXES] = df.index
     df[LINK_UNIQUE] = (df[DATE_START].map(str)
                        + df[DATE_EXPIRATION].map(str)
                        + df[NAME_HOLDING]
                        + df[WHS])
     list_link = list(set(df[LINK_UNIQUE].tolist()))
-    df_sales = get_data(TABLE_SALES_BY_DATE)
-    df[SALES_BY_DATE] = 0
-    df[CUTS_BY_DATE] = 0
+    for col in cols_add:
+        df[col] = 0
     df_pure = df.copy().drop(df.index, axis=0)
 
     for link in list_link:
+        cols_add_copy = cols_add.copy()
         df_mid = df[df[LINK_UNIQUE] == link].copy()
-        df_mid = df_mid.drop([SALES_BY_DATE, CUTS_BY_DATE], axis=1)
+        df_mid = df_mid.drop(cols_add_copy, axis=1)
         begin = df_mid[DATE_START].iloc[0]
         end = df_mid[DATE_EXPIRATION].iloc[0]
         whs = df_mid[WHS].iloc[0]
         holding = df_mid[NAME_HOLDING].iloc[0]
-        df_sales_mid = df_sales.copy()
+        df_merge_mid = df_merge.copy()
 
         if '), ' in str(holding):
             holding = get_mult_clients_dict(df_mid, NAME_HOLDING)[holding]
-        elif holding in [NAME_TRAD, ALL_CLIENTS]:
-            df_sales_mid.loc[df_sales_mid.index, NAME_HOLDING] = holding
+        elif holding == ALL_CLIENTS:
+            df_merge_mid.loc[df_merge_mid.index, NAME_HOLDING] = holding
+            holding = [holding]
+        elif holding == NAME_TRAD:
+            idx = df_merge_mid[df_merge_mid[PG_PROGRAMM] == CHANNEL_TRAD].index
+            df_merge_mid.loc[idx, NAME_HOLDING] = holding
             holding = [holding]
         else:
             holding = [holding]
 
-        df_sales_mid = df_sales_mid[
-            (df_sales_mid[DATE_SALES] >= begin)
-            & (df_sales_mid[DATE_SALES] <= end)
-            & (df_sales_mid[NAME_HOLDING].isin(holding))
-            & (df_sales_mid[WHS] == whs)
-        ].copy().groupby([EAN])[[
-            SALES_BY_DATE, CUTS_BY_DATE
-        ]].sum().reset_index()
-        df_mid = df_mid.merge(df_sales_mid, on=EAN, how='left')
+        if QUOTA in cols_add_copy:
+            df_merge_mid_quota = df_merge_mid[
+                (df_merge_mid[NAME_HOLDING].isin(holding))
+                & (df_merge_mid[WHS] == whs)
+            ].copy().groupby([EAN])[QUOTA].sum().reset_index()
+            df_mid = df_mid.merge(df_merge_mid_quota, on=EAN, how='left')
+            cols_add_copy.remove(QUOTA)
+
+        df_merge_mid = df_merge_mid[
+            (df_merge_mid[date_col] >= begin)
+            & (df_merge_mid[date_col] <= end)
+            & (df_merge_mid[NAME_HOLDING].isin(holding))
+            & (df_merge_mid[WHS] == whs)
+        ].copy().groupby([EAN])[cols_add_copy].sum().reset_index()
+        df_mid = df_mid.merge(df_merge_mid, on=EAN, how='left')
         df_pure = pd.concat([df_pure, df_mid], ignore_index=True)
         df = df[df[LINK_UNIQUE] != link]
 
     df_pure = df_pure.sort_values(by=[INDEXES], ascending=[True])
+    for col in cols_add:
+        df_pure = utils.void_to(df_pure, col, 0)
+    df_pure = df_pure.drop(columns=[LINK_UNIQUE, INDEXES], axis=1)
+    df_pure.loc[df_pure[df_pure[FACTOR_PERIOD] == PAST].index, QUOTA] = 0
     return df_pure
+
+
+def add_sales_rsv_by_date(df):
+    """Добавляет данные по продажам и урезаниям учитывая даты заявок"""
+    df_sales = get_data(TABLE_SALES_BY_DATE)
+    df = proccess_by_date(
+        df, df_sales, [SALES_BY_DATE, CUTS_BY_DATE], DATE_SALES
+    )
+    df_rsv = get_data(TABLE_RSV_BY_DATE)
+    df_rsv = df_rsv[df_rsv[EXCLUDE_STRING] != WORD_YES]
+    df = proccess_by_date(
+        df, df_rsv, [SOFT_RSV, HARD_RSV, QUOTA], EXPECTED_DATE
+    )
+    return df
 
 
 def main():
@@ -351,10 +381,11 @@ def main():
     update_factors_nfe(SOURCE_FILE)
     update_factors_nfe_promo(SOURCE_FILE_PROMO)
     update_factors_pbi(SOURCE_FILE_PB)
+
     factors = add_pbi_and_purpose(add_num_factors(filtered_factors()))
     factors = add_sales_and_rsv(reindex_rename(split_by_month(factors)))
     factors = link_replace(fill_empty_cells(add_total_sales_rsv(factors)))
-    factors = add_sales_by_date(factors)
+    factors = add_sales_rsv_by_date(factors)
     save_to_excel(RESULT_DIR + TABLE_FACTORS, factors)
     print_complete(__file__)
 

@@ -123,6 +123,7 @@ TABLE_SALES = 'Продажи по складам.xlsx'
 TABLE_RESERVE = 'Резервы.xlsx'
 TABLE_FACTORS = 'Факторы.xlsx'
 TABLE_REGISTRY_FACTORS = 'Реестр по факторам.xlsx'
+WORD_YES = 'ДА'
 
 ACCESSORY_DIR = '\\Вспомогательные данные\\'
 TABLE_RESERVE_CURRENT = ACCESSORY_DIR + 'Резервы текущего месяца.xlsx'
