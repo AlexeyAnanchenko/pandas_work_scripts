@@ -13,6 +13,7 @@ from settings import SOURCE_DIR, SALES_BY_DATE, CUTS_BY_DATE, DATE_SALES, LINK
 from settings import RESULT_DIR, WHS, EAN, NAME_HOLDING, TABLE_SALES_BY_DATE
 from settings import TABLE_EXCEPTIONS, EX_LINK_DATE, EX_NAME_HOLDING, EX_LINK
 from settings import EX_EAN, EXCLUDE_STRING, TABLE_DIRECTORY, PRODUCT
+from settings import TABLE_HOLDINGS, PG_PROGRAMM
 
 
 SOURCE_FILE = 'Продажи по дням.xlsx'
@@ -102,18 +103,22 @@ def add_exceptions(df):
     return df
 
 
-def merge_directory(df):
+def merge_dir_and_pg(df):
     df_dir = get_data(TABLE_DIRECTORY)[[EAN, PRODUCT]]
     df = df.merge(df_dir, on=EAN, how='left')
+    df_holdings = get_data(TABLE_HOLDINGS)[[
+        NAME_HOLDING, PG_PROGRAMM
+    ]].drop_duplicates(subset=[NAME_HOLDING])
+    df = df.merge(df_holdings, on=NAME_HOLDING, how='left')
     df = df[[
-        WHS, NAME_HOLDING, EAN, PRODUCT, SALES_BY_DATE, CUTS_BY_DATE,
-        DATE_SALES, EXCLUDE_STRING, LINK_DATE, LINK
+        WHS, NAME_HOLDING, PG_PROGRAMM, EAN, PRODUCT, SALES_BY_DATE,
+        CUTS_BY_DATE, DATE_SALES, EXCLUDE_STRING, LINK_DATE, LINK
     ]]
     return df
 
 
 def main():
-    df = merge_directory(add_exceptions(col_to_datetime(get_source())))
+    df = merge_dir_and_pg(add_exceptions(col_to_datetime(get_source())))
     save_to_excel(RESULT_DIR + TABLE_SALES_BY_DATE, df)
     print_complete(__file__)
 

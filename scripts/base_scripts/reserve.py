@@ -19,7 +19,7 @@ from settings import TABLE_RESERVE, SOURCE_DIR, RESULT_DIR, TABLE_HOLDINGS
 from settings import FUTURE, TABLE_RESERVE_CURRENT, TABLE_RESERVE_FUTURE
 from settings import SOFT_HARD_RSV_CURRENT, SOFT_HARD_RSV_FUTURE, EXPECTED_DATE
 from settings import TABLE_RSV_BY_DATE, EXCLUDE_STRING, TABLE_EXCEPTIONS
-from settings import EX_RSV
+from settings import EX_RSV, PG_PROGRAMM
 
 
 SOURCE_FILE = '1275 - Резервы и резервы-квоты по холдингам.xlsx'
@@ -74,6 +74,15 @@ def reserve_by_date(df):
     ex_list = list(set(df_except[EX_RSV].to_list()))
     idx = df[df[LINK_DATE].isin(ex_list)].index
     df.loc[idx, EXCLUDE_STRING] = 'ДА'
+
+    df_holdings = get_data(TABLE_HOLDINGS)[[
+        NAME_HOLDING, PG_PROGRAMM
+    ]].drop_duplicates(subset=[NAME_HOLDING])
+    df = df.merge(df_holdings, on=NAME_HOLDING, how='left')
+    static_col = [
+        WHS_LOC, NAME_HOLDING, PG_PROGRAMM, EAN_LOC,
+        PRODUCT_NAME, EXPECTED_DATE_LOC
+    ]
 
     df = df[static_col + num_col + [EXCLUDE_STRING, LINK_DATE, LINK]]
     df = df.rename(columns={

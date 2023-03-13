@@ -110,7 +110,7 @@ CRITICAL_EAN = 'Штриккод в критикал листе'
 QUOTA_WITH_REST = 'Квота обеспеченная товаром, шт'
 QUOTA_WITHOUT_REST = 'Квота не обеспеченная товаром, шт'
 EXPECTED_DATE = 'Дата резерва (ожидаемой доставки)'
-PG_PROGRAMM = 'PG программа'
+PG_PROGRAMM = 'PG программа клиента'
 
 TABLE_ASSORTMENT = 'Ассортимент.xlsx'
 TABLE_DIRECTORY = 'Справочник_ШК.xlsx'

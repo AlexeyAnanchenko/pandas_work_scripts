@@ -64,7 +64,7 @@ def generate_holdings():
 def merge_pg_programm(df):
     excel = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
     df_full = excel.parse('Точка доставки-Холдинг')
-    df_full = df_full[[NAME_M_HOLDING, PG_PROGRAMM, SUM]].rename(columns={
+    df_full = df_full[[NAME_M_HOLDING, PG_PROGRAMM_LOC, SUM]].rename(columns={
         NAME_M_HOLDING: NAME_HOLDING, PG_PROGRAMM_LOC: PG_PROGRAMM
     })
     df_full = df_full.groupby([NAME_HOLDING, PG_PROGRAMM]).agg({
