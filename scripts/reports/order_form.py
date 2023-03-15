@@ -37,6 +37,8 @@ LIST_A_VALUE = 'Лист А'
 SALES_WEEK = 'Продажи '
 CUTS_WEEK = 'Урезания '
 WEEKS = 8
+AVG_SALES = 'СДО по продажам, шт'
+AVG_CUTS = 'СДО по урезаниям, шт'
 
 today = date.today()
 log_days = pd.to_datetime(today + timedelta(days=LOG_LEVERAGE + 1))
@@ -50,6 +52,11 @@ dict_week = {
 for name, list_cols in dict_week.items():
     for week in range(1, WEEKS + 1):
         list_cols.append(name + f'-{week}' + ' неделя')
+
+DICT_COLS_WEEK = {
+    SALES_BY_DATE: list_sales_week,
+    CUTS_BY_DATE: list_cuts_week
+}
 
 
 def get_assortment():
@@ -207,21 +214,27 @@ def merge_sales_history(df):
         LINK, EXCLUDE_STRING, SALES_BY_DATE, CUTS_BY_DATE, DATE_SALES
     ]]
     df_sales = df_sales[df_sales[EXCLUDE_STRING] != WORD_YES]
-    begin_day = datetime.today().date() - timedelta(days=1)
-    for week in range(WEEKS):
-        start_day = pd.to_datetime(str(begin_day))
-        end_day = pd.to_datetime(start_day - timedelta(days=6))
-        df_merge = df_sales[
-            (df_sales[DATE_SALES] <= start_day)
-            & (df_sales[DATE_SALES] >= end_day)
-        ].copy().groupby([LINK])[[CUTS_BY_DATE]].sum().reset_index()
-        df_merge = df_merge.rename(
-            columns={CUTS_BY_DATE: list_sales_week[week]}
-        )
-        df = df.merge(df_merge, on=LINK, how='left')
-        df = utils.void_to(df, list_sales_week[week], 0)
+    for col_by_date, cols_by_week in DICT_COLS_WEEK.items():
+        begin_day = datetime.today().date() - timedelta(days=1)
+        for week in range(WEEKS):
+            start_day = pd.to_datetime(str(begin_day))
+            end_day = pd.to_datetime(start_day - timedelta(days=6))
+            df_merge = df_sales[
+                (df_sales[DATE_SALES] <= start_day)
+                & (df_sales[DATE_SALES] >= end_day)
+            ].copy().groupby([LINK])[[col_by_date]].sum().reset_index()
+            df_merge = df_merge.rename(
+                columns={col_by_date: cols_by_week[week]}
+            )
+            df = df.merge(df_merge, on=LINK, how='left')
+            df = utils.void_to(df, cols_by_week[week], 0)
 
-        begin_day = begin_day - timedelta(days=7)
+            begin_day = begin_day - timedelta(days=7)
+    days_in_week = 7
+    df[AVG_SALES] = (df[list_sales_week].sum(axis=1)
+                     / WEEKS / days_in_week).round(1)
+    df[AVG_CUTS] = (df[list_cuts_week].sum(axis=1)
+                    / WEEKS / days_in_week).round(1)
     return df
 
 

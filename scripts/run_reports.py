@@ -13,7 +13,8 @@ scripts = [
     'future_potential_sales',
     'check_factors',
     'not_sold',
-    'tracking_not_sold'
+    'order_form',
+    # 'tracking_not_sold',
 ]
 
 for script in scripts:
