@@ -23,7 +23,8 @@ from settings import AVG_FACTOR_PERIOD, TABLE_REMAINS, FREE_REST, TRANZIT
 from settings import OVERSTOCK, AVG_FACTOR_PERIOD_WHS, SOFT_HARD_RSV, QUOTA
 from settings import TABLE_SALES, DATE_EXPIRATION, DATE_START, REF_FACTOR
 from settings import DESCRIPTION, USER, FACTOR, DATE_CREATION, LEVEL_3
-from settings import CANCEL_STATUS
+from settings import CANCEL_STATUS, SOFT_RSV_BY_DATE, HARD_RSV_BY_DATE
+from settings import SALES_BY_DATE
 
 
 LINK_HOLDING_PERIOD = 'Сцепка Период-Склад-Холдинг-ШК'
@@ -76,8 +77,8 @@ def get_factors():
 def check_fact(df):
     """Проверяем факт продаж по заявке"""
     df.loc[
-        (df[SALES_PBI] + df[RESERVES_PBI] < (df[SALES_FACTOR_PERIOD]
-                                             + df[RSV_FACTOR_PERIOD_CURRENT]))
+        (df[SALES_BY_DATE] + df[SOFT_RSV_BY_DATE] + df[HARD_RSV_BY_DATE]
+         < (df[SALES_FACTOR_PERIOD] + df[RSV_FACTOR_PERIOD_CURRENT]))
         & (df[FACTOR_STATUS].isin(ACTIVE_STATUS))
         & (df[FACTOR_PERIOD] == CURRENT)
         & (~df[NAME_HOLDING].isin([NAME_TRAD, ALL_CLIENTS]))
@@ -85,10 +86,10 @@ def check_fact(df):
         CHECK_FACT
     ] = 'Факт ниже продаж и резервов!'
     df.loc[
-        (df[FACT_NFE] - df[CUTS_PBI] < (df[SALES_FACTOR_PERIOD]
-                                        + df[RSV_FACTOR_PERIOD_CURRENT]))
+        (df[SALES_BY_DATE] + df[SOFT_RSV_BY_DATE] + df[HARD_RSV_BY_DATE]
+         < (df[SALES_FACTOR_PERIOD] + df[RSV_FACTOR_PERIOD_FUTURE]))
         & (~df[FACTOR_STATUS].isin(ACTIVE_STATUS))
-        & (df[FACTOR_PERIOD] == CURRENT)
+        & (df[FACTOR_PERIOD] == FUTURE)
         & (~df[NAME_HOLDING].isin([NAME_TRAD, ALL_CLIENTS]))
         & (~df[LINK_FACTOR].isin(df_exclude[CHECK_FACT].to_list())),
         CHECK_FACT
@@ -142,7 +143,6 @@ def merge_assort_and_dir(df):
 
 def merge_remains(df):
     """Подтягиваем остатки и резервы"""
-    df = df.drop(columns=[QUOTA], axis=1)
     columns = [
         LINK, FULL_REST, SOFT_HARD_RSV, QUOTA, FREE_REST, TRANZIT, OVERSTOCK
     ]

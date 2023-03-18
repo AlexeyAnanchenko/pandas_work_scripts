@@ -23,11 +23,12 @@ from settings import ACTIVE_STATUS, PURPOSE_PROMO, INACTIVE_PURPOSE, PLAN_NFE
 from settings import DATE_EXPIRATION, DATE_CREATION, DESCRIPTION, USER
 from settings import SALES_BY_DATE, CUTS_BY_DATE, NAME_HOLDING, TABLE_MHL
 from settings import TABLE_ORDER_FACTORS, TABLE_SALES_BY_DATE, DATE_SALES
+from settings import HARD_RSV_BY_DATE, SOFT_RSV_BY_DATE, QUOTA_BY_DATE
 
 
 LOG_LEVERAGE = 7
 SOFT_RSV_FAR = f'Мягкие резервы, шт (свыше {LOG_LEVERAGE} дней по лог. плечу)'
-DEMAIND_BY_FACTOR = 'Потребность по заявке, шт'
+DEMAIND_BY_FACTOR = 'Потребность по факторам, шт'
 EAN_MHL = 'EAN'
 CLASSIF_N = 'классификация'
 MHL = 'MHL'
@@ -188,7 +189,7 @@ def merge_forecast(df):
     df_fct = get_data(TABLE_FACTORS)
     df_fct = df_fct[
         (df_fct[DATE_EXPIRATION] >= log_days)
-        & (df_fct[DATE_EXPIRATION] <= (log_days + pd.offsets.MonthEnd(0)))
+        & (df_fct[DATE_START] <= log_days)
         & (df_fct[FACTOR_STATUS].isin(ACTIVE_STATUS))
         & (df_fct[PURPOSE_PROMO] != INACTIVE_PURPOSE)
     ]
@@ -196,11 +197,12 @@ def merge_forecast(df):
         LINK, FACTOR, REF_FACTOR, FACTOR_NUM, FACTOR_STATUS, DATE_CREATION,
         DATE_START, DATE_EXPIRATION, WHS, NAME_HOLDING, EAN, PRODUCT,
         DESCRIPTION, USER, PLAN_NFE, SALES_BY_DATE, CUTS_BY_DATE,
-        HARD_RSV, SOFT_RSV, QUOTA
+        HARD_RSV_BY_DATE, SOFT_RSV_BY_DATE, QUOTA_BY_DATE
     ]]
     df_fct[DEMAIND_BY_FACTOR] = np.maximum(
         (df_fct[PLAN_NFE] - df_fct[SALES_BY_DATE] - df_fct[CUTS_BY_DATE]
-         - df_fct[HARD_RSV] - df_fct[SOFT_RSV] - df_fct[QUOTA]),
+         - df_fct[HARD_RSV_BY_DATE] - df_fct[SOFT_RSV_BY_DATE]
+         - df_fct[QUOTA_BY_DATE]),
         0)
     save_to_excel(REPORT_DIR + TABLE_ORDER_FACTORS, df_fct)
     df_fct = df_fct.groupby([LINK])[[DEMAIND_BY_FACTOR]].sum().reset_index()

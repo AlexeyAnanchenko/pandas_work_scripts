@@ -14,7 +14,7 @@ scripts = [
     'check_factors',
     'not_sold',
     'order_form',
-    # 'tracking_not_sold',
+    'tracking_not_sold',
 ]
 
 for script in scripts:

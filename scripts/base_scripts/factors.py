@@ -26,6 +26,7 @@ from settings import RSV_FACTOR_PERIOD_CURRENT, SALES_CURRENT_FOR_PAST
 from settings import RSV_FACTOR_PERIOD_TOTAL, TABLE_SALES_BY_DATE, HARD_RSV
 from settings import SALES_BY_DATE, CUTS_BY_DATE, DATE_SALES, PG_PROGRAMM
 from settings import EXPECTED_DATE, TABLE_RSV_BY_DATE, EXCLUDE_STRING, WORD_YES
+from settings import SOFT_RSV_BY_DATE, HARD_RSV_BY_DATE, QUOTA_BY_DATE
 
 
 SOURCE_FILE = 'NovoForecastServer_РезультатыПоиска.xlsx'
@@ -372,6 +373,11 @@ def add_sales_rsv_by_date(df):
     df = proccess_by_date(
         df, df_rsv, [SOFT_RSV, HARD_RSV, QUOTA], EXPECTED_DATE
     )
+    df = df.rename(columns={
+        SOFT_RSV: SOFT_RSV_BY_DATE,
+        HARD_RSV: HARD_RSV_BY_DATE,
+        QUOTA: QUOTA_BY_DATE
+    })
     return df
 
 
