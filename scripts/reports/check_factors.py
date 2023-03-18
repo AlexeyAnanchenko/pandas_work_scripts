@@ -24,7 +24,7 @@ from settings import OVERSTOCK, AVG_FACTOR_PERIOD_WHS, SOFT_HARD_RSV, QUOTA
 from settings import TABLE_SALES, DATE_EXPIRATION, DATE_START, REF_FACTOR
 from settings import DESCRIPTION, USER, FACTOR, DATE_CREATION, LEVEL_3
 from settings import CANCEL_STATUS, SOFT_RSV_BY_DATE, HARD_RSV_BY_DATE
-from settings import SALES_BY_DATE
+from settings import SALES_BY_DATE, CUTS_BY_DATE, QUOTA_BY_DATE
 
 
 LINK_HOLDING_PERIOD = 'Сцепка Период-Склад-Холдинг-ШК'
@@ -181,7 +181,7 @@ def calc_new_forecast(df):
     """Рассчитываем корректировку прогноза по трекингу"""
     curent_dt = pd.Timestamp(pd.Timestamp.now().date())
     risk_limit = 1
-    add_purchase_days = 7
+    add_purchase_days = 8
 
     df[DAYS_IN_FACTOR] = (df[DATE_EXPIRATION] - df[DATE_START]).dt.days
     df[REMAINING_DAYS] = (df[DATE_EXPIRATION] - curent_dt).dt.days
@@ -198,16 +198,20 @@ def calc_new_forecast(df):
                 * df[DAYS_IN_FACTOR] - df[CUTS_PBI]
             )
             / 2
-        )
-        + df[CUTS_PBI],
+        ),
         (df[AVG_FACTOR_PERIOD] / df[DAYS_IN_FACTOR] * df[REMAINING_DAYS])
-        + df[SALES_PBI] + df[CUTS_PBI]
+        + df[SALES_PBI]
     ) + df[RESERVES_PBI]).round(0)
     idx = df[df[NEW_PLAN].isnull()].index
     df.loc[idx, NEW_PLAN] = df.loc[idx, PLAN_NFE]
     idx = df[df[REMAINING_DAYS] == 0].index
     df.loc[idx, NEW_PLAN] = df.loc[idx, FACT_NFE]
     df[NEW_ADJUSTMENT] = df[[PLAN_NFE, ADJUSTMENT_PBI, NEW_PLAN]].max(axis=1)
+    df.loc[df[
+        (df[FULL_REST] - df[SOFT_HARD_RSV] < df[PLAN_NFE] * 0.2)
+        & (df[SALES_PBI] < df[PLAN_NFE] * 0.2)].index,
+        NEW_PLAN
+    ] = (df[NEW_ADJUSTMENT] / df[DAYS_IN_FACTOR] * df[REMAINING_DAYS]).round(0)
 
     df[NEW_RISK] = (df[NEW_PLAN] / df[AVG_FACTOR_PERIOD_WHS]).round(1)
     df.loc[df[AVG_FACTOR_PERIOD_WHS] == 0, NEW_RISK] = 9999
@@ -226,19 +230,21 @@ def calc_new_forecast(df):
 
 def reindex_and_sort(df):
     df_sales, col_sales = get_data(TABLE_SALES)
+    del df_sales
     df = df[[
         LINK_FACTOR, REF_FACTOR, DESCRIPTION, USER, FACTOR, FACTOR_PERIOD,
         FACTOR_NUM, FACTOR_STATUS, DATE_START, DATE_EXPIRATION, DATE_CREATION,
         WHS, NAME_HOLDING, EAN, LEVEL_3, PRODUCT, CHECK_FACT, CHECK_DUPL,
         ACTIVE_LOC, PLAN_MSU, PLAN_PRICE, ADJUSTMENT_PBI, PLAN_NFE, SALES_PBI,
-        RESERVES_PBI, CUTS_PBI, FACT_NFE, SALES_FACTOR_PERIOD,
+        RESERVES_PBI, CUTS_PBI, FACT_NFE, SALES_BY_DATE, CUTS_BY_DATE,
+        SALES_FACTOR_PERIOD, SOFT_RSV_BY_DATE, HARD_RSV_BY_DATE,
         RSV_FACTOR_PERIOD_CURRENT, RSV_FACTOR_PERIOD_FUTURE, RSV_FACTOR_PERIOD,
-        AVARAGE_MSU, AVARAGE_PRICE, AVG_FACTOR_PERIOD, AVG_FACTOR_PERIOD_WHS,
-        RISK, PLAN_NFE_TOTAL, RISK_TOTAL, col_sales['last_cut'],
-        col_sales['last_sale'], SOFT_HARD_RSV, QUOTA, FULL_REST, REST_TRANZIT,
-        FREE_REST, OVERSTOCK, TRANZIT, DAYS_IN_FACTOR, DAYS_PASSED,
-        REMAINING_DAYS, NEW_PLAN, NEW_ADJUSTMENT, NEW_RISK, NEW_RISK_PLAN,
-        NEW_RISK_ADJUST
+        QUOTA_BY_DATE, AVARAGE_MSU, AVARAGE_PRICE, AVG_FACTOR_PERIOD,
+        AVG_FACTOR_PERIOD_WHS, RISK, PLAN_NFE_TOTAL, RISK_TOTAL,
+        col_sales['last_cut'], col_sales['last_sale'], SOFT_HARD_RSV, QUOTA,
+        FULL_REST, REST_TRANZIT, FREE_REST, OVERSTOCK, TRANZIT, DAYS_IN_FACTOR,
+        DAYS_PASSED, REMAINING_DAYS, NEW_PLAN, NEW_ADJUSTMENT, NEW_RISK,
+        NEW_RISK_PLAN, NEW_RISK_ADJUST
     ]].sort_values(
         by=[DATE_CREATION, FACTOR_NUM, RISK], ascending=[False, False, False]
     )
