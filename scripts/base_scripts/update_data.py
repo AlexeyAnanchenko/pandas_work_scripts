@@ -216,6 +216,7 @@ def update_factors_nfe_promo(source_file):
         export_id = part_id + 'BarPanel_UserControl_PageToolbarMenu_DXI14_P'
         driver.find_element(By.ID, export_id).click()
         driver.implicitly_wait(3)
+        time.sleep(1)
         xlsx_id = part_id + 'BarPanel_UserControl_PageToolbarMenu_DXI14i1_T'
 
         if source_file in os.listdir(SOURCE_DIR):
