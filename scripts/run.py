@@ -12,6 +12,7 @@ os.environ.setdefault('SRS_DOWNLOAD', 'FALSE')
 scripts = [
     'assortment',
     'sales',
+    'sales_by_date'
     'price',
     'directory',
     'holdings',
@@ -21,7 +22,6 @@ scripts = [
     'factors',
     'registry_factors',
     'full_sales',
-    'sales_by_date'
 ]
 
 for script in scripts:

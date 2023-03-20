@@ -5,15 +5,14 @@
 import utils
 utils.path_append()
 
-import pandas as pd
-from datetime import date
+from datetime import date, timedelta, datetime
 from dateutil.relativedelta import relativedelta
 
-from hidden_settings import WAREHOUSES_SALES
-from service import get_filtered_df, save_to_excel, print_complete
-from settings import WHS, EAN, NAME_HOLDING, PRODUCT, NUM_MONTHS
+from service import save_to_excel, print_complete, get_data
+from settings import WHS, EAN, NAME_HOLDING, PRODUCT, NUM_MONTHS, DATE_SALES
 from settings import LINK, LINK_HOLDING, CUTS, SALES, CUTS_SALES, AVARAGE
-from settings import SOURCE_DIR, RESULT_DIR, TABLE_SALES_HOLDINGS, TABLE_SALES
+from settings import RESULT_DIR, TABLE_SALES_HOLDINGS, TABLE_SALES
+from settings import TABLE_SALES_BY_DATE, SALES_BY_DATE, CUTS_BY_DATE
 
 
 SOURCE_FILE = 'Продажи общие.xlsx'
@@ -25,55 +24,55 @@ M_HOLDING = 'Основной холдинг'
 PRODUCT_NAME = 'Наименование товара'
 
 
-def sales_by_client():
-    """Формирование фрейма данных продаж в разрезе клиент-склад-шк"""
-
-    excel = pd.ExcelFile(SOURCE_DIR + SOURCE_FILE)
-    full_df = get_filtered_df(
-        excel, WAREHOUSES_SALES, WHS, skiprows=EMPTY_ROWS
-    )
-    full_df = full_df.rename(columns={
-        EAN_LOC: EAN,
-        WHS_LOC: WHS,
-        M_HOLDING: NAME_HOLDING,
-        PRODUCT_NAME: PRODUCT
-    })
-    full_df.insert(
+def get_sales_by_month():
+    """Получаем данные по месяцам"""
+    df = get_data(TABLE_SALES_BY_DATE)
+    last_sale = (date.today() - timedelta(days=1))
+    merge_cols = [CUTS_BY_DATE, SALES_BY_DATE]
+    date_for_loop = last_sale
+    df.insert(
         0, LINK_HOLDING,
-        full_df[WHS] + full_df[NAME_HOLDING] + full_df[EAN].map(int).map(str)
+        df[WHS] + df[NAME_HOLDING] + df[EAN].map(int).map(str)
     )
+    df_main = df[[
+        LINK, LINK_HOLDING, WHS, NAME_HOLDING, EAN, PRODUCT
+    ]].drop_duplicates()
+    for col in merge_cols:
+        year = date_for_loop.year
+        month = date_for_loop.month
+        first_day = datetime(year, month - 2, 1)
+        last_day = datetime(year, month - 1, 1) - timedelta(days=1)
+        month_name = first_day.strftime('%B')
+        for _ in range(NUM_MONTHS):
+            df_iter = df[
+                (df[DATE_SALES] >= first_day) & (df[DATE_SALES] <= last_day)
+            ].copy().groupby([LINK_HOLDING])[col].sum().reset_index()
+            df_main = df_main.merge(df_iter, on=LINK_HOLDING, how='left')
+            df_main = utils.void_to(df_main, col, 0)
+            df_main = df_main.rename(
+                columns={col: col + f' {month_name}' + f' {year}'}
+            )
+            year = first_day.year
+            month = first_day.month
+            first_day = datetime(year, month + 1, 1)
+            last_day = datetime(year, month + 2, 1) - timedelta(days=1)
+            month_name = first_day.strftime('%B')
+    return df_main
 
-    # Суммируем урезания, корректно именуем столбцы и удаляем лишнее
-    col_month = list(full_df.columns)[-(NUM_MONTHS * REASON_FOR_CUTS):]
+
+def sales_by_client(df):
+    """Формирование фрейма данных продаж в разрезе клиент-склад-шк"""
+    col_month = list(df.columns)[-(NUM_MONTHS * (REASON_FOR_CUTS - 1)):]
     correct_month = col_month[:NUM_MONTHS]
-
-    for i in range(NUM_MONTHS):
-        full_df[CUTS + correct_month[i]] = full_df[[
-            col_month[i],
-            col_month[-NUM_MONTHS + i]
-        ]].sum(axis=1)
-
-    for i in range(NUM_MONTHS):
-        full_df[SALES + correct_month[i]] = full_df[col_month[i + NUM_MONTHS]]
-
-    full_df.drop(col_month, axis=1, inplace=True)
+    correct_month = [
+        col.replace(CUTS_BY_DATE + ' ', '') for col in correct_month
+    ]
 
     # группируем данные по EAN
     col_month_new = {}
 
-    for i in list(full_df.columns)[-(NUM_MONTHS * (REASON_FOR_CUTS - 1)):]:
+    for i in list(df.columns)[-(NUM_MONTHS * (REASON_FOR_CUTS - 1)):]:
         col_month_new[i] = 'sum'
-
-    correct_seq = [LINK_HOLDING, WHS, NAME_HOLDING, EAN]
-    group_df = full_df.groupby(correct_seq).agg(col_month_new).reset_index()
-
-    # подтягиваем наименование товара
-    group_df = group_df.merge(
-        full_df[[EAN, PRODUCT]].drop_duplicates(subset=[EAN]),
-        on=EAN, how='left'
-    )
-    correct_seq += [PRODUCT] + list(col_month_new.keys())
-    group_df = group_df.reindex(columns=correct_seq)
 
     # добавляем столбцы продажи + урезания
     cut_col = list(col_month_new.keys())[:NUM_MONTHS]
@@ -81,14 +80,14 @@ def sales_by_client():
     cuts_sales_col = [CUTS_SALES + i for i in correct_month]
 
     for i in range(NUM_MONTHS):
-        group_df[cuts_sales_col[i]] = group_df[[
+        df[cuts_sales_col[i]] = df[[
             cut_col[i], sales_col[i]
         ]].sum(axis=1)
 
     # формируем столбцы с суммой за все месяца
     def get_sum_all_columns(reason_col, prefix):
         name_col = prefix + 'за {} месяца (-ев)'.format(NUM_MONTHS)
-        group_df[name_col] = group_df[[col for col in reason_col]].sum(axis=1)
+        df[name_col] = df[[col for col in reason_col]].sum(axis=1)
         return name_col
 
     sum_all_columns = [
@@ -110,20 +109,16 @@ def sales_by_client():
 
     for name_col in sum_all_columns:
         new_name = AVARAGE + name_col
-        group_df[new_name] = (group_df[name_col]
-                              / divide_for_avarage
-                              * avarage_days_in_month).round(1)
+        df[new_name] = (df[name_col]
+                        / divide_for_avarage
+                        * avarage_days_in_month).round(1)
         avarage_col.append(new_name)
 
-    group_df.drop(sum_all_columns, axis=1, inplace=True)
+    df.drop(sum_all_columns, axis=1, inplace=True)
     numeric_col = [
         cut_col + sales_col + cuts_sales_col + avarage_col
     ]
-    group_df.insert(
-        0, LINK,
-        group_df[WHS] + group_df[EAN].map(int).map(str)
-    )
-    return group_df, numeric_col
+    return df, numeric_col
 
 
 def sales_by_warehouses(dataframe, numeric_columns):
@@ -141,7 +136,7 @@ def sales_by_warehouses(dataframe, numeric_columns):
 
 
 def main():
-    df, numeric_columns = sales_by_client()
+    df, numeric_columns = sales_by_client(get_sales_by_month())
     save_to_excel(RESULT_DIR + TABLE_SALES_HOLDINGS, df)
     df = sales_by_warehouses(df, numeric_columns)
     save_to_excel(RESULT_DIR + TABLE_SALES, df)
