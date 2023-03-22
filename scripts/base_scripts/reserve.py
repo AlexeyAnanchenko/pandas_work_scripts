@@ -6,7 +6,7 @@ import utils
 utils.path_append()
 
 import os
-import datetime
+import datetime as dt
 import pandas as pd
 
 
@@ -100,9 +100,9 @@ def reserve_by_date(df):
 def table_processing(df, period=None):
     idx_date = df.loc[df[EXPECTED_DATE_LOC].isnull()].index
     df.loc[idx_date, EXPECTED_DATE_LOC] = df.loc[idx_date, RESERVE_FOR]
-    today = datetime.date.today()
+    today = dt.date.today() - dt.timedelta(days=1)
     next_month = today.month + 1 if today.month < 12 else 1
-    next_month_fday = pd.to_datetime(datetime.date(today.year, next_month, 1))
+    next_month_fday = pd.to_datetime(dt.date(today.year, next_month, 1))
     if period == CURRENT:
         df = df[df[EXPECTED_DATE_LOC] < next_month_fday]
     elif period == FUTURE:

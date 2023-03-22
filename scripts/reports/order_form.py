@@ -41,7 +41,7 @@ WEEKS = 8
 AVG_SALES = 'СДО по продажам, шт'
 AVG_CUTS = 'СДО по урезаниям, шт'
 
-today = date.today()
+today = date.today() - timedelta(days=1)
 log_days = pd.to_datetime(today + timedelta(days=LOG_LEVERAGE + 1))
 
 list_sales_week = []

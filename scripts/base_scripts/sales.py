@@ -97,10 +97,11 @@ def sales_by_client(df):
     ]
 
     # определяем делитель (кол-во дней) для расчёта среднего
-    first_day_current_month = date(date.today().year, date.today().month, 1)
+    today = date.today() - timedelta(days=1)
+    first_day_current_month = date(today.year, today.month, 1)
     delta = relativedelta(months=(3 - 1))
     divide_for_avarage = (
-        date.today() - (first_day_current_month - delta)
+        today - (first_day_current_month - delta)
     ).days
     avarage_days_in_month = 365 / 12
 

@@ -8,7 +8,7 @@ utils.path_append()
 import os
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from hidden_settings import WAREHOUSE_REMAIN
 from service import get_filtered_df, save_to_excel, get_data, print_complete
@@ -94,7 +94,7 @@ def add_transit_directory(df):
             values=TRANZIT, index=static_col,
             columns=[MONTH], aggfunc=np.sum
         ).reset_index()
-        current_month = datetime.now().strftime("%B")
+        current_month = (datetime.now() - timedelta(days=1)).strftime("%B")
         next_month = utils.get_next_month(current_month)
         tz_df_col = tz_df.columns
 

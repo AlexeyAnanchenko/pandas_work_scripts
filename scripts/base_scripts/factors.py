@@ -124,7 +124,7 @@ def add_pbi_and_purpose(df):
 
 def split_by_month(df):
     """Разделяет факторы на текущие, будущие и прошедшие в отдельном столбце"""
-    today = dt.date.today()
+    today = dt.date.today() - dt.timedelta(days=1)
     current_month = today.replace(day=1)
     current_month_dt = dt.datetime.combine(current_month, dt.time(0, 0))
     next_month = today + relativedelta.relativedelta(months=1, day=1)
