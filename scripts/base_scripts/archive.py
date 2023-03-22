@@ -6,13 +6,14 @@ import shutil
 from datetime import datetime
 
 from settings import ARCHIVE_DIR, RESULT_DIR, TABLE_REGISTRY_FACTORS
-from settings import TABLE_REMAINS, TABLE_RESERVE
+from settings import TABLE_REMAINS, TABLE_RESERVE, TABLE_FIXING_FACTORS
 
 
 table_copy = [
     TABLE_REGISTRY_FACTORS,
     TABLE_RESERVE,
-    TABLE_REMAINS
+    TABLE_REMAINS,
+    TABLE_FIXING_FACTORS
 ]
 
 current_date = datetime.now().strftime("%d.%m.%Y")

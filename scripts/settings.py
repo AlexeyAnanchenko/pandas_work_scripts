@@ -117,6 +117,8 @@ HARD_RSV_BY_DATE = 'Жёсткие резервы (по датам фактор�
 QUOTA_BY_DATE = 'Квота, шт (в общем по клиенту)'
 PURCH_BY_DATE = 'Закупки, шт'
 DATE_PURCH = 'Дата закупки'
+FIRST_PLAN = 'Первый план фактора, шт'
+MAX_PLAN = 'Максимальный план фактора, шт'
 
 TABLE_ASSORTMENT = 'Ассортимент.xlsx'
 TABLE_DIRECTORY = 'Справочник_ШК.xlsx'
@@ -140,6 +142,7 @@ TABLE_FULL_SALES_CLIENTS = ACCESSORY_DIR + 'Полные продажи по к�
 TABLE_FULL_SALES = ACCESSORY_DIR + 'Полные продажи по складам.xlsx'
 TABLE_MHL = ACCESSORY_DIR + 'MHL_ListA.xlsx'
 TABLE_PURCH_BY_DATE = ACCESSORY_DIR + 'Закупки по датам.xlsx'
+TABLE_FIXING_FACTORS = ACCESSORY_DIR + 'Фиксация факторов.xlsx'
 
 ORDER_FORM = '\\Бланк заказа\\'
 ORDER_FORM_DIR = REPORTS + ORDER_FORM

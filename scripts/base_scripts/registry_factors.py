@@ -14,7 +14,8 @@ from settings import FACTOR_STATUS, ACTIVE_STATUS, PURPOSE_PROMO, EAN
 from settings import DATE_START, DATE_CREATION, DATE_EXPIRATION, WHS
 from settings import INACTIVE_PURPOSE, NAME_HOLDING, PLAN_NFE, PRODUCT
 from settings import DATE_REGISTRY, QUANT_REGISTRY, ARCHIVE_DIR, HOLDING
-from settings import TABLE_HOLDINGS
+from settings import TABLE_HOLDINGS, TABLE_FIXING_FACTORS, FIRST_PLAN
+from settings import MAX_PLAN
 from hidden_settings import OPT_CLIENTS
 from service import get_data, save_to_excel, print_complete
 
@@ -29,6 +30,7 @@ COL_REPORT = [
 ]
 SUBSTRACT = 'Отнять, шт'
 RESULT_COL = 'Расчётная колонка, шт'
+MAX_PLAN_ITEM = 'Максимальный план, временный'
 
 
 def get_archive():
@@ -171,10 +173,31 @@ def sort_and_test(df):
     raise Exception('РЕЕСТР ФОРМИРУЕТСЯ ОШИБОЧНО!!!')
 
 
+def gen_fixing_factors(df_reg):
+    df_reg = df_reg[[
+        LINK_FACTOR_NUM, FACTOR_NUM, WHS, EAN, PLAN_IN_NFE
+    ]].drop_duplicates()
+    df = get_data(TABLE_FIXING_FACTORS)
+    df = df.merge(
+        df_reg, on=[LINK_FACTOR_NUM, FACTOR_NUM, WHS, EAN], how='outer'
+    )
+    idx = df[df[FIRST_PLAN].isnull()].index
+    df.loc[idx, FIRST_PLAN] = df.loc[idx, PLAN_IN_NFE]
+    idx = df[df[MAX_PLAN].isnull()].index
+    df.loc[idx, MAX_PLAN] = 0
+    df[MAX_PLAN_ITEM] = df[[MAX_PLAN, PLAN_IN_NFE]].max(axis=1)
+    idx = df[~df[MAX_PLAN].isnull()].index
+    df.loc[idx, MAX_PLAN] = df.loc[idx, MAX_PLAN_ITEM]
+    df = df.drop(labels=[PLAN_IN_NFE, MAX_PLAN_ITEM], axis=1)
+    return df
+
+
 def main():
     df = merge_holdings(subtracting_factors(fix_changes(get_archive())))
     df = sort_and_test(df)
     save_to_excel(RESULT_DIR + TABLE_REGISTRY_FACTORS, df)
+    df = gen_fixing_factors(df)
+    save_to_excel(RESULT_DIR + TABLE_FIXING_FACTORS, df)
     print_complete(__file__)
 
 
