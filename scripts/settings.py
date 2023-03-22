@@ -115,6 +115,8 @@ WORD_YES = 'ДА'
 SOFT_RSV_BY_DATE = 'Мягкие резервы (по датам фактора), шт'
 HARD_RSV_BY_DATE = 'Жёсткие резервы (по датам фактора), шт'
 QUOTA_BY_DATE = 'Квота, шт (в общем по клиенту)'
+PURCH_BY_DATE = 'Закупки, шт'
+DATE_PURCH = 'Дата закупки'
 
 TABLE_ASSORTMENT = 'Ассортимент.xlsx'
 TABLE_DIRECTORY = 'Справочник_ШК.xlsx'
@@ -137,6 +139,7 @@ TABLE_EXCLUDE = ACCESSORY_DIR + 'Исключения проверки.xlsx'
 TABLE_FULL_SALES_CLIENTS = ACCESSORY_DIR + 'Полные продажи по клиентам.xlsx'
 TABLE_FULL_SALES = ACCESSORY_DIR + 'Полные продажи по складам.xlsx'
 TABLE_MHL = ACCESSORY_DIR + 'MHL_ListA.xlsx'
+TABLE_PURCH_BY_DATE = ACCESSORY_DIR + 'Закупки по датам.xlsx'
 
 ORDER_FORM = '\\Бланк заказа\\'
 ORDER_FORM_DIR = REPORTS + ORDER_FORM
@@ -161,7 +164,7 @@ REPORT_TRACKING_NOT_SOLD = 'Трекинг продаж по факторам.xl
 
 DATE_COL = [
     DATE_RSV, DATE_CREATION, DATE_START, DATE_EXPIRATION, DATE_REGISTRY,
-    DATE_SALES, EXPECTED_DATE
+    DATE_SALES, EXPECTED_DATE, DATE_PURCH
 ]
 
 ACTIVE_STATUS = [

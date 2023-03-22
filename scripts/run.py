@@ -11,8 +11,8 @@ os.environ.setdefault('SRS_DOWNLOAD', 'FALSE')
 
 scripts = [
     'assortment',
+    'sales_by_date',
     'sales',
-    'sales_by_date'
     'price',
     'directory',
     'holdings',
