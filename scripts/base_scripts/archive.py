@@ -28,6 +28,9 @@ if current_date not in list_dir:
         mtime = os.path.getmtime(src_file)
         mtime_dt = datetime.fromtimestamp(mtime).strftime("%d.%m.%Y")
         shutil.copy(src_file, current_fold)
+        idx = table.rfind('\\')
+        if idx != -1:
+            table = table[idx + 1:]
         current_name = current_fold + '\\' + table
         new_name = current_fold + '\\' + mtime_dt + ' ' + table
         os.rename(current_name, new_name)
