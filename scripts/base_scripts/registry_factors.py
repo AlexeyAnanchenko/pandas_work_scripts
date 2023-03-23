@@ -31,6 +31,10 @@ COL_REPORT = [
 SUBSTRACT = 'Отнять, шт'
 RESULT_COL = 'Расчётная колонка, шт'
 MAX_PLAN_ITEM = 'Максимальный план, временный'
+DATE_START_LOC = 'Дата старта последняя'
+DATE_EXPIRATION_LOC = 'Дата окончания последняя'
+NAME_HOLDING_LOC = 'Наименование клиента последнее'
+DATE_CREATION_LOC = 'Дата создания последняя'
 
 
 def get_archive():
@@ -175,11 +179,13 @@ def sort_and_test(df):
 
 def gen_fixing_factors(df_reg):
     df_reg = df_reg[[
-        LINK_FACTOR_NUM, FACTOR_NUM, WHS, EAN, PLAN_IN_NFE
+        LINK_FACTOR_NUM, FACTOR_NUM, DATE_CREATION, DATE_START,
+        DATE_EXPIRATION, NAME_HOLDING, WHS, EAN, PLAN_IN_NFE
     ]].drop_duplicates()
     df = get_data(TABLE_FIXING_FACTORS)
     df = df.merge(
-        df_reg, on=[LINK_FACTOR_NUM, FACTOR_NUM, WHS, EAN], how='outer'
+        df_reg[[LINK_FACTOR_NUM, FACTOR_NUM, WHS, EAN, PLAN_IN_NFE]],
+        on=[LINK_FACTOR_NUM, FACTOR_NUM, WHS, EAN], how='outer'
     )
     idx = df[df[FIRST_PLAN].isnull()].index
     df.loc[idx, FIRST_PLAN] = df.loc[idx, PLAN_IN_NFE]
@@ -189,6 +195,24 @@ def gen_fixing_factors(df_reg):
     idx = df[~df[MAX_PLAN].isnull()].index
     df.loc[idx, MAX_PLAN] = df.loc[idx, MAX_PLAN_ITEM]
     df = df.drop(labels=[PLAN_IN_NFE, MAX_PLAN_ITEM], axis=1)
+    df = df.merge(
+        df_reg[[
+            LINK_FACTOR_NUM, DATE_CREATION, DATE_START,
+            DATE_EXPIRATION, NAME_HOLDING
+        ]],
+        on=LINK_FACTOR_NUM, how='left'
+    )
+    cols_dict = {
+        DATE_CREATION: DATE_CREATION_LOC,
+        DATE_START: DATE_START_LOC,
+        DATE_EXPIRATION: DATE_EXPIRATION_LOC,
+        NAME_HOLDING: NAME_HOLDING_LOC,
+    }
+    for new, current in cols_dict.items():
+        idx = df[df[new].isnull()].index
+        df.loc[idx, new] = df.loc[idx, current]
+        df = df.drop(labels=[current], axis=1)
+        df = df.rename(columns={new: current})
     return df
 
 
