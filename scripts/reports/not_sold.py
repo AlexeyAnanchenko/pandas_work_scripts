@@ -17,7 +17,7 @@ from settings import DESCRIPTION, USER, SALES_CURRENT_FOR_PAST, TABLE_REMAINS
 from settings import RSV_FACTOR_PERIOD_TOTAL, TABLE_PURCHASES, FREE_REST
 from settings import ARCHIVE_DIR, FULL_REST, SOFT_HARD_RSV, QUOTA, OVERSTOCK
 from settings import TABLE_SALES, TABLE_DIRECTORY, MSU, BASE_PRICE, MAX_PLAN
-from settings import REPORT_NOT_SOLD_CURRENT
+from settings import REPORT_NOT_SOLD_CURRENT, ALL_CLIENTS, NAME_TRAD
 
 
 LINK_HOLDING_PERIOD = 'Сцепка Склад-Холдинг-Штрихкод-Период'
@@ -165,12 +165,39 @@ def merge_group_col(df, group_col, new_name_col):
     return group_df
 
 
+def merge_group_rsv(df):
+    """Подтягивает сгруппированный и переименованный столбец по резервам"""
+    df_copy = df.copy()
+    idx = df_copy[df_copy[NAME_HOLDING].isin([ALL_CLIENTS, NAME_TRAD])].index
+    df_copy.loc[idx, RSV_BY_PLAN] = 0
+    group_df = df.merge(
+        df_copy[[LINK_PERIOD, RSV_BY_PLAN]].groupby([LINK_PERIOD]).agg({
+            RSV_BY_PLAN: 'sum'
+        }).reset_index().rename(columns={RSV_BY_PLAN: RSV_BY_PLAN_TOTAL}),
+        on=LINK_PERIOD, how='left'
+    )
+    df_copy = df[df[NAME_HOLDING].isin([ALL_CLIENTS, NAME_TRAD])].copy()
+    temp_col = RSV_BY_PLAN + '2'
+    df_copy = df_copy.groupby([LINK_PERIOD]).agg({
+        RSV_BY_PLAN: 'max'
+    }).reset_index().rename(columns={RSV_BY_PLAN: temp_col})
+    group_df = group_df.merge(
+        df_copy[[LINK_PERIOD, temp_col]], on=LINK_PERIOD, how='left'
+    )
+    idx = group_df[~group_df[temp_col].isnull()].index
+    group_df.loc[idx, RSV_BY_PLAN_TOTAL] = np.maximum(
+        group_df.loc[idx, RSV_BY_PLAN_TOTAL], group_df.loc[idx, temp_col]
+    )
+    group_df = group_df.drop(columns=[temp_col], axis=1)
+    return group_df
+
+
 def not_sold(df, purch, rest):
     """Рассчёт показателей недогруза"""
     df[LINK_PERIOD] = df[LINK] + df[FACTOR_PERIOD]
     df[PLAN_MINUS_SALES] = np.maximum(df[PLAN] - df[SALES], 0)
     df[RSV_BY_PLAN] = df[[RSV, PLAN_MINUS_SALES]].min(axis=1)
-    df = merge_group_col(df, RSV_BY_PLAN, RSV_BY_PLAN_TOTAL)
+    df = merge_group_rsv(df)
     df[RSV_BY_PLAN_PURCH] = (
         df[RSV_BY_PLAN] / df[RSV_BY_PLAN_TOTAL]
         * df[[purch, RSV_BY_PLAN_TOTAL]].min(axis=1)
