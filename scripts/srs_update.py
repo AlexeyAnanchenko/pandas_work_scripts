@@ -9,9 +9,11 @@ start_time = time.time()
 
 scripts = [
     'archive',
-    'price',
     'remains',
-    'reserve'
+    'price',
+    'factors',
+    'reserve',
+    'registry_factors'
 ]
 
 for script in scripts:

@@ -5,6 +5,7 @@
 import utils
 utils.path_append()
 
+import os
 import pandas as pd
 import datetime as dt
 from dateutil import relativedelta
@@ -442,11 +443,12 @@ def add_sales_rsv_by_date(df):
 
 
 def main():
-    # from update_data import update_factors_nfe, update_factors_pbi
-    # from update_data import update_factors_nfe_promo
-    # update_factors_nfe(SOURCE_FILE)
-    # update_factors_nfe_promo(SOURCE_FILE_PROMO)
-    # update_factors_pbi(SOURCE_FILE_PB)
+    if os.environ.get('SRS_DOWNLOAD') is None:
+        from update_data import update_factors_nfe, update_factors_pbi
+        from update_data import update_factors_nfe_promo
+        update_factors_nfe(SOURCE_FILE)
+        update_factors_nfe_promo(SOURCE_FILE_PROMO)
+        update_factors_pbi(SOURCE_FILE_PB)
 
     factors = add_deleted_factors(add_num_factors(filtered_factors()))
     factors = reindex_rename(split_by_month(add_pbi_and_purpose(factors)))
