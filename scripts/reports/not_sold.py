@@ -12,11 +12,11 @@ from service import save_to_excel, get_data, print_complete
 from settings import REPORT_NOT_SOLD_PAST, REPORT_DIR, TABLE_FACTORS, PAST
 from settings import CURRENT, FACTOR_PERIOD, PURPOSE_PROMO, INACTIVE_PURPOSE
 from settings import SALES_FACTOR_PERIOD, LINK, LINK_HOLDING, WHS, NAME_HOLDING
-from settings import EAN, PRODUCT, LEVEL_3, PLAN_NFE, ADJUSTMENT_PBI, FACT_NFE
+from settings import EAN, PRODUCT, LEVEL_3, PLAN_NFE, FACT_NFE, FIRST_PLAN
 from settings import DESCRIPTION, USER, SALES_CURRENT_FOR_PAST, TABLE_REMAINS
 from settings import RSV_FACTOR_PERIOD_TOTAL, TABLE_PURCHASES, FREE_REST
 from settings import ARCHIVE_DIR, FULL_REST, SOFT_HARD_RSV, QUOTA, OVERSTOCK
-from settings import TABLE_SALES, TABLE_DIRECTORY, MSU, BASE_PRICE
+from settings import TABLE_SALES, TABLE_DIRECTORY, MSU, BASE_PRICE, MAX_PLAN
 from settings import REPORT_NOT_SOLD_CURRENT
 
 
@@ -46,6 +46,9 @@ NOT_SOLD_PURCH_TOTAL = 'Не продано (с учётом закупа) по 
 RES_FOR_STOCK = 'Вклад в пересток, шт'
 RES_FOR_STOCK_PURCH = 'Вклад в пересток (с учётом закупа), шт'
 PRICE = 'Цена по направлениям бизнеса, руб'
+ADJUSTED_CLIENTS = [
+    'Копейка Ставрополь (4925081)'
+]
 
 
 def get_factors():
@@ -60,8 +63,9 @@ def get_factors():
         LINK_HOLDING_PERIOD, LINK, LINK_HOLDING, FACTOR_PERIOD, WHS,
         NAME_HOLDING, EAN, PRODUCT, LEVEL_3
     ]).agg({
+        FIRST_PLAN: 'max',
+        MAX_PLAN: 'max',
         PLAN_NFE: 'max',
-        ADJUSTMENT_PBI: 'max',
         FACT_NFE: 'max',
         SALES_FACTOR_PERIOD: 'max',
         SALES_CURRENT_FOR_PAST: 'max',
@@ -76,10 +80,9 @@ def get_factors():
 
 def gen_plan_sales_rsv(df):
     """Формируем итоговый столбец плана и столбцы продаж"""
-    df[PLAN] = np.maximum(
-        df[PLAN_NFE],
-        (df[ADJUSTMENT_PBI] * 0.7)
-    ).round(0)
+    df[PLAN] = df[[PLAN_NFE, MAX_PLAN]].max(axis=1).round(0)
+    idx = df[df[NAME_HOLDING].isin(ADJUSTED_CLIENTS)].index
+    df.loc[idx, PLAN] = df.loc[idx, FIRST_PLAN]
     df[SALES_TOTAL] = df[SALES_FACTOR_PERIOD] + df[SALES_CURRENT_FOR_PAST]
     df[SALES] = df[[PLAN, SALES_TOTAL]].min(axis=1)
     df[RSV] = df[RSV_FACTOR_PERIOD_TOTAL]
@@ -226,7 +229,7 @@ def get_current_df(df):
     df = merge_directory(responsibility_for_overstock(df))
     df = df[[
         LINK, LINK_HOLDING, WHS, NAME_HOLDING, EAN, PRODUCT, LEVEL_3,
-        PLAN_NFE, ADJUSTMENT_PBI, FACT_NFE, DESCRIPTION, USER, PLAN,
+        FIRST_PLAN, MAX_PLAN, PLAN_NFE, FACT_NFE, DESCRIPTION, USER, PLAN,
         SALES_TOTAL, SALES, RSV, FREE_REST_CURRENT, PURCH_CURRENT,
         PLAN_MINUS_SALES, RSV_BY_PLAN, RSV_BY_PLAN_PURCH, PLAN_MINUS_SALES_RSV,
         FREE_REST_BY_PLAN, FREE_REST_BY_PLAN_PURCH, NOT_SOLD, NOT_SOLD_PURCH,
@@ -242,7 +245,7 @@ def get_past_df(df):
     df = merge_directory(responsibility_for_overstock(df))
     df = df[[
         LINK, LINK_HOLDING, WHS, NAME_HOLDING, EAN, PRODUCT, LEVEL_3,
-        PLAN_NFE, ADJUSTMENT_PBI, FACT_NFE, DESCRIPTION, USER, PLAN,
+        FIRST_PLAN, MAX_PLAN, PLAN_NFE, FACT_NFE, DESCRIPTION, USER, PLAN,
         SALES_TOTAL, SALES, RSV, FREE_REST_PAST, PURCH_PAST,
         PLAN_MINUS_SALES, RSV_BY_PLAN, RSV_BY_PLAN_PURCH, PLAN_MINUS_SALES_RSV,
         FREE_REST_BY_PLAN, FREE_REST_BY_PLAN_PURCH, NOT_SOLD, NOT_SOLD_PURCH,
