@@ -27,6 +27,11 @@ from settings import RSV_FACTOR_PERIOD_TOTAL, TABLE_SALES_BY_DATE, HARD_RSV
 from settings import SALES_BY_DATE, CUTS_BY_DATE, DATE_SALES, PG_PROGRAMM
 from settings import EXPECTED_DATE, TABLE_RSV_BY_DATE, EXCLUDE_STRING, WORD_YES
 from settings import SOFT_RSV_BY_DATE, HARD_RSV_BY_DATE, QUOTA_BY_DATE
+from settings import TABLE_FIXING_FACTORS, FIRST_PLAN, MAX_PLAN, DEL_ROW
+from settings import TABLE_DIRECTORY
+from registry_factors import DATE_CREATION_LAST, DATE_START_LAST
+from registry_factors import DATE_EXPIRATION_LAST, NAME_HOLDING_LAST
+from registry_factors import LINK_FACTOR_NUM
 
 
 SOURCE_FILE = 'NovoForecastServer_РезультатыПоиска.xlsx'
@@ -65,6 +70,8 @@ TRAD_HOLDINGS = [
 INDEXES = 'Текущие индексы строк'
 LINK_UNIQUE = 'Уникальная сцепка'
 CHANNEL_TRAD = 'Канал продаж'
+NOT_DATA = '<НЕТ ДАННЫХ>'
+DEL_FACTOR = 'Удалённый фактор'
 
 
 def filtered_factors(file=SOURCE_FILE, column=FACTOR, skip=0):
@@ -92,6 +99,58 @@ def add_num_factors(df):
     return df
 
 
+def add_deleted_factors(df):
+    """Добавляет удалённые факторы из реестра"""
+    df_reg = get_data(TABLE_FIXING_FACTORS)
+    df_reg = df_reg.drop(labels=[LINK_FACTOR_NUM], axis=1)
+    df_reg = df_reg[
+        df_reg[DATE_START_LAST] >= pd.to_datetime(utils.get_factor_start())
+    ]
+    df_reg = df_reg.rename(columns={
+        DATE_CREATION_LAST: DATE_CREATION_LOC,
+        DATE_START_LAST: DATE_START_LOC,
+        DATE_EXPIRATION_LAST: DATE_EXPIRATION_LOC,
+        NAME_HOLDING_LAST: HOLDING_LOC,
+        EAN: EAN_LOC
+    })
+    df[FACTOR_NUM] = df[FACTOR_NUM].astype(int)
+    df = df.merge(
+        df_reg,
+        on=[
+            FACTOR_NUM, DATE_CREATION_LOC, DATE_START_LOC, DATE_EXPIRATION_LOC,
+            HOLDING_LOC, WHS, EAN_LOC
+        ],
+        how='outer'
+    )
+
+    df_empty = df[df[FACTOR_LOC].isnull()].copy()
+    df = df[~df[FACTOR_LOC].isnull()]
+    labels = [FACTOR_LOC, USER_LOC, REF_FACTOR_LOC]
+    df_empty = df_empty.drop(labels=labels, axis=1)
+    df_empty = df_empty.merge(
+        df[labels + [FACTOR_NUM]].drop_duplicates(),
+        on=FACTOR_NUM, how='left')
+    df = pd.concat([df, df_empty], ignore_index=True)
+
+    df = utils.void_to(df, FACTOR_LOC, DEL_FACTOR)
+    df = utils.void_to(df, REF_FACTOR_LOC, NOT_DATA)
+    df = utils.void_to(df, USER_LOC, NOT_DATA)
+    df = utils.void_to(df, FACTOR_STATUS_LOC, DEL_ROW)
+    for col in [PLAN_LOC, FACT_LOC, FIRST_PLAN, MAX_PLAN]:
+        df = utils.void_to(df, col, 0)
+
+    df_dir = get_data(TABLE_DIRECTORY)[[EAN, PRODUCT, LEVEL_3]]
+    df_dir = df_dir.rename(columns={EAN: EAN_LOC})
+    df = df.merge(df_dir, on=EAN_LOC, how='left')
+    for col in [PRODUCT, LEVEL_3]:
+        df = utils.void_to(df, col, NOT_DATA)
+    idx = df[df[PRODUCT_LOC].isnull()].index
+    df.loc[idx, PRODUCT_LOC] = df.loc[idx, PRODUCT]
+    df.loc[idx, LEVEL_3_LOC] = df.loc[idx, LEVEL_3]
+    df = df.drop(labels=[PRODUCT, LEVEL_3], axis=1)
+    return df
+
+
 def add_pbi_and_purpose(df):
     """Добавляет столбцы из отчёта в PBI по факторам и цель акции"""
     df_pb = filtered_factors(SOURCE_FILE_PB, TYPE_FACTOR, 2)
@@ -103,7 +162,7 @@ def add_pbi_and_purpose(df):
     )
     df.insert(
         0, LINK_FACTOR,
-        df[FACTOR_NUM] + df[EAN_LOC].map(str)
+        df[FACTOR_NUM].map(str) + df[EAN_LOC].map(str)
     )
     df = df.merge(
         df_pb[[LINK_FACTOR, ORDER_LOC, SALES_LOC, RESERVES_LOC, CUTS_LOC]],
@@ -143,8 +202,9 @@ def reindex_rename(df):
         LINK, LINK_HOLDING, FACTOR_LOC, REF_FACTOR_LOC, FACTOR_NUM,
         FACTOR_STATUS_LOC, PURPOSE, FACTOR_PERIOD, DATE_CREATION_LOC,
         DATE_START_LOC, DATE_EXPIRATION_LOC, WHS, HOLDING_LOC, EAN_LOC,
-        PRODUCT_LOC, LEVEL_3_LOC, DESCRIPTION_LOC, USER_LOC, PLAN_LOC,
-        FACT_LOC, ORDER_LOC, SALES_LOC, RESERVES_LOC, CUTS_LOC
+        PRODUCT_LOC, LEVEL_3_LOC, DESCRIPTION_LOC, USER_LOC, FIRST_PLAN,
+        MAX_PLAN, PLAN_LOC, FACT_LOC, ORDER_LOC, SALES_LOC, RESERVES_LOC,
+        CUTS_LOC
     ]].rename(columns={
         FACTOR_LOC: FACTOR, REF_FACTOR_LOC: REF_FACTOR,
         FACTOR_STATUS_LOC: FACTOR_STATUS, DATE_CREATION_LOC: DATE_CREATION,
@@ -382,16 +442,16 @@ def add_sales_rsv_by_date(df):
 
 
 def main():
-    from update_data import update_factors_nfe, update_factors_pbi
-    from update_data import update_factors_nfe_promo
-    update_factors_nfe(SOURCE_FILE)
-    update_factors_nfe_promo(SOURCE_FILE_PROMO)
-    update_factors_pbi(SOURCE_FILE_PB)
+    # from update_data import update_factors_nfe, update_factors_pbi
+    # from update_data import update_factors_nfe_promo
+    # update_factors_nfe(SOURCE_FILE)
+    # update_factors_nfe_promo(SOURCE_FILE_PROMO)
+    # update_factors_pbi(SOURCE_FILE_PB)
 
-    factors = add_pbi_and_purpose(add_num_factors(filtered_factors()))
-    factors = add_sales_and_rsv(reindex_rename(split_by_month(factors)))
-    factors = link_replace(fill_empty_cells(add_total_sales_rsv(factors)))
-    factors = add_sales_rsv_by_date(factors)
+    factors = add_deleted_factors(add_num_factors(filtered_factors()))
+    factors = reindex_rename(split_by_month(add_pbi_and_purpose(factors)))
+    factors = fill_empty_cells(add_total_sales_rsv(add_sales_and_rsv(factors)))
+    factors = add_sales_rsv_by_date(link_replace(factors))
     save_to_excel(RESULT_DIR + TABLE_FACTORS, factors)
     print_complete(__file__)
 

@@ -4,7 +4,6 @@ utils.path_append()
 import os
 import time
 import shutil
-from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -26,19 +25,6 @@ options.add_experimental_option("prefs", {
 driver = webdriver.Chrome(options=options)
 
 EXPORT_PBI = 'data.xlsx'
-
-
-def get_factor_start():
-    """Возвращает дату старта для выгрузки факторов"""
-    today = datetime.today()
-
-    if today.month > 1:
-        first_day_last_month = datetime(today.year, today.month - 1, 1)
-    else:
-        first_day_last_month = datetime(today.year - 1, 12, 1)
-
-    formatted_date = first_day_last_month.strftime('%d.%m.%Y')
-    return formatted_date
 
 
 def view_report_click(driver, waiting_word):
@@ -163,7 +149,7 @@ def update_factors_nfe(source_file):
         driver.implicitly_wait(3)
         driver.find_element(
             By.ID, part_id + 'SearchFilter_FormLayout_DateFrom_DateEdit_I'
-        ).send_keys(get_factor_start())
+        ).send_keys(utils.get_factor_start())
         driver.implicitly_wait(3)
         driver.find_element(
             By.ID, part_id + 'SearchFilter_FormLayout_Supplier_ComboBox_B-1'

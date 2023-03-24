@@ -31,10 +31,10 @@ COL_REPORT = [
 SUBSTRACT = 'Отнять, шт'
 RESULT_COL = 'Расчётная колонка, шт'
 MAX_PLAN_ITEM = 'Максимальный план, временный'
-DATE_START_LOC = 'Дата старта последняя'
-DATE_EXPIRATION_LOC = 'Дата окончания последняя'
-NAME_HOLDING_LOC = 'Наименование клиента последнее'
-DATE_CREATION_LOC = 'Дата создания последняя'
+DATE_START_LAST = 'Дата старта последняя'
+DATE_EXPIRATION_LAST = 'Дата окончания последняя'
+NAME_HOLDING_LAST = 'Наименование клиента последнее'
+DATE_CREATION_LAST = 'Дата создания последняя'
 
 
 def get_archive():
@@ -203,10 +203,10 @@ def gen_fixing_factors(df_reg):
         on=LINK_FACTOR_NUM, how='left'
     )
     cols_dict = {
-        DATE_CREATION: DATE_CREATION_LOC,
-        DATE_START: DATE_START_LOC,
-        DATE_EXPIRATION: DATE_EXPIRATION_LOC,
-        NAME_HOLDING: NAME_HOLDING_LOC,
+        DATE_CREATION: DATE_CREATION_LAST,
+        DATE_START: DATE_START_LAST,
+        DATE_EXPIRATION: DATE_EXPIRATION_LAST,
+        NAME_HOLDING: NAME_HOLDING_LAST,
     }
     for new, current in cols_dict.items():
         idx = df[df[new].isnull()].index

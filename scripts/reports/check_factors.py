@@ -24,7 +24,8 @@ from settings import OVERSTOCK, AVG_FACTOR_PERIOD_WHS, SOFT_HARD_RSV, QUOTA
 from settings import TABLE_SALES, DATE_EXPIRATION, DATE_START, REF_FACTOR
 from settings import DESCRIPTION, USER, FACTOR, DATE_CREATION, LEVEL_3
 from settings import CANCEL_STATUS, SOFT_RSV_BY_DATE, HARD_RSV_BY_DATE
-from settings import SALES_BY_DATE, CUTS_BY_DATE, QUOTA_BY_DATE
+from settings import SALES_BY_DATE, CUTS_BY_DATE, QUOTA_BY_DATE, DEL_ROW
+from settings import FIRST_PLAN, MAX_PLAN
 
 
 LINK_HOLDING_PERIOD = 'Сцепка Период-Склад-Холдинг-ШК'
@@ -63,14 +64,16 @@ def get_factors():
     df = df[
         (df[FACTOR_PERIOD].isin([CURRENT, FUTURE]))
         & (df[PURPOSE_PROMO] != INACTIVE_PURPOSE)
-        & (df[FACTOR_STATUS] != CANCEL_STATUS)
+        & (~df[FACTOR_STATUS].isin([CANCEL_STATUS, DEL_ROW]))
     ]
     df[RSV_FACTOR_PERIOD_FUTURE] = (df[RSV_FACTOR_PERIOD]
                                     - df[RSV_FACTOR_PERIOD_CURRENT])
     df.insert(0, LINK_FACTOR, df[FACTOR_NUM].map(str) + df[LINK])
     df.insert(0, LINK_HOLDING_PERIOD, df[FACTOR_PERIOD] + df[LINK_HOLDING])
     df.insert(0, LINK_PERIOD, df[FACTOR_PERIOD] + df[LINK])
-    df = df.drop(labels=[LINK_HOLDING, PURPOSE_PROMO], axis=1)
+    df = df.drop(
+        labels=[LINK_HOLDING, PURPOSE_PROMO, FIRST_PLAN, MAX_PLAN], axis=1
+    )
     return df
 
 
