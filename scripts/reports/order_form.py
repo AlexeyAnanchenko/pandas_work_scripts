@@ -24,7 +24,7 @@ from settings import DATE_EXPIRATION, DATE_CREATION, DESCRIPTION, USER
 from settings import SALES_BY_DATE, CUTS_BY_DATE, NAME_HOLDING, TABLE_MHL
 from settings import TABLE_ORDER_FACTORS, TABLE_SALES_BY_DATE, DATE_SALES
 from settings import HARD_RSV_BY_DATE, SOFT_RSV_BY_DATE, QUOTA_BY_DATE
-from settings import CRITICAL_EAN
+from settings import CRITICAL_EAN, REPORT_DIR_FINAL
 
 
 LOG_LEVERAGE = 7
@@ -226,7 +226,7 @@ def merge_forecast(df):
         ].index,
         RSV_BEFORE_ARRIVAL
     ] = 0
-    save_to_excel(REPORT_DIR + TABLE_ORDER_FACTORS, df_fct)
+    save_to_excel(REPORT_DIR_FINAL + TABLE_ORDER_FACTORS, df_fct)
     df_fct = df_fct.groupby([LINK])[
         [DEMAIND_BY_FACTOR, RSV_BEFORE_ARRIVAL]
     ].sum().reset_index()

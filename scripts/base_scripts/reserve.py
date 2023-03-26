@@ -173,9 +173,9 @@ def merge_period_rsv(df):
 
 
 def main():
-    if os.environ.get('SRS_DOWNLOAD') is None:
-        from update_data import update_reserve
-        update_reserve(SOURCE_FILE)
+    # if os.environ.get('SRS_DOWNLOAD') is None:
+    #     from update_data import update_reserve
+    #     update_reserve(SOURCE_FILE)
     df = get_reserve()
     df_by_date = reserve_by_date(df)
     save_to_excel(RESULT_DIR + TABLE_RSV_BY_DATE, df_by_date)

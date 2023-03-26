@@ -145,13 +145,13 @@ TABLE_MHL = ACCESSORY_DIR + 'MHL_ListA.xlsx'
 TABLE_PURCH_BY_DATE = ACCESSORY_DIR + 'Закупки по датам.xlsx'
 TABLE_FIXING_FACTORS = ACCESSORY_DIR + 'Фиксация факторов.xlsx'
 
-ORDER_FORM = '\\Бланк заказа\\'
-ORDER_FORM_DIR = REPORTS + ORDER_FORM
+ORDER_FORM_NAME = '\\Бланк заказа\\'
+ORDER_FORM_DIR = REPORTS_FINAL + ORDER_FORM_NAME
 TABLE_SALES_BY_DATE = ORDER_FORM_DIR + 'Продажи по датам.xlsx'
 TABLE_EXCEPTIONS = ORDER_FORM_DIR + 'Исключения.xlsx'
-REPORT_ORDER_FORM = ORDER_FORM + 'Бланк заказа.xlsx'
+REPORT_ORDER_FORM = ORDER_FORM_NAME + 'Бланк заказа.xlsx'
 TABLE_RSV_BY_DATE = ORDER_FORM_DIR + 'Резервы по датам.xlsx'
-TABLE_ORDER_FACTORS = ORDER_FORM + 'Прогноз по факторам.xlsx'
+TABLE_ORDER_FACTORS = ORDER_FORM_NAME + 'Прогноз по факторам.xlsx'
 
 PS_DIR = '\\Потенциальные продажи\\'
 PS_DIR_FUTURE = '\\Будущие потенциальные продажи\\'
