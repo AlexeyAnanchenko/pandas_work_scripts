@@ -24,9 +24,12 @@ from settings import DATE_EXPIRATION, DATE_CREATION, DESCRIPTION, USER
 from settings import SALES_BY_DATE, CUTS_BY_DATE, NAME_HOLDING, TABLE_MHL
 from settings import TABLE_ORDER_FACTORS, TABLE_SALES_BY_DATE, DATE_SALES
 from settings import HARD_RSV_BY_DATE, SOFT_RSV_BY_DATE, QUOTA_BY_DATE
+from settings import CRITICAL_EAN
 
 
 LOG_LEVERAGE = 7
+MIN_DAYS = 5
+TARGET_DAYS = 16
 SOFT_RSV_FAR = f'Мягкие резервы, шт (свыше {LOG_LEVERAGE} дней по лог. плечу)'
 DEMAIND_BY_FACTOR = 'Потребность по факторам, шт'
 EAN_MHL = 'EAN'
@@ -40,6 +43,12 @@ CUTS_WEEK = 'Урезания '
 WEEKS = 8
 AVG_SALES = 'СДО по продажам, шт'
 AVG_CUTS = 'СДО по урезаниям, шт'
+RSV_BEFORE_ARRIVAL = 'Резерв раньше прихода, шт'
+OUT_OF_STOCK = 'Нет в наличии, шт'
+TO_ORDER = 'К заказу, шт'
+TO_ORDER_ROUND = 'К заказу под мин. отгрузку, шт'
+TO_ORDER_PALLET = 'К заказу, паллет'
+TO_ORDER_MSU = 'К заказу, msu'
 
 today = date.today() - timedelta(days=1)
 log_days = pd.to_datetime(today + timedelta(days=LOG_LEVERAGE + 1))
@@ -204,10 +213,26 @@ def merge_forecast(df):
          - df_fct[HARD_RSV_BY_DATE] - df_fct[SOFT_RSV_BY_DATE]
          - df_fct[QUOTA_BY_DATE]),
         0)
+    df_fct[RSV_BEFORE_ARRIVAL] = np.minimum(
+        df_fct[PLAN_NFE] - df_fct[SALES_BY_DATE] - df_fct[CUTS_BY_DATE],
+        (df_fct[SOFT_RSV_BY_DATE]
+         + df_fct[HARD_RSV_BY_DATE]
+         + df_fct[QUOTA_BY_DATE])
+    )
+    df_fct.loc[
+        df_fct[df_fct[DATE_CREATION] <= pd.to_datetime(
+            today - timedelta(days=LOG_LEVERAGE)
+        )
+        ].index,
+        RSV_BEFORE_ARRIVAL
+    ] = 0
     save_to_excel(REPORT_DIR + TABLE_ORDER_FACTORS, df_fct)
-    df_fct = df_fct.groupby([LINK])[[DEMAIND_BY_FACTOR]].sum().reset_index()
+    df_fct = df_fct.groupby([LINK])[
+        [DEMAIND_BY_FACTOR, RSV_BEFORE_ARRIVAL]
+    ].sum().reset_index()
     df = df.merge(df_fct, on=LINK, how='left')
     df = utils.void_to(df, DEMAIND_BY_FACTOR, 0)
+    df = utils.void_to(df, RSV_BEFORE_ARRIVAL, 0)
     return df
 
 
@@ -240,9 +265,47 @@ def merge_sales_history(df):
     return df
 
 
+def to_order(df):
+    df.loc[
+        df[
+            (df[FREE_REST] < (df[AVG_SALES] * MIN_DAYS))
+            & (df[CRITICAL_EAN] != WORD_YES)
+        ].index,
+        OUT_OF_STOCK
+    ] = WORD_YES
+    df[TO_ORDER] = (
+        df[AVG_SALES] * TARGET_DAYS + df[DEMAIND_BY_FACTOR]
+        + df[QUOTA_WITHOUT_REST] - df[FREE_REST]
+    ).round(0)
+    df.loc[df[df[TO_ORDER] < 0].index, TO_ORDER] = 0
+    df[TO_ORDER_ROUND] = (
+        np.ceil((df[TO_ORDER] / df[MIN_ORDER])) * df[MIN_ORDER]
+    )
+    df[TO_ORDER_PALLET] = (df[TO_ORDER_ROUND] / df[PIC_IN_PALLET]).round(1)
+    df[TO_ORDER_MSU] = (df[TO_ORDER_ROUND] * df[MSU]).round(2)
+    df = utils.void_to(df, TO_ORDER_MSU, 0)
+    return df
+
+
+def reindex(df):
+    list_cuts_week.reverse()
+    list_sales_week.reverse()
+    df = df[
+        [LINK, WHS, EAN, CRITICAL_EAN, PRODUCT, LEVEL_3, MSU, MHL, LIST_A,
+            PIC_IN_BOX, PIC_IN_LAYER, PIC_IN_PALLET, MIN_ORDER, FULL_REST,
+            OVERSTOCK, HARD_RSV, SOFT_RSV, QUOTA_WITH_REST, QUOTA_WITHOUT_REST,
+            FREE_REST, TRANZIT, DEMAIND_BY_FACTOR]
+        + list_cuts_week + [AVG_CUTS] + list_sales_week
+        + [AVG_SALES, TO_ORDER_PALLET, TO_ORDER_MSU, TO_ORDER, TO_ORDER_ROUND,
+            OUT_OF_STOCK, RSV_BEFORE_ARRIVAL, SOFT_RSV_FAR]
+    ]
+    return df
+
+
 def main():
     df = merge_remains(add_mhl_list_a(get_assortment()))
     df = merge_sales_history(merge_forecast(correct_by_exclude_rsv((df))))
+    df = reindex(to_order(df))
     save_to_excel(REPORT_DIR + REPORT_ORDER_FORM, df)
     print_complete(__file__)
 

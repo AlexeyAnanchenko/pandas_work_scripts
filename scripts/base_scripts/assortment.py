@@ -13,7 +13,7 @@ from service import save_to_excel, print_complete
 from hidden_settings import WAREHOUSE_ASSORT
 from settings import SOURCE_DIR, RESULT_DIR, TABLE_ASSORTMENT, LINK, WHS, EAN
 from settings import PIC_IN_BOX, PIC_IN_LAYER, PIC_IN_PALLET, PRODUCT
-from settings import MIN_ORDER, CRITICAL_EAN
+from settings import MIN_ORDER, CRITICAL_EAN, WORD_YES
 
 
 PATH_ASSORTMENT = 'Ассортимент МР Юг/'
@@ -38,7 +38,7 @@ def get_warehouse_data(file_path, warehouse):
     xl = pd.ExcelFile(file_path)
     df_critical_full = xl.parse(SHEET_CRIT)[[EAN_CRIT]]
     df_critical_full = df_critical_full.rename(columns={EAN_CRIT: EAN})
-    df_critical_full[CRITICAL_EAN] = 'Да'
+    df_critical_full[CRITICAL_EAN] = WORD_YES
     df_avialable_full = xl.parse(SHEET_ASSORT)[[
         EAN_ASSORT, PRODUCT_NAME, MIN_ORDER_LOC, PIC_IN_BOX_LOC,
         BOXES_IN_LAYER, BOXES_IN_PALLET
