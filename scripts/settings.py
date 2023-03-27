@@ -120,6 +120,9 @@ PURCH_BY_DATE = 'Закупки, шт'
 DATE_PURCH = 'Дата закупки'
 FIRST_PLAN = 'Первый план фактора, шт'
 MAX_PLAN = 'Максимальный план фактора, шт'
+DATE_CREATION_LAST = 'Дата создания последняя'
+DATE_START_LAST = 'Дата старта последняя'
+DATE_EXPIRATION_LAST = 'Дата окончания последняя'
 
 TABLE_ASSORTMENT = 'Ассортимент.xlsx'
 TABLE_DIRECTORY = 'Справочник_ШК.xlsx'
@@ -168,7 +171,8 @@ REPORT_TRACKING_NOT_SOLD = 'Трекинг продаж по факторам.xl
 
 DATE_COL = [
     DATE_RSV, DATE_CREATION, DATE_START, DATE_EXPIRATION, DATE_REGISTRY,
-    DATE_SALES, EXPECTED_DATE, DATE_PURCH
+    DATE_SALES, EXPECTED_DATE, DATE_PURCH, DATE_CREATION_LAST,
+    DATE_START_LAST, DATE_EXPIRATION_LAST
 ]
 
 ACTIVE_STATUS = [

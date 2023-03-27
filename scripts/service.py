@@ -2,12 +2,11 @@
 Файл содержит вспомогательные функции проекта
 
 """
-
 import pandas as pd
 import pandas.io.formats.excel
 from os.path import basename
 
-from settings import BASE_DIR, NUM_MONTHS, DATE_COL
+from settings import BASE_DIR, NUM_MONTHS, DATE_COL, EAN
 from settings import TABLE_PURCHASES, TABLE_SALES_HOLDINGS, TABLE_SALES
 
 
@@ -63,7 +62,22 @@ def save_to_excel(path, df):
             max_wdh_col
         )
         col_idx = df.columns.get_loc(column)
-        writer.sheets[sheet].set_column(col_idx, col_idx, column_width)
+        if column == EAN:
+            format = workbook.add_format({'num_format': '0'})
+            writer.sheets[sheet].set_column(
+                first_col=col_idx, last_col=col_idx,
+                width=column_width, cell_format=format
+            )
+        # if column in DATE_COL:
+        #     format = workbook.add_format({'num_format': '0.00'})
+        #     writer.sheets[sheet].set_column(
+        #         first_col=col_idx, last_col=col_idx,
+        #         width=column_width, cell_format=format
+        #     )
+        else:
+            writer.sheets[sheet].set_column(
+                first_col=col_idx, last_col=col_idx, width=column_width,
+            )
     writer.close()
 
 

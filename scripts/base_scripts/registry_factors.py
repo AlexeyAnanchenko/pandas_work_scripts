@@ -15,7 +15,8 @@ from settings import DATE_START, DATE_CREATION, DATE_EXPIRATION, WHS
 from settings import INACTIVE_PURPOSE, NAME_HOLDING, PLAN_NFE, PRODUCT
 from settings import DATE_REGISTRY, QUANT_REGISTRY, ARCHIVE_DIR, HOLDING
 from settings import TABLE_HOLDINGS, TABLE_FIXING_FACTORS, FIRST_PLAN
-from settings import MAX_PLAN
+from settings import MAX_PLAN, DATE_CREATION_LAST, DATE_START_LAST
+from settings import DATE_EXPIRATION_LAST
 from hidden_settings import OPT_CLIENTS
 from service import get_data, save_to_excel, print_complete
 
@@ -31,10 +32,7 @@ COL_REPORT = [
 SUBSTRACT = 'Отнять, шт'
 RESULT_COL = 'Расчётная колонка, шт'
 MAX_PLAN_ITEM = 'Максимальный план, временный'
-DATE_START_LAST = 'Дата старта последняя'
-DATE_EXPIRATION_LAST = 'Дата окончания последняя'
 NAME_HOLDING_LAST = 'Наименование клиента последнее'
-DATE_CREATION_LAST = 'Дата создания последняя'
 
 
 def get_archive():
@@ -192,8 +190,7 @@ def gen_fixing_factors(df_reg):
     idx = df[df[MAX_PLAN].isnull()].index
     df.loc[idx, MAX_PLAN] = 0
     df[MAX_PLAN_ITEM] = df[[MAX_PLAN, PLAN_IN_NFE]].max(axis=1)
-    idx = df[~df[MAX_PLAN].isnull()].index
-    df.loc[idx, MAX_PLAN] = df.loc[idx, MAX_PLAN_ITEM]
+    df[MAX_PLAN] = df[MAX_PLAN_ITEM]
     df = df.drop(labels=[PLAN_IN_NFE, MAX_PLAN_ITEM], axis=1)
     df = df.merge(
         df_reg[[
