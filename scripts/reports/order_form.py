@@ -275,7 +275,7 @@ def to_order(df):
     ] = WORD_YES
     df[TO_ORDER] = (
         df[AVG_SALES] * TARGET_DAYS + df[DEMAIND_BY_FACTOR]
-        + df[QUOTA_WITHOUT_REST] - df[FREE_REST]
+        + df[QUOTA_WITHOUT_REST] - df[FREE_REST] - df[TRANZIT]
     ).round(0)
     df.loc[df[df[TO_ORDER] < 0].index, TO_ORDER] = 0
     df[TO_ORDER_ROUND] = (

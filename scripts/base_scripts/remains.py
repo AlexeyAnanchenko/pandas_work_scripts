@@ -153,10 +153,10 @@ def main():
     if os.environ.get('SRS_DOWNLOAD') is None:
         from update_data import update_remains
         update_remains(SOURCE_FILE)
-    result_df = add_transit_directory(create_remains())
-    result_df = conversion_msu(added_overstock(result_df))
-    save_to_excel(RESULT_DIR + TABLE_REMAINS, result_df)
-    print_complete(__file__)
+    # result_df = add_transit_directory(create_remains())
+    # result_df = conversion_msu(added_overstock(result_df))
+    # save_to_excel(RESULT_DIR + TABLE_REMAINS, result_df)
+    # print_complete(__file__)
 
 
 if __name__ == "__main__":
