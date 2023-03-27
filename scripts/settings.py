@@ -169,12 +169,6 @@ REPORT_NOT_SOLD_PAST = 'Не продано с прошлого месяца.xls
 REPORT_NOT_SOLD_CURRENT = 'Не продано с текущего месяца.xlsx'
 REPORT_TRACKING_NOT_SOLD = 'Трекинг продаж по факторам.xlsx'
 
-DATE_COL = [
-    DATE_RSV, DATE_CREATION, DATE_START, DATE_EXPIRATION, DATE_REGISTRY,
-    DATE_SALES, EXPECTED_DATE, DATE_PURCH, DATE_CREATION_LAST,
-    DATE_START_LAST, DATE_EXPIRATION_LAST
-]
-
 ACTIVE_STATUS = [
     'Полностью согласован(а)',
     'Завершен(а)'

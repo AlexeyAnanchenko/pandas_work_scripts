@@ -6,7 +6,7 @@ import pandas as pd
 import pandas.io.formats.excel
 from os.path import basename
 
-from settings import BASE_DIR, NUM_MONTHS, DATE_COL, EAN
+from settings import BASE_DIR, NUM_MONTHS, EAN
 from settings import TABLE_PURCHASES, TABLE_SALES_HOLDINGS, TABLE_SALES
 
 
@@ -35,14 +35,7 @@ def save_to_excel(path, df):
     # Убираем формат заголовка таблицы по умолчанию
     pandas.io.formats.excel.ExcelFormatter.header_style = None
 
-    for column in df:
-        if column in DATE_COL:
-            to_date_dict = {}
-            for val in df[column]:
-                to_date_dict[val] = val.date()
-            df = df.replace({column: to_date_dict})
-
-    writer = pd.ExcelWriter(path)
+    writer = pd.ExcelWriter(path, datetime_format='dd.mm.yyyy')
     df.to_excel(writer, sheet_name=sheet, index=False)
     workbook = writer.book
     worksheet = writer.sheets[sheet]
@@ -68,12 +61,6 @@ def save_to_excel(path, df):
                 first_col=col_idx, last_col=col_idx,
                 width=column_width, cell_format=format
             )
-        # if column in DATE_COL:
-        #     format = workbook.add_format({'num_format': '0.00'})
-        #     writer.sheets[sheet].set_column(
-        #         first_col=col_idx, last_col=col_idx,
-        #         width=column_width, cell_format=format
-        #     )
         else:
             writer.sheets[sheet].set_column(
                 first_col=col_idx, last_col=col_idx, width=column_width,
