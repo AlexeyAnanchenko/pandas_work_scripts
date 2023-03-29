@@ -13,7 +13,7 @@ from service import get_mult_clients_dict
 from settings import REPORT_POTENTIAL_SALES, REPORT_DIR, TABLE_FACTORS
 from settings import FACTOR_PERIOD, FACTOR_STATUS, CURRENT, PURPOSE_PROMO
 from settings import LINK, LINK_HOLDING, FACTOR, DATE_START, DATE_EXPIRATION
-from settings import WHS, NAME_HOLDING, EAN, PRODUCT, LEVEL_3, FREE_REST
+from settings import WHS, NAME_HOLDING, EAN, PRODUCT, LEVEL_3, AVAILABLE_REST
 from settings import USER, PLAN_NFE, SALES_FACTOR_PERIOD, MSU, DATE_CREATION
 from settings import RSV_FACTOR_PERIOD, TABLE_SALES_HOLDINGS, TABLE_RESERVE
 from settings import SOFT_HARD_RSV, NAME_TRAD, ALL_CLIENTS, TABLE_DIRECTORY
@@ -21,7 +21,8 @@ from settings import ELB_PRICE, TABLE_REMAINS, TRANZIT_CURRENT, ACTIVE_STATUS
 from settings import REPORT_ELBRUS_FACTORS, INACTIVE_PURPOSE, BASE_PRICE
 from settings import REPORT_BASE_FACTORS, TABLE_REGISTRY_FACTORS, DATE_REGISTRY
 from settings import QUANT_REGISTRY, FACTOR_NUM, RSV_FACTOR_PERIOD_CURRENT
-from settings import SOFT_HARD_RSV_CURRENT, TABLE_LINES, LINES
+from settings import SOFT_HARD_RSV_CURRENT, TABLE_LINES, LINES, SALES_BY_DATE
+from settings import SOFT_RSV_BY_DATE, HARD_RSV_BY_DATE
 from hidden_settings import WHS_ELBRUS, elbrus
 
 
@@ -31,7 +32,7 @@ PLAN_MINUS_FACT = 'План - Факт, шт'
 TOTAL_PLAN_MINUS_FACT = 'Сумма план - факт по Склад-EAN, шт'
 MAX_DEMAND = 'Максимальная потребность, шт'
 RESULT_REST = 'Остаток + транзит, шт'
-DIST_FREE_REST = 'Свободный остаток к распределению, шт'
+DIST_AVAILABLE_REST = 'Доступный остаток к распределению, шт'
 DIST_RESULT_REST = 'Остаток + транзит к распределению, шт'
 LINK_DATE = 'Сцепка с датами'
 FULL_REST_CUSTOMER = 'Остаток + Транзит под заказчика, шт'
@@ -54,8 +55,15 @@ def get_factors():
     df = df[[
         LINK, LINK_HOLDING, FACTOR, DATE_START, DATE_CREATION,
         DATE_EXPIRATION, WHS, NAME_HOLDING, EAN, USER, PLAN_NFE,
-        SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD, RSV_FACTOR_PERIOD_CURRENT
+        SALES_FACTOR_PERIOD, RSV_FACTOR_PERIOD, RSV_FACTOR_PERIOD_CURRENT,
+        SALES_BY_DATE, SOFT_RSV_BY_DATE, HARD_RSV_BY_DATE
     ]]
+    df[PLAN_MINUS_FACT] = (df[PLAN_NFE] - df[SALES_BY_DATE]
+                           - df[SOFT_RSV_BY_DATE] - df[HARD_RSV_BY_DATE])
+    df.loc[df[PLAN_MINUS_FACT] < 0, PLAN_MINUS_FACT] = 0
+    df = df.drop(
+        labels=[SALES_BY_DATE, SOFT_RSV_BY_DATE, HARD_RSV_BY_DATE], axis=1
+    )
     return df
 
 
@@ -131,10 +139,6 @@ def merge_sales_rsv(df):
         df.loc[df[col].isnull(), col] = 0
 
     df = df[df[NAME_HOLDING] != ALIDI_MOVING]
-    df[PLAN_MINUS_FACT] = (df[PLAN_NFE]
-                           - df[SALES_FACTOR_PERIOD]
-                           - df[RSV_FACTOR_PERIOD])
-    df.loc[df[PLAN_MINUS_FACT] < 0, PLAN_MINUS_FACT] = 0
 
     df = correction_by_milt_clients(df)
 
@@ -162,11 +166,11 @@ def merge_directory(df):
 
 def merge_remains(df):
     """Присоединяем остатки и транзиты"""
-    remains = get_data(TABLE_REMAINS)[[LINK, FREE_REST, TRANZIT_CURRENT]]
+    remains = get_data(TABLE_REMAINS)[[LINK, AVAILABLE_REST, TRANZIT_CURRENT]]
     df = df.merge(remains, on=LINK, how='left')
     df.loc[df[TRANZIT_CURRENT].isnull(), TRANZIT_CURRENT] = 0
-    df.loc[df[FREE_REST].isnull(), FREE_REST] = 0
-    df[RESULT_REST] = df[FREE_REST] + df[TRANZIT_CURRENT]
+    df.loc[df[AVAILABLE_REST].isnull(), AVAILABLE_REST] = 0
+    df[RESULT_REST] = df[AVAILABLE_REST] + df[TRANZIT_CURRENT]
     return df
 
 
@@ -264,16 +268,18 @@ def distribute_remainder(df):
         df[RESULT_REST],
         df[TOTAL_PLAN_MINUS_FACT]
     )
-    df[DIST_FREE_REST] = np.minimum(df[FREE_REST], df[TOTAL_PLAN_MINUS_FACT])
+    df[DIST_AVAILABLE_REST] = np.minimum(
+        df[AVAILABLE_REST], df[TOTAL_PLAN_MINUS_FACT]
+    )
     df_reg = get_registry_factors(df)
     df_reg = df_reg.merge(
         df[[
-            LINK, DIST_RESULT_REST, DIST_FREE_REST, TOTAL_PLAN_MINUS_FACT
+            LINK, DIST_RESULT_REST, DIST_AVAILABLE_REST, TOTAL_PLAN_MINUS_FACT
         ]].drop_duplicates(subset=LINK),
         on=LINK, how='left'
     )
     df_reg = add_distribute(df_reg, DIST_RESULT_REST, FULL_REST_CUSTOMER)
-    df_reg = add_distribute(df_reg, DIST_FREE_REST, FREE_REST_CUSTOMER)
+    df_reg = add_distribute(df_reg, DIST_AVAILABLE_REST, FREE_REST_CUSTOMER)
     df_reg = df_reg.groupby([LINK_HOLDING]).agg(
         {FULL_REST_CUSTOMER: 'sum', FREE_REST_CUSTOMER: 'sum'}
     ).reset_index()
@@ -300,7 +306,8 @@ def get_elbrus_factors(df):
     elb_df = df[df[TERRITORY].isin([elbrus])]
     elb_df = elb_df.drop(
         labels=[
-            TERRITORY, TOTAL_PLAN_MINUS_FACT, DIST_RESULT_REST, DIST_FREE_REST
+            TERRITORY, TOTAL_PLAN_MINUS_FACT,
+            DIST_RESULT_REST, DIST_AVAILABLE_REST
         ],
         axis=1
     )
@@ -312,7 +319,8 @@ def get_base_factors(df):
     base_df = df[df[TERRITORY] != elbrus]
     base_df = base_df.drop(
         labels=[
-            TERRITORY, TOTAL_PLAN_MINUS_FACT, DIST_RESULT_REST, DIST_FREE_REST
+            TERRITORY, TOTAL_PLAN_MINUS_FACT,
+            DIST_RESULT_REST, DIST_AVAILABLE_REST
         ],
         axis=1
     )
