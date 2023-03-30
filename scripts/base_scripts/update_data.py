@@ -17,10 +17,12 @@ from hidden_settings import url_factors_nfe_promo, USER_NFE, PASSWORD_NFE
 
 options = Options()
 options.add_argument('–disable-blink-features=BlockCredentialedSubresources')
-# options.add_argument('headless')
 options.add_argument('log-level=3')
 options.add_experimental_option("prefs", {
     "download.default_directory": SOURCE_DIR,
+    'download.prompt_for_download': False,
+    'download.directory_upgrade': True,
+    'safebrowsing.enabled': True
 })
 driver = webdriver.Chrome(options=options)
 
@@ -38,18 +40,18 @@ def view_report_click(driver, waiting_word):
 
 def escort_download_srs(driver, file, folder=None):
     """Функция сопровождает выгрузку файла из SRS в исходники"""
+    if file in os.listdir(SOURCE_DIR):
+        os.remove(SOURCE_DIR + file)
     export_id = 'ReportViewerControl_ctl05_ctl04_ctl00_ButtonLink'
     export = driver.find_element(By.ID, export_id)
     export.click()
     driver.implicitly_wait(2)
     excel = driver.find_element(By.XPATH, "//a[@title='Excel']")
-    if file in os.listdir(SOURCE_DIR):
-        os.remove(SOURCE_DIR + file)
     excel.click()
     flag = True
     while flag:
         if file not in os.listdir(SOURCE_DIR):
-            time.sleep(2)
+            time.sleep(10)
         else:
             flag = False
     if folder is not None:
