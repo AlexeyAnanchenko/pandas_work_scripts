@@ -196,12 +196,6 @@ def correct_by_exclude_rsv(df):
 
 def merge_forecast(df):
     df_fct = get_data(TABLE_FACTORS)
-    # df_fct = df_fct[
-    #     (df_fct[DATE_EXPIRATION] >= log_days)
-    #     & (df_fct[DATE_START] <= log_days)
-    #     & (df_fct[FACTOR_STATUS].isin(ACTIVE_STATUS))
-    #     & (df_fct[PURPOSE_PROMO] != INACTIVE_PURPOSE)
-    # ]
     df_fct = df_fct[
         (df_fct[FACTOR_PERIOD].isin([CURRENT, FUTURE]))
         & (df_fct[FACTOR_STATUS].isin(ACTIVE_STATUS))
