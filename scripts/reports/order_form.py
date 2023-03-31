@@ -23,12 +23,12 @@ from settings import ACTIVE_STATUS, PURPOSE_PROMO, INACTIVE_PURPOSE, PLAN_NFE
 from settings import DATE_EXPIRATION, DATE_CREATION, DESCRIPTION, USER
 from settings import SALES_BY_DATE, CUTS_BY_DATE, NAME_HOLDING, TABLE_MHL
 from settings import TABLE_ORDER_FACTORS, TABLE_SALES_BY_DATE, DATE_SALES
-from settings import HARD_RSV_BY_DATE, SOFT_RSV_BY_DATE, QUOTA_BY_DATE
-from settings import CRITICAL_EAN, REPORT_DIR_FINAL
+from settings import HARD_RSV_BY_DATE, SOFT_RSV_BY_DATE, QUOTA_BY_DATE, FUTURE
+from settings import CRITICAL_EAN, REPORT_DIR_FINAL, FACTOR_PERIOD, CURRENT
 
 
 LOG_LEVERAGE = 7
-MIN_DAYS = 5
+MIN_DAYS = 3
 TARGET_DAYS = 16
 SOFT_RSV_FAR = f'Мягкие резервы, шт (свыше {LOG_LEVERAGE} дней по лог. плечу)'
 DEMAIND_BY_FACTOR = 'Потребность по факторам, шт'
@@ -196,9 +196,14 @@ def correct_by_exclude_rsv(df):
 
 def merge_forecast(df):
     df_fct = get_data(TABLE_FACTORS)
+    # df_fct = df_fct[
+    #     (df_fct[DATE_EXPIRATION] >= log_days)
+    #     & (df_fct[DATE_START] <= log_days)
+    #     & (df_fct[FACTOR_STATUS].isin(ACTIVE_STATUS))
+    #     & (df_fct[PURPOSE_PROMO] != INACTIVE_PURPOSE)
+    # ]
     df_fct = df_fct[
-        (df_fct[DATE_EXPIRATION] >= log_days)
-        & (df_fct[DATE_START] <= log_days)
+        (df_fct[FACTOR_PERIOD].isin([CURRENT, FUTURE]))
         & (df_fct[FACTOR_STATUS].isin(ACTIVE_STATUS))
         & (df_fct[PURPOSE_PROMO] != INACTIVE_PURPOSE)
     ]
@@ -219,13 +224,18 @@ def merge_forecast(df):
          + df_fct[HARD_RSV_BY_DATE]
          + df_fct[QUOTA_BY_DATE])
     )
-    df_fct.loc[
-        df_fct[df_fct[DATE_CREATION] <= pd.to_datetime(
+    idx = df_fct[
+        (df_fct[DATE_CREATION] <= pd.to_datetime(
             today - timedelta(days=LOG_LEVERAGE)
-        )
-        ].index,
-        RSV_BEFORE_ARRIVAL
-    ] = 0
+        ))
+        & (df_fct[DATE_START] <= pd.to_datetime(today))
+    ].index
+    df_fct.loc[idx, RSV_BEFORE_ARRIVAL] = 0
+    idx = df_fct[
+        (df_fct[DATE_EXPIRATION] < log_days)
+        | (df_fct[DATE_START] > log_days)
+    ].index
+    df_fct.loc[idx, DEMAIND_BY_FACTOR] = 0
     save_to_excel(REPORT_DIR_FINAL + TABLE_ORDER_FACTORS, df_fct)
     df_fct = df_fct.groupby([LINK])[
         [DEMAIND_BY_FACTOR, RSV_BEFORE_ARRIVAL]
