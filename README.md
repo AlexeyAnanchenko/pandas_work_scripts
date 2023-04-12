@@ -13,6 +13,8 @@
 
 4. Фиксация недогруженных заказов клиентам и распределение остатка по ответственным. (<code>[not_sold.py](https://github.com/AlexeyAnanchenko/pandas_work_scripts/blob/main/scripts/reports/not_sold.py)</code>)
 
-5. Отчёт аккумулирующий всю возможную информация в разрезе Клиент-Склад-Штрихкод (<code>[registry_potential_sales.py](https://github.com/AlexeyAnanchenko/pandas_work_scripts/blob/main/scripts/reports/registry_potential_sales.py)</code>)
+5. Отчёт собирающий всю возможную информацию в разрезе Клиент-Склад-Штрихкод (заказы, продажи, резервы, остатки, транзит)(<code>[registry_potential_sales.py](https://github.com/AlexeyAnanchenko/pandas_work_scripts/blob/main/scripts/reports/registry_potential_sales.py)</code>)
 
-6. Eжедневное архивирование сформированных отчётов (<code>[archive.py](https://github.com/AlexeyAnanchenko/pandas_work_scripts/blob/main/scripts/base_scripts/archive.py)</code>)
+6. Автоматический бланк для заказа товара поставщику(<code>[order_form.py.py](https://github.com/AlexeyAnanchenko/pandas_work_scripts/blob/main/scripts/reports/order_form.py)</code>)
+
+7. Eжедневное архивирование сформированных отчётов (<code>[archive.py](https://github.com/AlexeyAnanchenko/pandas_work_scripts/blob/main/scripts/base_scripts/archive.py)</code>)
