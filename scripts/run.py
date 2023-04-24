@@ -9,7 +9,7 @@ from service import BASE_DIR
 start_time = time.time()
 os.environ.setdefault('SRS_DOWNLOAD', 'FALSE')
 
-scripts = [
+scripts_base = [
     'assortment',
     'sales_by_date',
     'sales',
@@ -19,13 +19,26 @@ scripts = [
     'purchases',
     'remains',
     'reserve',
-    'factors',
-    'full_sales',
+    'factors'
 ]
 
-for script in scripts:
+for script in scripts_base:
     subprocess.Popen([
         'python.exe', f'{BASE_DIR}/scripts/base_scripts/{script}.py'
+    ], shell=True).wait()
+
+reports = [
+    'potential_sales',
+    'registry_potential_sales',
+    'future_potential_sales',
+    'check_factors',
+    'not_sold',
+    'order_form'
+]
+
+for script in reports:
+    subprocess.Popen([
+        'python.exe', f'{BASE_DIR}/scripts/reports/{script}.py'
     ], shell=True).wait()
 
 os.environ.pop('SRS_DOWNLOAD')
