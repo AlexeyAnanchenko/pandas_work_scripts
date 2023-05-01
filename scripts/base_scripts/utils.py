@@ -5,7 +5,7 @@
 from sys import path
 from os.path import dirname
 import calendar
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 def path_append():
@@ -30,7 +30,7 @@ def get_next_month(current_mon):
 
 def get_factor_start():
     """Возвращает дату старта для выгрузки факторов"""
-    today = datetime.today()
+    today = datetime.today() - timedelta(days=1)
 
     if today.month > 1:
         first_day_last_month = datetime(today.year, today.month - 1, 1)
