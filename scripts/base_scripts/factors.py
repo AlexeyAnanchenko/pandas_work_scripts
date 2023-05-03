@@ -104,25 +104,26 @@ def add_deleted_factors(df):
     """Добавляет удалённые факторы из реестра"""
     df_reg = get_data(TABLE_FIXING_FACTORS)
     df_reg = df_reg.drop(labels=[LINK_FACTOR_NUM], axis=1)
-    df_reg = df_reg[
-        df_reg[DATE_START_LAST] >= pd.to_datetime(utils.get_factor_start())
-    ]
+    start_factor = pd.to_datetime(utils.get_factor_start(), format="%d.%m.%Y")
+    df_reg = df_reg[df_reg[DATE_START_LAST] >= start_factor]
     df_reg = df_reg.rename(columns={
         DATE_CREATION_LAST: DATE_CREATION_LOC,
         DATE_START_LAST: DATE_START_LOC,
         DATE_EXPIRATION_LAST: DATE_EXPIRATION_LOC,
-        NAME_HOLDING_LAST: HOLDING_LOC,
         EAN: EAN_LOC
     })
-    df[FACTOR_NUM] = df[FACTOR_NUM].astype(int)
+    df = df.astype({EAN_LOC: "Int64", FACTOR_NUM: "Int64"})
     df = df.merge(
         df_reg,
         on=[
             FACTOR_NUM, DATE_CREATION_LOC, DATE_START_LOC, DATE_EXPIRATION_LOC,
-            HOLDING_LOC, WHS, EAN_LOC
+            WHS, EAN_LOC
         ],
         how='outer'
     )
+    idx = df[df[HOLDING_LOC].isnull()].index
+    df.loc[idx, HOLDING_LOC] = df.loc[idx, NAME_HOLDING_LAST]
+    df = df.drop(labels=[NAME_HOLDING_LAST], axis=1)
 
     df_empty = df[df[FACTOR_LOC].isnull()].copy()
     df = df[~df[FACTOR_LOC].isnull()]
@@ -302,6 +303,7 @@ def add_total_sales_rsv(df):
         TOTAL_RSV: 'sum'
     }).reset_index()
     TRAD_HOLDINGS.append(ALL_CLIENTS)
+    TRAD_HOLDINGS.append(NAME_TRAD)
     df = df.merge(
         sales[[
             LINK, col_sales['pntm_sale'], col_sales['last_sale'],
@@ -340,6 +342,7 @@ def add_total_sales_rsv(df):
     df.drop(TOTAL_RSV, axis=1, inplace=True)
 
     TRAD_HOLDINGS.remove(ALL_CLIENTS)
+    TRAD_HOLDINGS.remove(NAME_TRAD)
     idx = df[df[NAME_HOLDING].isin(TRAD_HOLDINGS)].index
     df.loc[idx, NAME_HOLDING] = NAME_TRAD
     return df
