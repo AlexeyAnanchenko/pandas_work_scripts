@@ -92,7 +92,6 @@ def check_fact(df):
         (df[SALES_BY_DATE] + df[SOFT_RSV_BY_DATE] + df[HARD_RSV_BY_DATE]
          < (df[SALES_FACTOR_PERIOD] + df[RSV_FACTOR_PERIOD_FUTURE]))
         & (~df[FACTOR_STATUS].isin(ACTIVE_STATUS))
-        & (df[FACTOR_PERIOD] == FUTURE)
         & (~df[NAME_HOLDING].isin([NAME_TRAD, ALL_CLIENTS]))
         & (~df[LINK_FACTOR].isin(df_exclude[CHECK_FACT].to_list())),
         CHECK_FACT
