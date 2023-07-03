@@ -24,7 +24,7 @@ for script in scripts:
 flag = True
 while flag:
     now = datetime.datetime.now()
-    if now.hour == 8 and now.minute >= 40 or now.hour > 8:
+    if now.hour == 9 and now.minute >= 10 or now.hour > 9:
         subprocess.Popen(
             ['python.exe', f'{BASE_DIR}/scripts/base_scripts/reserve.py'],
             shell=True
