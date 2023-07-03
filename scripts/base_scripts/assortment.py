@@ -16,7 +16,7 @@ from settings import PIC_IN_BOX, PIC_IN_LAYER, PIC_IN_PALLET, PRODUCT
 from settings import MIN_ORDER, CRITICAL_EAN, WORD_YES
 
 
-PATH_ASSORTMENT = 'Ассортимент МР Юг/'
+PATH_ASSORTMENT = 'Ассортименты PG/'
 SHEET_CRIT = 'Критические коды'
 SHEET_ASSORT = 'Ассортимент'
 EAN_CRIT = 'EAN'
