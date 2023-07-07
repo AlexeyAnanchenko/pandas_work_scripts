@@ -150,6 +150,10 @@ def add_deleted_factors(df):
     df.loc[idx, PRODUCT_LOC] = df.loc[idx, PRODUCT]
     df.loc[idx, LEVEL_3_LOC] = df.loc[idx, LEVEL_3]
     df = df.drop(labels=[PRODUCT, LEVEL_3], axis=1)
+
+    # удаляем продукты не PG
+    df = df[df[PRODUCT_LOC] != NOT_DATA]
+
     return df
 
 

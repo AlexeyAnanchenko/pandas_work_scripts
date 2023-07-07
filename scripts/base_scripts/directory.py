@@ -41,6 +41,9 @@ MIN_ORDER_DICT = {
     'L': PIC_IN_LAYER,
     'P': PIC_IN_PALLET
 }
+# список категорий из колонки 'Бренд (англ)', которые нужно
+# удалить из справочника
+DELETE_LEVEL_2 = ['WELLAFLEX']
 
 
 def get_category_msu():
@@ -127,8 +130,11 @@ def added_price(dataframe):
     return dataframe
 
 
-def delete_level(df):
-    """Удаляет уровни, которые пока не нужны в справочнике"""
+def delete_category_level(df):
+    """Удаляет категории и уровни, которые пока не нужны в справочнике"""
+    for i in DELETE_LEVEL_2:
+        df = df[df[LEVEL_2] != i]
+
     df = df.drop(labels=[LEVEL_0, LEVEL_1, LEVEL_2], axis=1)
     return df
 
@@ -149,7 +155,7 @@ def fill_empty_cells(df):
 
 def main():
     directory = added_price(added_matrix(get_category_msu()))
-    directory = fill_empty_cells(delete_level(directory))
+    directory = fill_empty_cells(delete_category_level(directory))
     save_to_excel(RESULT_DIR + TABLE_DIRECTORY, directory)
     print_complete(__file__)
 
