@@ -107,7 +107,7 @@ def update_price(source_file, folder):
         driver.get(url_price)
         driver.implicitly_wait(20)
         select_pg = 'ReportViewerControl$ctl04$ctl03$ddValue'
-        Select(driver.find_element(By.NAME, select_pg)).select_by_value('66')
+        Select(driver.find_element(By.NAME, select_pg)).select_by_value('67')
         driver.implicitly_wait(2)
         select_whs = 'ReportViewerControl$ctl04$ctl05$ddValue'
         Select(driver.find_element(By.NAME, select_whs)).select_by_value('1')
@@ -243,7 +243,7 @@ def update_factors_pbi(source_file):
         ).click()
         driver.implicitly_wait(3)
         driver.find_element(
-            By.XPATH, "//div[@title='Экспортировать данные']"
+            By.XPATH, "//button[@title='Экспортировать данные']"
         ).click()
         driver.implicitly_wait(3)
         export = driver.find_element(
